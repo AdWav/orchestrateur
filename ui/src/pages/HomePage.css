@@ -19,42 +19,6 @@
   border: 1px solid var(--app-border-color);
 }
 
-.hero-card__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.hero-status-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  max-width: min(100%, 280px);
-}
-
-.hero-status-chip__spinner {
-  width: 14px;
-  height: 14px;
-}
-
-.hero-status-chip__label,
-.hero-status-chip__state {
-  display: block;
-}
-
-.hero-status-chip__label {
-  font-weight: 600;
-}
-
-.hero-status-chip__state {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  opacity: 0.9;
-}
-
 .toggle-icon {
   display: inline-flex;
   align-items: center;
@@ -101,6 +65,24 @@
   border-radius: 18px;
   background: var(--app-surface-2);
   border: 1px solid var(--app-border-color);
+}
+
+.service-light-button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+
+.service-light-button:focus-visible {
+  outline: none;
+  border-color: rgba(var(--ion-color-primary-rgb), 0.5);
+  box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.14);
+}
+
+.service-light--selected {
+  border-color: rgba(var(--ion-color-primary-rgb), 0.35);
+  background: rgba(var(--ion-color-primary-rgb), 0.12);
 }
 
 .service-light div {
@@ -340,15 +322,6 @@
 }
 
 @media (max-width: 560px) {
-  .hero-card h1 {
-    font-size: 1.6rem;
-  }
-
-  .hero-card__head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
   .status-grid,
   .compact-grid {
     grid-template-columns: 1fr;

@@ -49,6 +49,7 @@ const defaultAxes = [
   "security",
   "dependencies",
 ];
+const backendServiceKey = "po";
 
 type HomePageProps = {
   themeMode: ThemeMode;
@@ -273,6 +274,7 @@ const HomePage = ({
   const [objective, setObjective] = useState(defaultObjective);
   const [repoPath, setRepoPath] = useState(".");
   const [analysisAxes, setAnalysisAxes] = useState<string[]>(defaultAxes);
+  const [isBackendCardVisible, setIsBackendCardVisible] = useState(false);
 
   const healthQuery = useQuery({
     queryKey: ["health"],
@@ -304,21 +306,6 @@ const HomePage = ({
   const isLoading =
     healthQuery.isLoading || teamQuery.isLoading || useCasesQuery.isLoading;
   const report = repoAuditMutation.data;
-  const poService =
-    serviceStatusQuery.data?.services.find((service) => service.key === "po") ??
-    null;
-  const poChipColor = serviceStatusQuery.isLoading
-    ? "medium"
-    : serviceStatusQuery.error || poService?.active === false
-      ? "danger"
-      : "primary";
-  const poChipStateLabel = serviceStatusQuery.isLoading
-    ? "Loading..."
-    : serviceStatusQuery.error instanceof Error
-      ? serviceStatusQuery.error.message
-      : poService?.active === false
-        ? "Offline"
-        : "Online";
 
   const toggleAxis = (axis: string) => {
     setAnalysisAxes((current) =>
@@ -371,84 +358,102 @@ const HomePage = ({
       <IonContent fullscreen>
         <div className="home-shell">
           <section className="hero-card">
-            <div className="hero-card__head">
-              <div>
-                <span className="eyebrow">Containers</span>
-                <h1>Lumieres du mesh</h1>
-              </div>
-              <IonChip color={poChipColor} className="hero-status-chip">
-                {serviceStatusQuery.isLoading ? (
-                  <IonSpinner name="crescent" className="hero-status-chip__spinner" />
-                ) : null}
-                <span className="hero-status-chip__label">PO / :8000</span>
-                <span className="hero-status-chip__state">{poChipStateLabel}</span>
-              </IonChip>
-            </div>
             <div className="service-lights">
-              {(serviceStatusQuery.data?.services ?? []).map((service) => (
-                <article key={service.key} className="service-light">
-                  <span
-                    className={
-                      service.active
-                        ? "service-light__dot service-light__dot--up"
-                        : "service-light__dot service-light__dot--down"
-                    }
-                  />
-                  <div>
-                    <strong>{service.label}</strong>
-                    <span>
-                      {service.port ? `:${service.port}` : service.target}
-                    </span>
-                  </div>
-                </article>
-              ))}
+              {(serviceStatusQuery.data?.services ?? []).map((service) => {
+                const isBackendService = service.key === backendServiceKey;
+                const serviceLightContent = (
+                  <>
+                    <span
+                      className={
+                        service.active
+                          ? "service-light__dot service-light__dot--up"
+                          : "service-light__dot service-light__dot--down"
+                      }
+                    />
+                    <div>
+                      <strong>{service.label}</strong>
+                      <span>
+                        {service.port ? `:${service.port}` : service.target}
+                      </span>
+                    </div>
+                  </>
+                );
+
+                if (isBackendService) {
+                  return (
+                    <button
+                      key={service.key}
+                      type="button"
+                      className={
+                        isBackendCardVisible
+                          ? "service-light service-light-button service-light--selected"
+                          : "service-light service-light-button"
+                      }
+                      onClick={() =>
+                        setIsBackendCardVisible((current) => !current)
+                      }
+                      aria-expanded={isBackendCardVisible}
+                      aria-controls="backend-health-card"
+                    >
+                      {serviceLightContent}
+                    </button>
+                  );
+                }
+
+                return (
+                  <article key={service.key} className="service-light">
+                    {serviceLightContent}
+                  </article>
+                );
+              })}
             </div>
-            <IonNote color="medium">Vert = actif, rouge = eteint</IonNote>
           </section>
 
-          <IonCard>
-            <IonCardHeader>
-              <IonCardSubtitle>Connexion backend</IonCardSubtitle>
-              <IonCardTitle>Sante du service</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              {isLoading ? (
-                <div className="loading-row">
-                  <IonSpinner name="crescent" />
-                  <span>Chargement des informations de demarrage...</span>
-                </div>
-              ) : (
-                <div className="status-grid">
-                  <div>
-                    <span className="eyebrow">Service</span>
-                    <strong>{healthQuery.data?.service ?? "unavailable"}</strong>
+          {isBackendCardVisible ? (
+            <IonCard id="backend-health-card">
+              <IonCardHeader>
+                <IonCardSubtitle>Connexion backend</IonCardSubtitle>
+                <IonCardTitle>Sante du service</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                {isLoading ? (
+                  <div className="loading-row">
+                    <IonSpinner name="crescent" />
+                    <span>Chargement des informations de demarrage...</span>
                   </div>
-                  <div>
-                    <span className="eyebrow">Etat</span>
-                    <IonBadge color={bootstrapError ? "danger" : "success"}>
-                      {bootstrapError ? "unreachable" : healthQuery.data?.status}
-                    </IonBadge>
+                ) : (
+                  <div className="status-grid">
+                    <div>
+                      <span className="eyebrow">Service</span>
+                      <strong>{healthQuery.data?.service ?? "unavailable"}</strong>
+                    </div>
+                    <div>
+                      <span className="eyebrow">Etat</span>
+                      <IonBadge color={bootstrapError ? "danger" : "success"}>
+                        {bootstrapError ? "unreachable" : healthQuery.data?.status}
+                      </IonBadge>
+                    </div>
+                    <div>
+                      <span className="eyebrow">Equipe</span>
+                      <strong>
+                        {bootstrapError
+                          ? "n/a"
+                          : `${teamQuery.data?.roles.length ?? 0} roles`}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="eyebrow">Use cases</span>
+                      <strong>
+                        {bootstrapError
+                          ? "n/a"
+                          : `${useCasesQuery.data?.length ?? 0} exposes`}
+                      </strong>
+                    </div>
                   </div>
-                  <div>
-                    <span className="eyebrow">Equipe</span>
-                    <strong>
-                      {bootstrapError
-                        ? "n/a"
-                        : `${teamQuery.data?.roles.length ?? 0} roles`}
-                    </strong>
-                  </div>
-                  <div>
-                    <span className="eyebrow">Use cases</span>
-                    <strong>
-                      {bootstrapError
-                        ? "n/a"
-                        : `${useCasesQuery.data?.length ?? 0} exposes`}
-                    </strong>
-                  </div>
-                </div>
-              )}
-            </IonCardContent>
-          </IonCard>
+                )}
+              </IonCardContent>
+            </IonCard>
+          ) : null}
 
           <IonCard>
             <IonCardHeader>
