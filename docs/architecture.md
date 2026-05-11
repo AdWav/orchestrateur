@@ -2,7 +2,9 @@
 
 ## Objectif
 
-Cette V1 etablit une architecture multi-agents locale, conteneurisee, specialisee par role, sans partir trop tot dans une complexite distribuee excessive.
+Cette base etablit une architecture multi-agents locale, conteneurisee, specialisee par role, sans partir trop tot dans une complexite distribuee excessive.
+
+La V2 ajoute un workflow `local-repo-audit` en lecture seule pour auditer un depot local avec preuves traceables.
 
 Le principe retenu est:
 
@@ -12,6 +14,7 @@ Le principe retenu est:
 - un orchestrateur central qui sequence les handoffs
 - une execution d'agents en services HTTP distincts
 - un runtime `Ollama` partage pour la validation fonctionnelle
+- une couche de capacites repo en lecture seule pour l'audit local
 
 ## Pourquoi cette architecture
 
@@ -35,9 +38,19 @@ flowchart TD
     researcher --> ollama
     executor --> ollama
     verifier --> ollama
+    researcher --> repoCapabilities[RepoCapabilities]
     orchestrator --> memory[SharedMemoryInWorkflow]
     orchestrator --> runtime[RuntimeSelection]
 ```
+
+## Workflow repo audit
+
+Le nouveau flux `local-repo-audit` garde les memes roles, mais specialise leurs sorties:
+
+1. `Planner` cadre le scope, les limites de lecture et le plan de recherche
+2. `Researcher` lit le depot via `RepoCapabilities` et collecte des preuves bornees
+3. `Executor` transforme ces preuves en constats structures
+4. `Verifier` controle la couverture, la presence des preuves et le respect du mode lecture seule
 
 ## Responsabilites des dossiers
 
@@ -86,11 +99,19 @@ Ce compromis est volontaire:
 - facile a tester
 - compatible avec un futur backend de memoire partagee
 
+Dans le workflow repo audit, cette memoire transporte aussi:
+
+- l'inventaire du depot
+- les preuves collectees
+- les evenements de capacites invoquees
+- le rapport de verification final
+
 ## Evolution prevue
 
 Les evolutions naturelles de cette base sont:
 
 - conserver `Ollama` pour la validation puis changer de modele ou de runtime
+- etendre l'audit local a un repo monte explicitement en mode Docker
 - brancher un stockage de traces et d'observabilite
 - separer les images Docker par famille d'agents
 - introduire une vraie memoire partagee externe

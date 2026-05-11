@@ -6,6 +6,7 @@ import httpx
 
 from core.agent_runtime import run_agent_request
 from core.contracts import AgentExecutionRequest, AgentOutput, WorkItem
+from core.model_client import ModelClient
 
 
 class AgentGateway(ABC):
@@ -20,6 +21,9 @@ class AgentGateway(ABC):
 
 
 class LocalAgentGateway(AgentGateway):
+    def __init__(self, model_client: ModelClient | None = None) -> None:
+        self.model_client = model_client
+
     def run_agent(
         self,
         role: str,
@@ -27,7 +31,8 @@ class LocalAgentGateway(AgentGateway):
         memory: dict[str, object],
     ) -> tuple[AgentOutput, dict[str, object]]:
         response = run_agent_request(
-            AgentExecutionRequest(role=role, work_item=work_item, memory=memory)
+            AgentExecutionRequest(role=role, work_item=work_item, memory=memory),
+            model_client=self.model_client,
         )
         return response.output, response.memory
 

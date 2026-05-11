@@ -48,4 +48,15 @@ V1_USE_CASES: list[UseCaseDefinition] = [
         inputs=["objectif", "outils autorises", "seuils de securite", "definition du done"],
         deliverables=["procedure", "checks de securite", "preuves attendues", "conditions d'arret"],
     ),
+    UseCaseDefinition(
+        id="local-repo-audit",
+        title="Local Repo Audit",
+        description=(
+            "Auditer un depot local en lecture seule pour produire une cartographie, "
+            "des preuves traceables et des constats priorises."
+        ),
+        primary_outcome="Rapport d'audit de repo avec inventaire, preuves, constats et verdict.",
+        inputs=["objectif", "chemin du depot", "axes d'analyse", "limites de lecture"],
+        deliverables=["inventaire", "preuves", "constats", "verdict de verification"],
+    ),
 ]

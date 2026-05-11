@@ -1,8 +1,8 @@
 # Operations et prochaines etapes
 
-## Objectif de la V1
+## Objectif de la base actuelle
 
-La V1 doit prouver trois choses:
+La base actuelle doit prouver trois choses:
 
 - qu'un orchestrateur central peut piloter plusieurs agents specialises
 - que les handoffs sont explicites et verifiables
@@ -18,6 +18,7 @@ Quand la stack tourne, verifier:
 4. `GET /v1/use-cases`
 5. `POST /v1/runtime/recommendation`
 6. `POST /v1/workflows/specification`
+7. `POST /v1/workflows/repo-audit`
 
 ## Profil de validation ultra-legere
 
@@ -57,6 +58,28 @@ Le workflow doit renvoyer:
 - la memoire du workflow
 - un verdict `verification_passed`
 
+## Exemple de payload pour le repo audit
+
+```json
+{
+  "objective": "Auditer ce depot en lecture seule",
+  "repo_path": ".",
+  "analysis_axes": [
+    "architecture",
+    "docs",
+    "dependencies"
+  ]
+}
+```
+
+La reponse attendue inclut alors:
+
+- la requete normalisee `RepoAuditRequest`
+- un `inventory` du depot audite
+- des `findings` relies a des preuves
+- un `validation_report`
+- la memoire d'execution et les evenements de capacites
+
 ## Extensions naturelles
 
 Les prochaines etapes coherentes sont:
@@ -66,6 +89,7 @@ Les prochaines etapes coherentes sont:
 3. isoler certains agents dans des images plus specialisees
 4. connecter une UI `TypeScript`
 5. introduire un stockage memoire partage externe
+6. permettre l'audit d'un repo monte explicitement via Docker
 
 ## Regle de croissance
 

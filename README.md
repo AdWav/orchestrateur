@@ -36,7 +36,7 @@ flowchart TD
 - compatibilite et quantisation: `llama.cpp`
 - composants natifs plus tard: `Rust` ou `C++` apres profilage
 
-## Equipe V1
+## Equipe actuelle
 
 La premiere equipe specialisee contient quatre roles:
 
@@ -45,12 +45,26 @@ La premiere equipe specialisee contient quatre roles:
 3. `Executor`
 4. `Verifier`
 
-Ces roles cooperent sur quatre cas d'usage:
+Ces roles cooperent maintenant sur cinq cas d'usage:
 
 1. transformer une demande floue en specification exploitable
 2. benchmarker des modeles locaux
 3. preparer un corpus pour fine-tuning ou RAG
 4. produire un runbook operateur local et auditable
+5. auditer un depot local en lecture seule avec preuves traceables
+
+## V2 Repo Audit
+
+La V2 ajoute un workflow `local-repo-audit` centre sur l'analyse d'un depot local.
+
+Ce workflow:
+
+- garde les quatre roles existants
+- collecte des preuves deterministes via une couche `RepoCapabilities`
+- produit un inventaire, des constats structures et un verdict de verification
+- reste strictement en lecture seule
+
+En mode local, l'API principale peut maintenant utiliser un vrai backend modele si `MODEL_BACKEND=ollama`.
 
 ## Demarrage recommande
 
@@ -87,6 +101,19 @@ Une valeur d'exemple est fournie dans `.env.example`, et `compose.yaml` utilise 
 - `GET /v1/team`
 - `POST /v1/runtime/recommendation`
 - `POST /v1/workflows/specification`
+- `POST /v1/workflows/repo-audit`
+
+Exemple minimal pour le repo audit:
+
+```bash
+curl -X POST http://localhost:8000/v1/workflows/repo-audit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "objective": "Auditer ce depot en lecture seule",
+    "repo_path": ".",
+    "analysis_axes": ["architecture", "docs", "dependencies"]
+  }'
+```
 
 ## Documentation
 

@@ -15,9 +15,18 @@ class SharedMemory:
             self._state[key] = value
             self._events.append({"type": "remember", "role": role, "key": key})
 
-    def append_event(self, role: str, message: str) -> None:
+    def append_event(
+        self,
+        role: str,
+        message: str,
+        data: dict[str, Any] | None = None,
+        event_type: str = "event",
+    ) -> None:
         with self._lock:
-            self._events.append({"type": "event", "role": role, "message": message})
+            event = {"type": event_type, "role": role, "message": message}
+            if data:
+                event["data"] = data
+            self._events.append(event)
 
     def read(self, key: str, default: Any = None) -> Any:
         with self._lock:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, Field
 
+from core.contracts import RepoAnalysisAxis, RepoReadLimits
 from serve.local_runtime import HardwareProfile, WorkloadProfile
 
 
@@ -27,3 +28,36 @@ class SpecificationWorkflowRequest(BaseModel):
         ]
     )
     use_case_id: str = "specification-factory"
+
+
+class RepoAuditWorkflowRequest(BaseModel):
+    objective: str
+    repo_path: str = "."
+    include_paths: list[str] = Field(default_factory=list)
+    exclude_paths: list[str] = Field(
+        default_factory=lambda: [
+            ".git",
+            "node_modules",
+            ".venv",
+            "venv",
+            "__pycache__",
+            ".pytest_cache",
+            ".mypy_cache",
+            "dist",
+            "build",
+        ]
+    )
+    analysis_axes: list[RepoAnalysisAxis] = Field(
+        default_factory=lambda: ["architecture", "tests", "docs", "security", "dependencies"]
+    )
+    read_limits: RepoReadLimits = Field(default_factory=RepoReadLimits)
+    constraints: list[str] = Field(
+        default_factory=lambda: ["Ne pas modifier le depot cible.", "Rester strictement en lecture seule."]
+    )
+    success_criteria: list[str] = Field(
+        default_factory=lambda: [
+            "Le rapport doit citer des preuves traceables.",
+            "Le scope d'analyse doit etre explicite.",
+            "Le verdict final doit rester verifiable.",
+        ]
+    )
