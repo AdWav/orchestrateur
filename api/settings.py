@@ -17,5 +17,24 @@ def build_role_urls() -> dict[str, str]:
     }
 
 
+def ui_allowed_origins() -> list[str]:
+    configured = os.getenv("UI_ALLOWED_ORIGINS")
+    if configured:
+        origins = [origin.strip() for origin in configured.split(",") if origin.strip()]
+        if origins:
+            return origins
+
+    return [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:8100",
+        "http://127.0.0.1:8100",
+        "capacitor://localhost",
+        "ionic://localhost",
+        "http://localhost",
+        "http://127.0.0.1",
+    ]
+
+
 def running_in_compose() -> bool:
     return _env("ORCHESTRATOR_MODE", "local").lower() == "compose"

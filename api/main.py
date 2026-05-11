@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from api.schemas import (
     HealthResponse,
@@ -8,7 +9,7 @@ from api.schemas import (
     RuntimeRecommendationRequest,
     SpecificationWorkflowRequest,
 )
-from api.settings import build_role_urls, running_in_compose
+from api.settings import build_role_urls, running_in_compose, ui_allowed_origins
 from core.agent_gateway import HttpAgentGateway, LocalAgentGateway
 from core.contracts import (
     AuditScope,
@@ -29,6 +30,14 @@ app = FastAPI(
     title="Orchestrateur Local Multi-Agents",
     version="0.1.0",
     description="Control plane Python-first pour agents locaux specialises.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=ui_allowed_origins(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 gateway = (

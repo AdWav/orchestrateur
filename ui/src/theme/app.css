@@ -1,0 +1,13 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+ion-content {
+  --background: var(--ion-color-step-100, #f5f7fb);
+}
