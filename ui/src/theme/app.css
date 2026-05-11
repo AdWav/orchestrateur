@@ -4,10 +4,33 @@ body,
   min-height: 100%;
 }
 
+:root {
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+html {
+  background: var(--app-page-background);
+}
+
 body {
   margin: 0;
+  background: var(--app-page-background);
+  color: var(--ion-text-color, #0f172a);
+  transition: background-color 180ms ease, color 180ms ease;
+}
+
+ion-app {
+  background: transparent;
 }
 
 ion-content {
-  --background: var(--ion-color-step-100, #f5f7fb);
+  --background: var(--app-page-background);
+}
+
+ion-card {
+  box-shadow: var(--app-surface-shadow);
 }

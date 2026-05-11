@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+from urllib.parse import urlparse
 
 
 def _env(name: str, default: str) -> str:
@@ -15,6 +16,22 @@ def build_role_urls() -> dict[str, str]:
         "Executor": _env("EXECUTOR_AGENT_URL", "http://executor-agent:8003"),
         "Verifier": _env("VERIFIER_AGENT_URL", "http://verifier-agent:8004"),
     }
+
+
+def ollama_base_url() -> str:
+    default = "http://ollama:11434" if running_in_compose() else "http://localhost:11434"
+    return _env("OLLAMA_BASE_URL", default)
+
+
+def port_from_url(url: str) -> str | None:
+    parsed = urlparse(url)
+    if parsed.port:
+        return str(parsed.port)
+    if parsed.scheme == "https":
+        return "443"
+    if parsed.scheme == "http":
+        return "80"
+    return None
 
 
 def ui_allowed_origins() -> list[str]:

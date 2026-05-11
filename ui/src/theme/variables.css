@@ -21,4 +21,33 @@
   --ion-color-tertiary-tint: #906ef8;
 
   --ion-border-radius: 18px;
+
+  --app-page-background:
+    radial-gradient(circle at top center, rgba(var(--ion-color-primary-rgb), 0.12), transparent 35%),
+    linear-gradient(180deg, #f7f9ff 0%, #eef3fb 100%);
+  --app-surface-1: rgba(255, 255, 255, 0.9);
+  --app-surface-2: var(--ion-card-background, #ffffff);
+  --app-border-color: rgba(15, 23, 42, 0.08);
+  --app-border-strong: rgba(15, 23, 42, 0.12);
+  --app-hero-accent: rgba(var(--ion-color-primary-rgb), 0.22);
+  --app-code-background: rgba(var(--ion-color-primary-rgb), 0.08);
+  --app-surface-shadow: 0 18px 48px rgba(15, 23, 42, 0.08);
+  --app-service-up-glow: rgba(45, 211, 111, 0.18);
+  --app-service-down-glow: rgba(235, 68, 90, 0.18);
+}
+
+:root[data-theme="dark"],
+:root.ion-palette-dark {
+  --app-page-background:
+    radial-gradient(circle at top center, rgba(var(--ion-color-primary-rgb), 0.18), transparent 35%),
+    linear-gradient(180deg, #08111f 0%, #101826 55%, #0f172a 100%);
+  --app-surface-1: rgba(18, 24, 38, 0.92);
+  --app-surface-2: rgba(27, 35, 52, 0.92);
+  --app-border-color: rgba(148, 163, 184, 0.16);
+  --app-border-strong: rgba(148, 163, 184, 0.24);
+  --app-hero-accent: rgba(var(--ion-color-primary-rgb), 0.3);
+  --app-code-background: rgba(255, 255, 255, 0.06);
+  --app-surface-shadow: 0 20px 52px rgba(2, 6, 23, 0.34);
+  --app-service-up-glow: rgba(45, 211, 111, 0.22);
+  --app-service-down-glow: rgba(242, 76, 88, 0.22);
 }

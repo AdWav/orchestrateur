@@ -7,8 +7,10 @@ from api.schemas import (
     HealthResponse,
     RepoAuditWorkflowRequest,
     RuntimeRecommendationRequest,
+    ServiceMeshStatusResponse,
     SpecificationWorkflowRequest,
 )
+from api.service_status import collect_service_status
 from api.settings import build_role_urls, running_in_compose, ui_allowed_origins
 from core.agent_gateway import HttpAgentGateway, LocalAgentGateway
 from core.contracts import (
@@ -51,6 +53,11 @@ orchestrator = MultiAgentOrchestrator(gateway=gateway)
 @app.get("/health", response_model=HealthResponse)
 def health() -> HealthResponse:
     return HealthResponse(status="ok", service="orchestrateur-local")
+
+
+@app.get("/v1/services/status", response_model=ServiceMeshStatusResponse)
+def service_status() -> ServiceMeshStatusResponse:
+    return collect_service_status()
 
 
 @app.get("/v1/use-cases", response_model=list[UseCaseDefinition])

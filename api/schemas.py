@@ -11,6 +11,18 @@ class HealthResponse(BaseModel):
     service: str
 
 
+class ServiceStatus(BaseModel):
+    key: str
+    label: str
+    target: str
+    port: str | None = None
+    active: bool
+
+
+class ServiceMeshStatusResponse(BaseModel):
+    services: list[ServiceStatus]
+
+
 class RuntimeRecommendationRequest(BaseModel):
     hardware: HardwareProfile
     workload: WorkloadProfile
