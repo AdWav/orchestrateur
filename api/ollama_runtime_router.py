@@ -15,7 +15,7 @@ from api.schemas import (
     OllamaRuntimeSettingsUpdate,
 )
 
-router = APIRouter(prefix="/runtime/ollama", tags=["runtime-ollama"])
+router = APIRouter(prefix="/v1/runtime/ollama", tags=["runtime-ollama"])
 
 
 def _require_ollama_settings_backend() -> None:

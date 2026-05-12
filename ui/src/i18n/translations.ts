@@ -38,7 +38,7 @@ const translations = {
       ollamaSaveRuntime: "Enregistrer la configuration",
       ollamaRuntimeSaved: "Configuration Ollama enregistree.",
       ollamaRuntimeSettingsFetchError:
-        "Les reglages runtime n'ont pas pu etre lus depuis l'API (GET /runtime/ollama/settings).",
+        "Les reglages runtime n'ont pas pu etre lus depuis l'API (GET /v1/runtime/ollama/settings).",
       ollamaPersistPathPrefix: "Fichier de persistance :",
       ollamaWarm: "Precharger",
       ollamaUnload: "Decharger",
@@ -283,7 +283,7 @@ const translations = {
       ollamaSaveRuntime: "Save configuration",
       ollamaRuntimeSaved: "Saved Ollama routing settings.",
       ollamaRuntimeSettingsFetchError:
-        "Runtime settings could not be read from the API (GET /runtime/ollama/settings).",
+        "Runtime settings could not be read from the API (GET /v1/runtime/ollama/settings).",
       ollamaPersistPathPrefix: "Persistence file:",
       ollamaWarm: "Preload",
       ollamaUnload: "Unload",

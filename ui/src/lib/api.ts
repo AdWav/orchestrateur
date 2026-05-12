@@ -289,30 +289,30 @@ export type OllamaRuntimeSettingsUpdatePayload = {
 };
 
 export function fetchOllamaModels(): Promise<OllamaModelsResponse> {
-  return fetchJson<OllamaModelsResponse>("/runtime/ollama/models");
+  return fetchJson<OllamaModelsResponse>("/v1/runtime/ollama/models");
 }
 
 export function fetchOllamaRuntimeSettings(): Promise<OllamaRuntimeSettings> {
-  return fetchJson<OllamaRuntimeSettings>("/runtime/ollama/settings");
+  return fetchJson<OllamaRuntimeSettings>("/v1/runtime/ollama/settings");
 }
 
 export function putOllamaRuntimeSettings(
   body: OllamaRuntimeSettingsUpdatePayload,
 ): Promise<OllamaRuntimeSettings> {
   return putJson<OllamaRuntimeSettingsUpdatePayload, OllamaRuntimeSettings>(
-    "/runtime/ollama/settings",
+    "/v1/runtime/ollama/settings",
     body,
   );
 }
 
 export function postOllamaModelWarm(modelName: string): Promise<ModelWarmUnloadAck> {
   const segment = encodeURIComponent(modelName);
-  return postJsonEmpty<ModelWarmUnloadAck>(`/runtime/ollama/models/${segment}/warm`);
+  return postJsonEmpty<ModelWarmUnloadAck>(`/v1/runtime/ollama/models/${segment}/warm`);
 }
 
 export function postOllamaModelUnload(modelName: string): Promise<ModelWarmUnloadAck> {
   const segment = encodeURIComponent(modelName);
-  return postJsonEmpty<ModelWarmUnloadAck>(`/runtime/ollama/models/${segment}/unload`);
+  return postJsonEmpty<ModelWarmUnloadAck>(`/v1/runtime/ollama/models/${segment}/unload`);
 }
 
 export function fetchTeam(): Promise<TeamSpecification> {

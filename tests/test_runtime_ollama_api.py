@@ -14,7 +14,7 @@ def test_get_runtime_ollama_settings_exposes_pipeline(monkeypatch) -> None:
     reloaded = reload(api_main)
     client = TestClient(reloaded.app)
 
-    response = client.get("/runtime/ollama/settings")
+    response = client.get("/v1/runtime/ollama/settings")
     assert response.status_code == 200
     payload = response.json()
     assert payload["pipeline_steps"] == list(PIPELINE_STEP_IDS)
@@ -33,7 +33,7 @@ def test_put_runtime_ollama_settings_requires_ollama_backend(monkeypatch, tmp_pa
         "runner_models": {sid: "dummy" for sid in PIPELINE_STEP_IDS},
     }
 
-    response = client.put("/runtime/ollama/settings", json=body)
+    response = client.put("/v1/runtime/ollama/settings", json=body)
 
     assert response.status_code == 503
 
@@ -55,7 +55,7 @@ def test_put_runtime_ollama_settings_updates_when_models_exist(monkeypatch, tmp_
         "runner_models": {sid: "beta" if sid != "plan" else "alpha" for sid in PIPELINE_STEP_IDS},
     }
 
-    response = client.put("/runtime/ollama/settings", json=body)
+    response = client.put("/v1/runtime/ollama/settings", json=body)
 
     assert response.status_code == 200
     payload = response.json()
@@ -79,7 +79,7 @@ def test_put_runtime_rejects_unknown_model_tag(monkeypatch, tmp_path) -> None:
         "runner_models": {sid: "alpha" for sid in PIPELINE_STEP_IDS},
     }
 
-    response = client.put("/runtime/ollama/settings", json=body)
+    response = client.put("/v1/runtime/ollama/settings", json=body)
 
     assert response.status_code == 400
 
@@ -95,7 +95,7 @@ def test_post_warm_happy_path(monkeypatch) -> None:
     reloaded = reload(api_main)
     client = TestClient(reloaded.app)
 
-    response = client.post("/runtime/ollama/models/alpha/warm")
+    response = client.post("/v1/runtime/ollama/models/alpha/warm")
 
     assert response.status_code == 200
     assert response.json() == {"model": "alpha", "action": "warm"}

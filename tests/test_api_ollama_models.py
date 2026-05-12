@@ -24,7 +24,7 @@ def test_list_ollama_models_returns_sorted_names(monkeypatch) -> None:
 
     monkeypatch.setattr("api.ollama_models.fetch_ollama_model_names", fake_fetch)
 
-    response = client.get("/runtime/ollama/models")
+    response = client.get("/v1/runtime/ollama/models")
     assert response.status_code == 200
     assert response.json() == {"models": ["zebra", "alpha"]}
 
@@ -37,6 +37,6 @@ def test_list_ollama_models_gateway_error(monkeypatch) -> None:
 
     monkeypatch.setattr("api.ollama_models.fetch_ollama_model_names", fake_fetch)
 
-    response = client.get("/runtime/ollama/models")
+    response = client.get("/v1/runtime/ollama/models")
     assert response.status_code == 502
     assert "Ollama" in response.json()["detail"]
