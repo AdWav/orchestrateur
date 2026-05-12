@@ -630,7 +630,18 @@ const HomePage = ({
     );
   }, [teamQuery.data?.use_case_ids, useCasesQuery.data]);
 
-  const roleCount = teamQuery.data?.roles.length ?? 0;
+  const teamHasPayload =
+    Boolean(teamQuery.data) &&
+    (Boolean(teamQuery.data?.purpose?.trim()) ||
+      (teamQuery.data?.roles.length ?? 0) > 0 ||
+      (teamQuery.data?.handoff_contracts?.length ?? 0) > 0 ||
+      (teamQuery.data?.guardrails?.length ?? 0) > 0);
+
+  const showTeamCard = !teamQuery.isError && (teamQuery.isPending || teamHasPayload);
+
+  const showUseCasesCard =
+    !useCasesQuery.isError &&
+    (useCasesQuery.isPending || teamAlignedUseCases.length > 0);
 
   const handleOllamaModelsClick = async () => {
     setOllamaListBusy(true);
@@ -2004,78 +2015,72 @@ const HomePage = ({
             </>
           ) : null}
 
-          <IonCard>
-            <IonCardHeader>
-              <IonCardSubtitle>
-                {teamQuery.isPending
-                  ? copy.team.loadingRoles
-                  : teamQuery.isError
-                    ? copy.common.unavailable
+          {showTeamCard ? (
+            <IonCard>
+              <IonCardHeader>
+                <IonCardSubtitle>
+                  {teamQuery.isPending
+                    ? copy.team.loadingRoles
                     : copy.team.subtitleLive(teamQuery.data?.roles.length ?? 0)}
-              </IonCardSubtitle>
-              <IonCardTitle>
-                {teamQuery.isError
-                  ? copy.team.fallbackName
-                  : (teamQuery.data?.name ?? copy.team.fallbackName)}
-              </IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              <p className="section-copy">
-                {teamQuery.isError
-                  ? copy.team.fallbackPurpose
-                  : (teamQuery.data?.purpose ?? copy.team.fallbackPurpose)}
-              </p>
-              {teamQuery.data?.handoff_contracts.length ? (
-                <div className="team-spec-block">
-                  <p className="eyebrow">{copy.team.handoffsTitle}</p>
-                  <ul className="team-spec-list">
-                    {teamQuery.data.handoff_contracts.map((line) => (
-                      <li key={line}>{line}</li>
+                </IonCardSubtitle>
+                <IonCardTitle>
+                  {teamQuery.data?.name ?? copy.team.fallbackName}
+                </IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
+                {teamQuery.data?.purpose?.trim() ? (
+                  <p className="section-copy">{teamQuery.data.purpose}</p>
+                ) : null}
+                {teamQuery.data?.handoff_contracts.length ? (
+                  <div className="team-spec-block">
+                    <p className="eyebrow">{copy.team.handoffsTitle}</p>
+                    <ul className="team-spec-list">
+                      {teamQuery.data.handoff_contracts.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {teamQuery.data?.guardrails.length ? (
+                  <div className="team-spec-block">
+                    <p className="eyebrow">{copy.team.guardrailsTitle}</p>
+                    <ul className="team-spec-list">
+                      {teamQuery.data.guardrails.map((line) => (
+                        <li key={line}>{line}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : null}
+                {(teamQuery.data?.roles ?? []).length > 0 ? (
+                  <IonList inset>
+                    {(teamQuery.data?.roles ?? []).map((role) => (
+                      <IonItem key={role.role}>
+                        <IonLabel>
+                          <h2>{translateRuntimeRoleLabel(role.role)}</h2>
+                          <p>{role.responsibility}</p>
+                          <p className="muted-line">
+                            {copy.team.capabilities}: {role.capabilities.join(", ")}
+                          </p>
+                        </IonLabel>
+                      </IonItem>
                     ))}
-                  </ul>
-                </div>
-              ) : null}
-              {teamQuery.data?.guardrails.length ? (
-                <div className="team-spec-block">
-                  <p className="eyebrow">{copy.team.guardrailsTitle}</p>
-                  <ul className="team-spec-list">
-                    {teamQuery.data.guardrails.map((line) => (
-                      <li key={line}>{line}</li>
-                    ))}
-                  </ul>
-                </div>
-              ) : null}
-              <IonList inset>
-                {(teamQuery.data?.roles ?? []).map((role) => (
-                  <IonItem key={role.role}>
-                    <IonLabel>
-                      <h2>{translateRuntimeRoleLabel(role.role)}</h2>
-                      <p>{role.responsibility}</p>
-                      <p className="muted-line">
-                        {copy.team.capabilities}: {role.capabilities.join(", ")}
-                      </p>
-                    </IonLabel>
-                  </IonItem>
-                ))}
-              </IonList>
-            </IonCardContent>
-          </IonCard>
+                  </IonList>
+                ) : null}
+              </IonCardContent>
+            </IonCard>
+          ) : null}
 
-          <IonCard>
-            <IonCardHeader>
-              <IonCardSubtitle>
-                {useCasesQuery.isPending
-                  ? copy.useCases.loading
-                  : useCasesQuery.isError
-                    ? copy.common.unavailable
+          {showUseCasesCard ? (
+            <IonCard>
+              <IonCardHeader>
+                <IonCardSubtitle>
+                  {useCasesQuery.isPending
+                    ? copy.useCases.loading
                     : copy.useCases.subtitleLive(teamAlignedUseCases.length)}
-              </IonCardSubtitle>
-              <IonCardTitle>{copy.useCases.title}</IonCardTitle>
-            </IonCardHeader>
-            <IonCardContent>
-              {!useCasesQuery.isPending && teamAlignedUseCases.length === 0 ? (
-                <IonNote color="medium">{copy.useCases.empty}</IonNote>
-              ) : (
+                </IonCardSubtitle>
+                <IonCardTitle>{copy.useCases.title}</IonCardTitle>
+              </IonCardHeader>
+              <IonCardContent>
                 <IonList inset>
                   {teamAlignedUseCases.map((useCase) => (
                     <IonItem key={useCase.id}>
@@ -2089,9 +2094,9 @@ const HomePage = ({
                     </IonItem>
                   ))}
                 </IonList>
-              )}
-            </IonCardContent>
-          </IonCard>
+              </IonCardContent>
+            </IonCard>
+          ) : null}
         </div>
       </IonContent>
     </IonPage>
