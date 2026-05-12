@@ -14,11 +14,11 @@ Quand la stack tourne, verifier:
 
 1. `GET /health`
 2. `GET http://localhost:11434/api/tags`
-3. `GET /v1/team`
-4. `GET /v1/use-cases`
-5. `POST /v1/runtime/recommendation`
-6. `POST /v1/workflows/specification`
-7. `POST /v1/workflows/repo-audit`
+3. `GET /team`
+4. `GET /use-cases`
+5. `POST /runtime/recommendation`
+6. `POST /workflows/specification`
+7. `POST /workflows/repo-audit`
 
 ## Profil de validation ultra-legere
 

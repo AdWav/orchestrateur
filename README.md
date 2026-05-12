@@ -1,13 +1,13 @@
 # Orchestrateur local multi-agents
 
-Ce depot implemente un socle `Python-first` oriente `Docker-first` pour construire un orchestrateur multi-agents local.
+Ce depot implemente un socle `Python-first` pour construire un orchestrateur multi-agents local avec une topologie volontairement simple.
 
-L'architecture de demarrage suit une approche hybride pragmatique:
+L'architecture de demarrage suit maintenant cette approche:
 
 - un orchestrateur central expose en `FastAPI`
-- un conteneur par agent specialise
-- un service `Ollama` partage par les agents
-- un reseau Docker interne pour les handoffs
+- des roles `Planner`, `Researcher`, `Executor`, `Verifier` executes en interne a la demande
+- un service `Ollama` separe pour l'inference locale
+- une memoire partagee au niveau du workflow
 - un coeur Python simple a faire evoluer
 - des points d'extension futurs pour `TypeScript`, `Rust` et `C++`
 
@@ -16,10 +16,10 @@ L'architecture de demarrage suit une approche hybride pragmatique:
 ```mermaid
 flowchart TD
     userClient[ClientOrOperateur] --> api[orchestrator-api]
-    api --> planner[planner-agent]
-    api --> researcher[researcher-agent]
-    api --> executor[executor-agent]
-    api --> verifier[verifier-agent]
+    api --> planner[PlannerInProcess]
+    api --> researcher[ResearcherInProcess]
+    api --> executor[ExecutorInProcess]
+    api --> verifier[VerifierInProcess]
     api --> runtime[RuntimeRecommendationLayer]
     runtime --> ollama[Ollama]
     runtime --> vllm[vLLM]
@@ -68,7 +68,11 @@ En mode local, l'API principale peut maintenant utiliser un vrai backend modele 
 
 ## Demarrage recommande
 
-Le chemin recommande passe desormais par Docker, pas par un environnement virtuel.
+Le chemin recommande passe par une stack Docker simplifiee:
+
+- `orchestrator-api`
+- `ollama`
+- `ollama-init`
 
 ```bash
 docker compose up --build
@@ -87,26 +91,30 @@ Pour valider le fonctionnement sur un laptop de `16 Go` de RAM, la stack utilise
 Ce modele est volontairement minuscule. Il ne sert pas a juger la qualite finale des agents, seulement a valider:
 
 - le demarrage des services
-- la communication inter-conteneurs
+- l'execution interne des roles
 - les appels reels au runtime de modele
 - les handoffs de bout en bout
 
 Quand tu voudras monter en qualite, il suffira de changer la variable `OLLAMA_DEFAULT_MODEL`.
-Une valeur d'exemple est fournie dans `.env.example`, et `compose.yaml` utilise cette variable avec une valeur de repli.
+Une valeur d'exemple est fournie dans `.env.example`, avec:
+
+- `MODEL_BACKEND=ollama`
+- `OLLAMA_BASE_URL=http://localhost:11434`
+- `OLLAMA_DEFAULT_MODEL=qwen2.5:0.5b`
 
 ## Endpoints utiles
 
 - `GET /health`
-- `GET /v1/use-cases`
-- `GET /v1/team`
-- `POST /v1/runtime/recommendation`
-- `POST /v1/workflows/specification`
-- `POST /v1/workflows/repo-audit`
+- `GET /use-cases`
+- `GET /team`
+- `POST /runtime/recommendation`
+- `POST /workflows/specification`
+- `POST /workflows/repo-audit`
 
 Exemple minimal pour le repo audit:
 
 ```bash
-curl -X POST http://localhost:8000/v1/workflows/repo-audit \
+curl -X POST http://localhost:8000/workflows/repo-audit \
   -H "Content-Type: application/json" \
   -d '{
     "objective": "Auditer ce depot en lecture seule",

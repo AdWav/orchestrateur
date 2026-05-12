@@ -19,7 +19,7 @@ def test_repo_audit_endpoint_returns_structured_report(tmp_path, monkeypatch) ->
     client = TestClient(reloaded.app)
 
     response = client.post(
-        "/v1/workflows/repo-audit",
+        "/workflows/repo-audit",
         json={
             "objective": "Auditer ce depot en lecture seule",
             "repo_path": str(tmp_path),
@@ -31,5 +31,5 @@ def test_repo_audit_endpoint_returns_structured_report(tmp_path, monkeypatch) ->
     payload = response.json()
     assert payload["request"]["use_case_id"] == "local-repo-audit"
     assert Path(payload["inventory"]["root_path"]).resolve() == tmp_path.resolve()
-    assert payload["outputs"][0]["role"] == "Planner"
+    assert payload["outputs"][0]["role"] == "plan"
     assert payload["validation_report"]["approved"] is True

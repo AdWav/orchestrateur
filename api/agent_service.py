@@ -4,18 +4,29 @@ import os
 
 from fastapi import FastAPI, HTTPException
 
-from core.agent_runtime import ROLE_CLASS_MAP, run_agent_request
+from core.agent_runtime import STEP_RUNNER_CLASS_MAP, run_agent_request
 from core.contracts import AgentExecutionRequest, AgentExecutionResponse
 from core.model_client import build_model_client_from_env
+from core.pipeline import STEP_ID_BY_LEGACY_ENGINE_ROLE
+from core.runtime_ollama_settings import RuntimeOllamaSettings
 
-ROLE_NAME = os.getenv("AGENT_ROLE", "Planner")
+_raw_agent_role = os.getenv("AGENT_ROLE", "plan")
+SERVICE_RUNNER_STEP = STEP_ID_BY_LEGACY_ENGINE_ROLE.get(_raw_agent_role, _raw_agent_role)
 SERVICE_PORT = os.getenv("SERVICE_PORT", "8001")
-MODEL_CLIENT = build_model_client_from_env()
+
+if SERVICE_RUNNER_STEP not in STEP_RUNNER_CLASS_MAP:
+    raise RuntimeError(
+        f"AGENT_ROLE '{_raw_agent_role}' resout en '{SERVICE_RUNNER_STEP}' "
+        f"qui n'est pas une etape connue: {sorted(STEP_RUNNER_CLASS_MAP)}."
+    )
+
+_runtime = RuntimeOllamaSettings.bootstrap_from_environment()
+MODEL_CLIENT = build_model_client_from_env(_runtime)
 
 app = FastAPI(
-    title=f"{ROLE_NAME} Agent Service",
+    title=f"{SERVICE_RUNNER_STEP} Agent Service",
     version="0.1.0",
-    description="Service HTTP dedie a un role specialise dans le mesh Docker.",
+    description="Service HTTP dedie a une etape du pipeline dans le mesh Docker.",
 )
 
 
@@ -23,20 +34,18 @@ app = FastAPI(
 def health() -> dict[str, str]:
     return {
         "status": "ok",
-        "role": ROLE_NAME,
+        "role": SERVICE_RUNNER_STEP,
         "service_port": SERVICE_PORT,
         "model_backend": MODEL_CLIENT.__class__.__name__,
     }
 
 
-@app.post("/v1/agent/run", response_model=AgentExecutionResponse)
+@app.post("/agent/run", response_model=AgentExecutionResponse)
 def run_role(request: AgentExecutionRequest) -> AgentExecutionResponse:
-    if ROLE_NAME not in ROLE_CLASS_MAP:
-        raise HTTPException(status_code=500, detail=f"Unsupported AGENT_ROLE '{ROLE_NAME}'")
-    if request.role != ROLE_NAME:
+    if request.role != SERVICE_RUNNER_STEP:
         raise HTTPException(
             status_code=400,
-            detail=f"Service configured for role '{ROLE_NAME}', received '{request.role}'",
+            detail=f"Service configured for runner '{SERVICE_RUNNER_STEP}', received '{request.role}'",
         )
     try:
         return run_agent_request(request, model_client=MODEL_CLIENT)

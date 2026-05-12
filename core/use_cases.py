@@ -3,7 +3,7 @@ from __future__ import annotations
 from core.contracts import UseCaseDefinition
 
 
-V1_USE_CASES: list[UseCaseDefinition] = [
+USE_CASES: list[UseCaseDefinition] = [
     UseCaseDefinition(
         id="specification-factory",
         title="Specification Factory",

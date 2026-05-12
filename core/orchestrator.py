@@ -12,8 +12,9 @@ from core.contracts import (
     WorkItem,
 )
 from core.memory import SharedMemory
+from core.pipeline import PIPELINE_STEP_IDS
 from core.roles import ExecutorAgent, PlannerAgent, ResearcherAgent, VerifierAgent
-from core.use_cases import V1_USE_CASES
+from core.use_cases import USE_CASES
 
 
 class MultiAgentOrchestrator:
@@ -31,7 +32,7 @@ class MultiAgentOrchestrator:
                 "Transformer une demande utilisateur en livrable operationnel, "
                 "avec recherche, execution et verification."
             ),
-            use_case_ids=[use_case.id for use_case in V1_USE_CASES],
+            use_case_ids=[use_case.id for use_case in USE_CASES],
             roles=[
                 self.planner.descriptor,
                 self.researcher.descriptor,
@@ -39,12 +40,12 @@ class MultiAgentOrchestrator:
                 self.verifier.descriptor,
             ],
             handoff_contracts=[
-                "Planner -> Researcher: brief, hypotheses, criteres de succes",
-                "Researcher -> Executor: preuves requises, gaps, contexte exploitable",
-                "Executor -> Verifier: livrable final, checklist, risques restants",
+                "plan -> research: brief, hypotheses, criteres de succes",
+                "research -> execute: preuves requises, gaps, contexte exploitable",
+                "execute -> verify: livrable final, checklist, risques restants",
             ],
             guardrails=[
-                "Une seule iteration par workflow dans cette V1.",
+                "Une seule iteration par workflow est prevue avec cette orchestration.",
                 "Tous les handoffs sont traces dans la memoire partagee.",
                 "Le workflow s'arrete si les sorties attendues manquent.",
             ],
@@ -56,7 +57,7 @@ class MultiAgentOrchestrator:
 
         outputs = []
         memory_snapshot = memory.snapshot()
-        for role in ("Planner", "Researcher", "Executor", "Verifier"):
+        for role in PIPELINE_STEP_IDS:
             output, memory_snapshot = self.gateway.run_agent(role, item, memory_snapshot)
             outputs.append(output)
         verification_passed = bool(outputs[-1].approved)

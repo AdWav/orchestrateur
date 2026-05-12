@@ -88,7 +88,7 @@ def recommend_runtime(
         rationale.extend(
             [
                 "Ollama offre le meilleur compromis entre simplicite de mise en route et ergonomie.",
-                "Le runtime convient bien a une V1 d'orchestrateur avec plusieurs agents locaux.",
+                "Le runtime convient bien pour un orchestrateur local avec plusieurs agents dans le meme processus ou une topologie composee legere.",
             ]
         )
         setup_notes.extend(

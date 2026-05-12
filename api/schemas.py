@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from typing import Literal
+
+from pydantic import BaseModel, Field, field_validator
 
 from core.contracts import RepoAnalysisAxis, RepoReadLimits
+from core.pipeline import PIPELINE_STEP_IDS
 from serve.local_runtime import HardwareProfile, WorkloadProfile
 
 
@@ -21,6 +24,45 @@ class ServiceStatus(BaseModel):
 
 class ServiceMeshStatusResponse(BaseModel):
     services: list[ServiceStatus]
+
+
+class OllamaModelsResponse(BaseModel):
+    """Liste des noms de modèles visibles depuis Ollama (`ollama list` / `/api/tags`)."""
+
+    models: list[str]
+
+
+class OllamaRuntimeSettingsUpdate(BaseModel):
+    default_model: str = Field(min_length=1, max_length=256)
+    runner_models: dict[str, str]
+
+    @field_validator("runner_models")
+    @classmethod
+    def runners_complete(cls, runners: dict[str, str]) -> dict[str, str]:
+        missing = [sid for sid in PIPELINE_STEP_IDS if sid not in runners]
+        if missing:
+            raise ValueError(f"Cles runner manquantes: {sorted(missing)}.")
+        extras = sorted(set(runners) - set(PIPELINE_STEP_IDS))
+        if extras:
+            raise ValueError(f"Cles runner inconnues: {extras}.")
+        for sid in PIPELINE_STEP_IDS:
+            candidate = runners.get(sid, "")
+            if not isinstance(candidate, str) or not candidate.strip():
+                raise ValueError(f"Modele invalide ou vide pour l'etape {sid}.")
+        return runners
+
+
+class OllamaRuntimeSettingsResponse(BaseModel):
+    default_model: str
+    runner_models: dict[str, str]
+    pipeline_steps: list[str]
+    settings_persist_path: str | None = None
+    ollama_routing_active: bool = False
+
+
+class ModelWarmUnloadAck(BaseModel):
+    model: str
+    action: Literal["warm", "unload"]
 
 
 class RuntimeRecommendationRequest(BaseModel):

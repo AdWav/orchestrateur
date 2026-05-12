@@ -7,4 +7,4 @@ qui justifieront une optimisation apres profilage:
 - modules CPU/GPU critiques
 - moteurs specialises exposes ensuite a `Python`
 
-La V1 n'embarque pas encore de code natif.
+Aujourd'hui ce dossier n'embarque pas encore de code natif.

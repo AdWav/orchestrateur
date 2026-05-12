@@ -61,7 +61,7 @@ class RepoCapabilities:
         target: RepoTarget,
         scope: AuditScope,
         memory: SharedMemory | None = None,
-        role: str = "Researcher",
+        role: str = "research",
     ) -> None:
         self.root_path = Path(target.root_path).resolve()
         if not self.root_path.exists() or not self.root_path.is_dir():

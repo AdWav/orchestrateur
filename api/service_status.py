@@ -5,7 +5,7 @@ from dataclasses import dataclass
 import httpx
 
 from api.schemas import ServiceMeshStatusResponse, ServiceStatus
-from api.settings import build_role_urls, ollama_base_url, port_from_url
+from api.settings import build_role_urls, ollama_base_url, port_from_url, running_in_compose
 
 
 @dataclass(frozen=True, slots=True)
@@ -24,8 +24,8 @@ def _probe(url: str, health_path: str) -> bool:
     return response.is_success
 
 
-def collect_service_status() -> ServiceMeshStatusResponse:
-    services = [
+def _base_services() -> list[ServiceStatus]:
+    return [
         ServiceStatus(
             key="po",
             label="PO",
@@ -35,28 +35,60 @@ def collect_service_status() -> ServiceMeshStatusResponse:
         )
     ]
 
-    targets = [
-        ProbeTarget(key="planner", label="Planner", url=build_role_urls()["Planner"], health_path="/health"),
-        ProbeTarget(
-            key="researcher",
-            label="Researcher",
-            url=build_role_urls()["Researcher"],
-            health_path="/health",
-        ),
-        ProbeTarget(key="executor", label="Executor", url=build_role_urls()["Executor"], health_path="/health"),
-        ProbeTarget(key="verifier", label="Verifier", url=build_role_urls()["Verifier"], health_path="/health"),
-        ProbeTarget(key="ollama", label="Ollama", url=ollama_base_url(), health_path="/api/tags"),
+
+def _internal_role_services() -> list[ServiceStatus]:
+    return [
+        ServiceStatus(key="plan", label="plan", target="in-process", active=True),
+        ServiceStatus(key="research", label="research", target="in-process", active=True),
+        ServiceStatus(key="execute", label="execute", target="in-process", active=True),
+        ServiceStatus(key="verify", label="verify", target="in-process", active=True),
     ]
 
-    for target in targets:
-        services.append(
-            ServiceStatus(
-                key=target.key,
-                label=target.label,
-                target=target.url,
-                port=port_from_url(target.url),
-                active=_probe(target.url, target.health_path),
+
+def collect_service_status() -> ServiceMeshStatusResponse:
+    services = _base_services()
+
+    if running_in_compose():
+        urls = build_role_urls()
+        targets = [
+            ProbeTarget(key="plan", label="plan", url=urls["plan"], health_path="/health"),
+            ProbeTarget(
+                key="research",
+                label="research",
+                url=urls["research"],
+                health_path="/health",
+            ),
+            ProbeTarget(
+                key="execute",
+                label="execute",
+                url=urls["execute"],
+                health_path="/health",
+            ),
+            ProbeTarget(key="verify", label="verify", url=urls["verify"], health_path="/health"),
+        ]
+
+        for target in targets:
+            services.append(
+                ServiceStatus(
+                    key=target.key,
+                    label=target.label,
+                    target=target.url,
+                    port=port_from_url(target.url),
+                    active=_probe(target.url, target.health_path),
+                )
             )
+    else:
+        services.extend(_internal_role_services())
+
+    runtime_url = ollama_base_url()
+    services.append(
+        ServiceStatus(
+            key="ollama",
+            label="Ollama",
+            target=runtime_url,
+            port=port_from_url(runtime_url),
+            active=_probe(runtime_url, "/api/tags"),
         )
+    )
 
     return ServiceMeshStatusResponse(services=services)

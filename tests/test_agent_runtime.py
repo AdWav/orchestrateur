@@ -4,7 +4,7 @@ from core.contracts import AgentExecutionRequest, AuditScope, RepoAuditRequest, 
 
 def test_planner_service_request_returns_output_and_memory() -> None:
     request = AgentExecutionRequest(
-        role="Planner",
+        role="plan",
         work_item=WorkItem(
             objective="Structurer un workflow local multi-agent",
             constraints=["Rester en local"],
@@ -15,7 +15,7 @@ def test_planner_service_request_returns_output_and_memory() -> None:
 
     response = run_agent_request(request)
 
-    assert response.output.role == "Planner"
+    assert response.output.role == "plan"
     assert "planner_output" in response.memory["state"]
 
 
@@ -26,7 +26,7 @@ def test_verifier_rejects_repo_audit_without_proofs_or_coverage(tmp_path) -> Non
         audit_scope=AuditScope(analysis_axes=["docs"]),
     )
     verifier_request = AgentExecutionRequest(
-        role="Verifier",
+        role="verify",
         work_item=request.to_work_item(),
         memory={
             "state": {

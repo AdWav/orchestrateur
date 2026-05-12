@@ -19,10 +19,10 @@ def test_team_specification_exposes_four_specialists() -> None:
 
     assert team.name == "Specification Team"
     assert [role.role for role in team.roles] == [
-        "Planner",
-        "Researcher",
-        "Executor",
-        "Verifier",
+        "plan",
+        "research",
+        "execute",
+        "verify",
     ]
     assert "local-repo-audit" in team.use_case_ids
 
@@ -43,10 +43,10 @@ def test_specification_workflow_runs_end_to_end() -> None:
 
     assert result.verification_passed is True
     assert [output.role for output in result.outputs] == [
-        "Planner",
-        "Researcher",
-        "Executor",
-        "Verifier",
+        "plan",
+        "research",
+        "execute",
+        "verify",
     ]
     assert "planner_output" in result.memory["state"]
     assert "verifier_output" in result.memory["state"]
@@ -71,8 +71,8 @@ def test_repo_audit_workflow_runs_end_to_end(tmp_path) -> None:
     assert result.validation_report is not None
     assert "docs" in result.validation_report.covered_axes
     assert [output.role for output in result.outputs] == [
-        "Planner",
-        "Researcher",
-        "Executor",
-        "Verifier",
+        "plan",
+        "research",
+        "execute",
+        "verify",
     ]

@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import re
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class ToolPolicy(BaseModel):
@@ -31,6 +32,17 @@ class WorkItem(BaseModel):
 RepoAnalysisAxis = Literal["architecture", "tests", "docs", "security", "dependencies"]
 FindingSeverity = Literal["low", "medium", "high"]
 FindingConfidence = Literal["low", "medium", "high"]
+
+_IDENTIFIER_PATTERN = re.compile(r"^[a-z0-9](?:[a-z0-9_-]{1,62})$")
+
+
+def _validated_identifier(raw: str, field_name: str) -> str:
+    value = raw.strip().lower()
+    if not _IDENTIFIER_PATTERN.match(value):
+        raise ValueError(
+            f"{field_name} must match '{_IDENTIFIER_PATTERN.pattern}' and stay URL-friendly."
+        )
+    return value
 
 
 class RepoReadLimits(BaseModel):
@@ -217,3 +229,99 @@ class AgentExecutionRequest(BaseModel):
 class AgentExecutionResponse(BaseModel):
     output: AgentOutput
     memory: dict[str, Any] = Field(default_factory=dict)
+
+
+class AgentDefinition(BaseModel):
+    id: str
+    name: str
+    business_role: str
+    mission: str
+    capabilities: list[str] = Field(default_factory=list)
+    inputs: list[str] = Field(default_factory=list)
+    outputs: list[str] = Field(default_factory=list)
+    guardrails: list[str] = Field(default_factory=list)
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        return _validated_identifier(value, "AgentDefinition.id")
+
+    @field_validator("name", "business_role", "mission")
+    @classmethod
+    def validate_non_empty_text(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Agent definition text fields cannot be empty.")
+        return cleaned
+
+
+class WorkflowStepDefinition(BaseModel):
+    id: str
+    name: str
+    agent_definition_id: str
+    objective: str
+    expected_deliverables: list[str] = Field(default_factory=list)
+    success_criteria: list[str] = Field(default_factory=list)
+    depends_on: list[str] = Field(default_factory=list)
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        return _validated_identifier(value, "WorkflowStepDefinition.id")
+
+    @field_validator("agent_definition_id")
+    @classmethod
+    def validate_agent_definition_id(cls, value: str) -> str:
+        return _validated_identifier(value, "WorkflowStepDefinition.agent_definition_id")
+
+    @field_validator("name", "objective")
+    @classmethod
+    def validate_non_empty_text(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Workflow step text fields cannot be empty.")
+        return cleaned
+
+
+class WorkflowDefinition(BaseModel):
+    id: str
+    name: str
+    goal: str
+    context: dict[str, str] = Field(default_factory=dict)
+    constraints: list[str] = Field(default_factory=list)
+    success_criteria: list[str] = Field(default_factory=list)
+    steps: list[WorkflowStepDefinition] = Field(default_factory=list)
+
+    @field_validator("id")
+    @classmethod
+    def validate_id(cls, value: str) -> str:
+        return _validated_identifier(value, "WorkflowDefinition.id")
+
+    @field_validator("name", "goal")
+    @classmethod
+    def validate_non_empty_text(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Workflow definition text fields cannot be empty.")
+        return cleaned
+
+    @model_validator(mode="after")
+    def validate_steps(self) -> "WorkflowDefinition":
+        if not self.steps:
+            raise ValueError("WorkflowDefinition.steps must contain at least one step.")
+
+        step_ids = [step.id for step in self.steps]
+        if len(step_ids) != len(set(step_ids)):
+            raise ValueError("WorkflowDefinition.steps contains duplicate step ids.")
+
+        known_steps = set(step_ids)
+        for step in self.steps:
+            unknown_dependencies = [dependency for dependency in step.depends_on if dependency not in known_steps]
+            if unknown_dependencies:
+                unknown = ", ".join(sorted(unknown_dependencies))
+                raise ValueError(
+                    f"Workflow step '{step.id}' depends on unknown steps: {unknown}."
+                )
+        return self
+
+

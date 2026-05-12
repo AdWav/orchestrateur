@@ -17,7 +17,40 @@ class _Response:
         return 200 <= self.status_code < 400
 
 
-def test_service_status_endpoint_reports_mesh_lights(monkeypatch) -> None:
+def test_service_status_endpoint_reports_internal_roles_in_local_mode(monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRATOR_MODE", "local")
+    monkeypatch.setenv("OLLAMA_BASE_URL", "http://localhost:11434")
+
+    def fake_get(url: str, timeout: float) -> _Response:
+        assert timeout == 1.5
+        assert url == "http://localhost:11434/api/tags"
+        return _Response(200)
+
+    monkeypatch.setattr(service_status.httpx, "get", fake_get)
+
+    reloaded = reload(api_main)
+    client = TestClient(reloaded.app)
+
+    response = client.get("/services/status")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert [service["label"] for service in payload["services"]] == [
+        "PO",
+        "plan",
+        "research",
+        "execute",
+        "verify",
+        "Ollama",
+    ]
+    assert payload["services"][1]["target"] == "in-process"
+    assert payload["services"][1]["active"] is True
+    assert payload["services"][4]["target"] == "in-process"
+    assert payload["services"][5]["active"] is True
+
+
+def test_service_status_endpoint_reports_mesh_lights_in_compose_mode(monkeypatch) -> None:
+    monkeypatch.setenv("ORCHESTRATOR_MODE", "compose")
     monkeypatch.setenv("PLANNER_AGENT_URL", "http://planner-agent:8001")
     monkeypatch.setenv("RESEARCHER_AGENT_URL", "http://researcher-agent:8002")
     monkeypatch.setenv("EXECUTOR_AGENT_URL", "http://executor-agent:8003")
@@ -34,16 +67,16 @@ def test_service_status_endpoint_reports_mesh_lights(monkeypatch) -> None:
     reloaded = reload(api_main)
     client = TestClient(reloaded.app)
 
-    response = client.get("/v1/services/status")
+    response = client.get("/services/status")
 
     assert response.status_code == 200
     payload = response.json()
     assert [service["label"] for service in payload["services"]] == [
         "PO",
-        "Planner",
-        "Researcher",
-        "Executor",
-        "Verifier",
+        "plan",
+        "research",
+        "execute",
+        "verify",
         "Ollama",
     ]
     assert payload["services"][0]["active"] is True

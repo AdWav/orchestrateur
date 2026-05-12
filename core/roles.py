@@ -68,7 +68,7 @@ def _inventory_observation(inventory: RepoInventory, reason: str) -> EvidenceRef
 
 class PlannerAgent(SpecialistAgent):
     descriptor = AgentDescriptor(
-        role="Planner",
+        role="plan",
         responsibility="Decouper la demande en etapes, hypotheses et handoffs.",
         capabilities=[
             "decomposition de probleme",
@@ -167,7 +167,7 @@ class PlannerAgent(SpecialistAgent):
 
 class ResearcherAgent(SpecialistAgent):
     descriptor = AgentDescriptor(
-        role="Researcher",
+        role="research",
         responsibility="Transformer le contexte brut en hypotheses testables et preuves requises.",
         capabilities=[
             "analyse de contexte",
@@ -262,7 +262,7 @@ class ResearcherAgent(SpecialistAgent):
 
 class ExecutorAgent(SpecialistAgent):
     descriptor = AgentDescriptor(
-        role="Executor",
+        role="execute",
         responsibility="Produire le livrable operationnel a partir du brief et des contraintes.",
         capabilities=[
             "redaction de plan d'action",
@@ -504,7 +504,7 @@ class ExecutorAgent(SpecialistAgent):
 
 class VerifierAgent(SpecialistAgent):
     descriptor = AgentDescriptor(
-        role="Verifier",
+        role="verify",
         responsibility="Controler la qualite du livrable, les garde-fous et la completude.",
         capabilities=[
             "verification de contrat",
@@ -537,7 +537,7 @@ class VerifierAgent(SpecialistAgent):
         approved = not missing_items
         verification_report = {
             "approved": approved,
-            "checked_roles": ["Planner", "Researcher", "Executor"],
+            "checked_roles": ["plan", "research", "execute"],
             "missing_items": missing_items,
             "stop_conditions": item.guardrails.stop_conditions,
         }

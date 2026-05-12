@@ -20,6 +20,9 @@ dev = [
   "pytest>=8.3.0",
 ]
 
+[project.scripts]
+orchestrateur = "serve.cli:main"
+
 [tool.setuptools]
 include-package-data = true
 

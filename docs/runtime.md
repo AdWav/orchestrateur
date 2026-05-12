@@ -28,7 +28,7 @@ Bon choix de depart pour:
 
 - prototypage local
 - usages mono-utilisateur
-- orchestration multi-agents V1
+- orchestration multi-agents sur ce socle technique
 
 Profil actuellement implemente:
 
@@ -130,7 +130,7 @@ Une valeur de reference est egalement fournie dans `.env.example`.
 
 ## Ce que fait deja le code
 
-L'endpoint `POST /v1/runtime/recommendation` produit une recommandation selon:
+L'endpoint `POST /runtime/recommendation` produit une recommandation selon:
 
 - systeme d'exploitation
 - RAM

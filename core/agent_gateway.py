@@ -59,7 +59,7 @@ class HttpAgentGateway(AgentGateway):
 
         payload = AgentExecutionRequest(role=role, work_item=work_item, memory=memory)
         response = httpx.post(
-            f"{base_url.rstrip('/')}/v1/agent/run",
+            f"{base_url.rstrip('/')}/agent/run",
             json=payload.model_dump(),
             timeout=self.timeout_seconds,
         )

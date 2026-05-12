@@ -38,106 +38,15 @@ services:
       dockerfile: docker/Dockerfile.python
     container_name: orchestrator-api
     environment:
-      ORCHESTRATOR_MODE: compose
-      PLANNER_AGENT_URL: http://planner-agent:8001
-      RESEARCHER_AGENT_URL: http://researcher-agent:8002
-      EXECUTOR_AGENT_URL: http://executor-agent:8003
-      VERIFIER_AGENT_URL: http://verifier-agent:8004
+      MODEL_BACKEND: ollama
+      OLLAMA_BASE_URL: http://ollama:11434
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
     command: uvicorn api.main:app --host 0.0.0.0 --port 8000
     depends_on:
       ollama-init:
         condition: service_completed_successfully
-      planner-agent:
-        condition: service_started
-      researcher-agent:
-        condition: service_started
-      executor-agent:
-        condition: service_started
-      verifier-agent:
-        condition: service_started
     ports:
       - "8000:8000"
-    networks:
-      - agent_mesh
-
-  planner-agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.python
-    container_name: planner-agent
-    environment:
-      AGENT_ROLE: Planner
-      SERVICE_PORT: 8001
-      MODEL_BACKEND: ollama
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
-    depends_on:
-      ollama:
-        condition: service_healthy
-    command: uvicorn api.agent_service:app --host 0.0.0.0 --port 8001
-    expose:
-      - "8001"
-    networks:
-      - agent_mesh
-
-  researcher-agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.python
-    container_name: researcher-agent
-    environment:
-      AGENT_ROLE: Researcher
-      SERVICE_PORT: 8002
-      MODEL_BACKEND: ollama
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
-    depends_on:
-      ollama:
-        condition: service_healthy
-    command: uvicorn api.agent_service:app --host 0.0.0.0 --port 8002
-    expose:
-      - "8002"
-    networks:
-      - agent_mesh
-
-  executor-agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.python
-    container_name: executor-agent
-    environment:
-      AGENT_ROLE: Executor
-      SERVICE_PORT: 8003
-      MODEL_BACKEND: ollama
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
-    depends_on:
-      ollama:
-        condition: service_healthy
-    command: uvicorn api.agent_service:app --host 0.0.0.0 --port 8003
-    expose:
-      - "8003"
-    networks:
-      - agent_mesh
-
-  verifier-agent:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.python
-    container_name: verifier-agent
-    environment:
-      AGENT_ROLE: Verifier
-      SERVICE_PORT: 8004
-      MODEL_BACKEND: ollama
-      OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
-    depends_on:
-      ollama:
-        condition: service_healthy
-    command: uvicorn api.agent_service:app --host 0.0.0.0 --port 8004
-    expose:
-      - "8004"
     networks:
       - agent_mesh
 

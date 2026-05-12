@@ -29,6 +29,7 @@ import {
   getInitialThemeMode,
   persistThemeMode,
 } from "./theme/theme";
+import { I18nProvider } from "./i18n/I18nProvider";
 
 setupIonicReact();
 
@@ -47,21 +48,23 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <IonApp>
-        <IonReactRouter>
-          <IonRouterOutlet>
-            <Route exact path="/home">
-              <HomePage
-                themeMode={themeMode}
-                onThemeChange={setThemeMode}
-              />
-            </Route>
-            <Route exact path="/">
-              <Redirect to="/home" />
-            </Route>
-          </IonRouterOutlet>
-        </IonReactRouter>
-      </IonApp>
+      <I18nProvider>
+        <IonApp>
+          <IonReactRouter>
+            <IonRouterOutlet>
+              <Route exact path="/home">
+                <HomePage
+                  themeMode={themeMode}
+                  onThemeChange={setThemeMode}
+                />
+              </Route>
+              <Route exact path="/">
+                <Redirect to="/home" />
+              </Route>
+            </IonRouterOutlet>
+          </IonReactRouter>
+        </IonApp>
+      </I18nProvider>
     </QueryClientProvider>
   );
 };

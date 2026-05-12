@@ -6,6 +6,8 @@ from typing import Protocol
 
 import httpx
 
+from core.runtime_ollama_settings import RuntimeOllamaSettings
+
 
 @dataclass(slots=True)
 class ModelResponse:
@@ -32,23 +34,21 @@ class OllamaModelClient:
     def __init__(
         self,
         base_url: str,
-        default_model: str,
-        role_models: dict[str, str] | None = None,
+        runtime: RuntimeOllamaSettings,
         timeout_seconds: float = 120.0,
         temperature: float = 0.2,
         num_predict: int = 96,
         keep_alive: str = "5m",
     ) -> None:
         self.base_url = base_url.rstrip("/")
-        self.default_model = default_model
-        self.role_models = role_models or {}
+        self.runtime = runtime
         self.timeout_seconds = timeout_seconds
         self.temperature = temperature
         self.num_predict = num_predict
         self.keep_alive = keep_alive
 
     def model_for_role(self, role: str) -> str:
-        return self.role_models.get(role, self.default_model)
+        return self.runtime.model_for_runner(role)
 
     def generate(self, role: str, prompt: str) -> ModelResponse:
         model = self.model_for_role(role)
@@ -79,27 +79,14 @@ def _env(name: str, default: str) -> str:
     return value if value else default
 
 
-def _role_model_env(role: str, default_model: str) -> str:
-    env_name = f"OLLAMA_MODEL_{role.upper()}"
-    return _env(env_name, default_model)
-
-
-def build_model_client_from_env() -> ModelClient:
+def build_model_client_from_env(runtime: RuntimeOllamaSettings) -> ModelClient:
     backend = _env("MODEL_BACKEND", "dry-run").lower()
     if backend != "ollama":
         return DryRunModelClient()
 
-    default_model = _env("OLLAMA_DEFAULT_MODEL", "qwen2.5:0.5b")
-    role_models = {
-        "Planner": _role_model_env("planner", default_model),
-        "Researcher": _role_model_env("researcher", default_model),
-        "Executor": _role_model_env("executor", default_model),
-        "Verifier": _role_model_env("verifier", default_model),
-    }
     return OllamaModelClient(
         base_url=_env("OLLAMA_BASE_URL", "http://ollama:11434"),
-        default_model=default_model,
-        role_models=role_models,
+        runtime=runtime,
         timeout_seconds=float(_env("OLLAMA_TIMEOUT_SECONDS", "120")),
         temperature=float(_env("OLLAMA_TEMPERATURE", "0.2")),
         num_predict=int(_env("OLLAMA_NUM_PREDICT", "96")),
