@@ -485,6 +485,66 @@ function eventLabel(event: MemoryEvent) {
   return event.type;
 }
 
+type RepoAuditTraceViewMode = "trace" | "json";
+
+function RepoAuditStepTraceCard({
+  output,
+  report,
+}: {
+  output: AgentOutput;
+  report: RepoAuditReport;
+}) {
+  const { copy } = useI18n();
+  const [viewMode, setViewMode] = useState<RepoAuditTraceViewMode>("trace");
+  const rawJson = useMemo(() => JSON.stringify(output, null, 2), [output]);
+
+  return (
+    <article className="trace-card">
+      <div className="trace-card__head">
+        <div>
+          <span className="eyebrow">{copy.report.agent}</span>
+          <h3>{translateRuntimeRoleLabel(output.role)}</h3>
+        </div>
+        <IonChip
+          color={
+            output.approved === true
+              ? "success"
+              : output.approved === false
+                ? "danger"
+                : "primary"
+          }
+        >
+          {translateApprovalState(output.approved)}
+        </IonChip>
+      </div>
+
+      <div className="toggle-wrapper trace-card__view-toggle">
+        <div className="toggle-wrapper__spacer" aria-hidden="true" />
+        <div className="toggle-wrapper__control">
+          <IonToggle
+            checked={viewMode === "json"}
+            aria-label={copy.report.viewModeToggleAria}
+            onIonChange={(event) =>
+              setViewMode(event.detail.checked ? "json" : "trace")
+            }
+          />
+          <span className="toggle-wrapper__json-label">{copy.report.jsonToggleCaption}</span>
+        </div>
+      </div>
+
+      {viewMode === "json" ? (
+        <pre className="mono-block trace-card__raw-json">{rawJson}</pre>
+      ) : (
+        <>
+          <p className="trace-copy">{output.summary}</p>
+          {renderOutputArtifacts(output, report)}
+          {renderList(copy.artifacts.nextActions, output.next_actions)}
+        </>
+      )}
+    </article>
+  );
+}
+
 const HomePage = ({
   themeMode,
   onThemeChange,
@@ -1948,29 +2008,11 @@ const HomePage = ({
                 <IonCardContent>
                   <div className="trace-stack">
                     {report.outputs.map((output) => (
-                      <article key={output.role} className="trace-card">
-                        <div className="trace-card__head">
-                          <div>
-                            <span className="eyebrow">{copy.report.agent}</span>
-                            <h3>{translateRuntimeRoleLabel(output.role)}</h3>
-                          </div>
-                          <IonChip
-                            color={
-                              output.approved === true
-                                ? "success"
-                                : output.approved === false
-                                  ? "danger"
-                                  : "primary"
-                            }
-                          >
-                            {translateApprovalState(output.approved)}
-                          </IonChip>
-                        </div>
-
-                        <p className="trace-copy">{output.summary}</p>
-                        {renderOutputArtifacts(output, report)}
-                        {renderList(copy.artifacts.nextActions, output.next_actions)}
-                      </article>
+                      <RepoAuditStepTraceCard
+                        key={output.role}
+                        output={output}
+                        report={report}
+                      />
                     ))}
                   </div>
                 </IonCardContent>

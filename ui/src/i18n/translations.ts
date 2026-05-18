@@ -213,6 +213,9 @@ const translations = {
       agent: "Etape",
       journalSubtitle: "Journal du workflow",
       journalTitle: "Evenements traces par l'orchestrateur",
+      jsonToggleCaption: "json",
+      viewModeToggleAria:
+        "Vue classique lorsque desactive ; affiche la sortie JSON lorsque active.",
     },
     artifacts: {
       searchPlan: "Plan de recherche",
@@ -457,6 +460,9 @@ const translations = {
       agent: "Stage",
       journalSubtitle: "Workflow journal",
       journalTitle: "Events traced by the orchestrator",
+      jsonToggleCaption: "json",
+      viewModeToggleAria:
+        "Structured view when off; shows raw JSON output when on.",
     },
     artifacts: {
       searchPlan: "Search plan",

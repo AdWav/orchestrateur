@@ -376,6 +376,49 @@ ion-modal.ollama-models-modal {
   font-size: 1.1rem;
 }
 
+.trace-card .toggle-wrapper.trace-card__view-toggle {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  gap: 12px;
+}
+
+.trace-card .toggle-wrapper__spacer {
+  flex: 1;
+  min-width: 0;
+}
+
+.trace-card .toggle-wrapper__control {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.trace-card .toggle-wrapper__json-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+    monospace;
+  color: var(--ion-color-medium);
+  letter-spacing: 0.02em;
+}
+
+.trace-card .toggle-wrapper.trace-card__view-toggle ion-toggle {
+  --track-background: rgba(var(--ion-color-medium-rgb), 0.28);
+  --track-background-checked: rgba(var(--ion-color-primary-rgb), 0.48);
+  --handle-background: var(--app-surface-2);
+  --handle-background-checked: #ffffff;
+  --handle-box-shadow: 0 6px 16px rgba(15, 23, 42, 0.18);
+}
+
+.trace-card__raw-json {
+  max-height: min(70vh, 520px);
+  overflow: auto;
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
 .trace-copy {
   margin: 0;
   color: var(--ion-color-medium);
