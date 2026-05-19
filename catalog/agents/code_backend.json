@@ -1,0 +1,25 @@
+{
+  "id": "code_backend",
+  "name": "Code backend",
+  "business_role": "Backend developer",
+  "mission": "Implementer API, services, persistance et regles metier cote serveur.",
+  "runner_role": "code_backend",
+  "capabilities": [
+    "FastAPI",
+    "services",
+    "ORM",
+    "validation"
+  ],
+  "inputs": [
+    "api_contract",
+    "tests",
+    "schematic"
+  ],
+  "outputs": [
+    "backend_source_files",
+    "api_routes"
+  ],
+  "guardrails": [
+    "Respecter le contrat d'API si present."
+  ]
+}

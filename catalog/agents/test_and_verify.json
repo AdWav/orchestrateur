@@ -1,0 +1,24 @@
+{
+  "id": "test_and_verify",
+  "name": "Tests unitaires / integration locale",
+  "business_role": "QA",
+  "mission": "Creer les tests puis executer et valider le comportement apres implementation (souvent par couche).",
+  "runner_role": "test_and_verify",
+  "capabilities": [
+    "tests auto",
+    "pytest",
+    "verdict qualite"
+  ],
+  "inputs": [
+    "source_files",
+    "criteres de succes"
+  ],
+  "outputs": [
+    "test_files",
+    "test_run_report",
+    "tests_passed"
+  ],
+  "guardrails": [
+    "Le verdict doit etre explicite avant documentation."
+  ]
+}

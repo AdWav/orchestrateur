@@ -1,0 +1,25 @@
+{
+  "id": "write_tests",
+  "name": "Tests d'abord",
+  "business_role": "Test author",
+  "mission": "Rediger les tests et criteres d'acceptation avant toute implementation (TDD).",
+  "runner_role": "write_tests",
+  "capabilities": [
+    "cas de test",
+    "pytest",
+    "criteres d'acceptation"
+  ],
+  "inputs": [
+    "objectif",
+    "contraintes",
+    "criteres de succes"
+  ],
+  "outputs": [
+    "test_files",
+    "acceptance_criteria",
+    "test_plan"
+  ],
+  "guardrails": [
+    "Les tests doivent refleter les criteres de succes du workflow."
+  ]
+}

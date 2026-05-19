@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-from importlib import reload
-
 from fastapi.testclient import TestClient
 
-import api.main as api_main
+from tests.conftest import reload_api_app
 
 
 def _agent_payload(agent_id: str) -> dict[str, object]:
@@ -22,10 +20,12 @@ def _agent_payload(agent_id: str) -> dict[str, object]:
 
 def test_definition_endpoints_create_and_list_presets(tmp_path, monkeypatch) -> None:
     monkeypatch.setenv("ORCHESTRATOR_CATALOG_ROOT", str(tmp_path))
+    monkeypatch.setenv("CATALOG_BACKEND", "file")
     monkeypatch.delenv("ORCHESTRATOR_MODE", raising=False)
     monkeypatch.delenv("MODEL_BACKEND", raising=False)
+    monkeypatch.delenv("DATABASE_URL", raising=False)
 
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     client = TestClient(reloaded.app)
 
     for agent_id in ("director", "analyst", "delivery", "quality"):
@@ -80,5 +80,22 @@ def test_definition_endpoints_create_and_list_presets(tmp_path, monkeypatch) -> 
 
     assert listed_agents.status_code == 200
     assert listed_workflows.status_code == 200
-    assert len(listed_agents.json()) == 4
+    agent_ids = {agent["id"] for agent in listed_agents.json()}
+    assert {"director", "analyst", "delivery", "quality"} <= agent_ids
+    assert {
+        "schematic",
+        "code",
+        "code_backend",
+        "code_frontend",
+        "api_contract",
+        "integration",
+        "write_tests",
+        "test_and_verify",
+        "run_fix",
+        "document",
+        "security",
+        "review",
+        "database",
+        "devops",
+    } <= agent_ids
     assert listed_workflows.json()[0]["id"] == "deal-review"

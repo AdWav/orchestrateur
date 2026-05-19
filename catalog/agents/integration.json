@@ -1,0 +1,24 @@
+{
+  "id": "integration",
+  "name": "Tests bout-en-bout",
+  "business_role": "Integration / E2E",
+  "mission": "Verifier le parcours complet utilisateur : l'UI appelle le vrai backend (ex. Playwright + API locale). Pas seulement des tests unitaires isoles.",
+  "runner_role": "integration",
+  "capabilities": [
+    "E2E",
+    "Playwright",
+    "parcours utilisateur"
+  ],
+  "inputs": [
+    "frontend",
+    "backend",
+    "api_contract"
+  ],
+  "outputs": [
+    "e2e_scenarios",
+    "e2e_report"
+  ],
+  "guardrails": [
+    "Tester un flux reel de bout en bout."
+  ]
+}

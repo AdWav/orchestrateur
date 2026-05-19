@@ -1,18 +1,16 @@
 from __future__ import annotations
 
-from importlib import reload
-
 import httpx
 from fastapi.testclient import TestClient
 
-import api.main as api_main
-from api.schemas import OllamaModelsResponse
+from app.models.api_schemas import OllamaModelsResponse
+from tests.conftest import reload_api_app
 
 
-def _reload_app(monkeypatch) -> TestClient:
+def _reload_app(monkeypatch) -> tuple[TestClient, object]:
     monkeypatch.setenv("ORCHESTRATOR_MODE", "local")
     monkeypatch.delenv("MODEL_BACKEND", raising=False)
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     return TestClient(reloaded.app), reloaded
 
 
@@ -22,7 +20,7 @@ def test_list_ollama_models_returns_sorted_names(monkeypatch) -> None:
     def fake_fetch() -> OllamaModelsResponse:
         return OllamaModelsResponse(models=["zebra", "alpha"])
 
-    monkeypatch.setattr("api.ollama_models.fetch_ollama_model_names", fake_fetch)
+    monkeypatch.setattr("app.services.ollama_models.fetch_ollama_model_names", fake_fetch)
 
     response = client.get("/v1/runtime/ollama/models")
     assert response.status_code == 200
@@ -35,7 +33,7 @@ def test_list_ollama_models_gateway_error(monkeypatch) -> None:
     def fake_fetch() -> OllamaModelsResponse:
         raise httpx.ConnectError("simulated")
 
-    monkeypatch.setattr("api.ollama_models.fetch_ollama_model_names", fake_fetch)
+    monkeypatch.setattr("app.services.ollama_models.fetch_ollama_model_names", fake_fetch)
 
     response = client.get("/v1/runtime/ollama/models")
     assert response.status_code == 502

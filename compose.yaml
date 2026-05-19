@@ -1,4 +1,23 @@
 services:
+  db:
+    image: mariadb:11
+    container_name: orchestrateur-db
+    environment:
+      MARIADB_ROOT_PASSWORD: orchestrateur_root
+      MARIADB_USER: orchestrateur
+      MARIADB_PASSWORD: orchestrateur
+      MARIADB_DATABASE: orchestrateur
+    volumes:
+      - mariadb_data:/var/lib/mysql
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - agent_mesh
+
   ollama:
     image: ollama/ollama:latest
     container_name: ollama
@@ -27,26 +46,59 @@ services:
     depends_on:
       ollama:
         condition: service_healthy
-    command: ["pull", "${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}"]
+    command: ["pull", "${OLLAMA_DEFAULT_MODEL:-qwen2.5-coder:1.5b}"]
     restart: "no"
     networks:
       - agent_mesh
 
-  orchestrator-api:
+  backend:
     build:
       context: .
-      dockerfile: docker/Dockerfile.python
-    container_name: orchestrator-api
+      dockerfile: backend/Dockerfile
+    container_name: orchestrateur-backend
     environment:
+      ORCHESTRATOR_MODE: compose
       MODEL_BACKEND: ollama
       OLLAMA_BASE_URL: http://ollama:11434
-      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5:0.5b}
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+      OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5-coder:1.5b}
+      DATABASE_URL: mysql://orchestrateur:orchestrateur@db:3306/orchestrateur
+      CATALOG_BACKEND: mariadb
+      FRONTEND_URL: http://localhost:3000
+      UI_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
+      WORKSPACE_ROOT: /workspaces
+    volumes:
+      - ./workspaces:/workspaces
     depends_on:
+      db:
+        condition: service_healthy
       ollama-init:
         condition: service_completed_successfully
     ports:
       - "8000:8000"
+    networks:
+      - agent_mesh
+
+  workspace-runner:
+    build:
+      context: .
+      dockerfile: workspace-runner/Dockerfile
+    container_name: orchestrateur-workspace-runner
+    volumes:
+      - ./workspaces:/workspaces
+    networks:
+      - agent_mesh
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+    container_name: orchestrateur-frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
     networks:
       - agent_mesh
 
@@ -57,3 +109,4 @@ networks:
 
 volumes:
   ollama_data:
+  mariadb_data:

@@ -1,0 +1,478 @@
+{
+  "app": {
+    "title": "Local Orchestrator",
+    "description": "Mobile-first web-native interface to drive the local orchestrator."
+  },
+  "header": {
+    "apiDocs": "API",
+    "languageSwitcher": "Change language",
+    "switchToLight": "Switch to light mode",
+    "switchToDark": "Switch to dark mode",
+    "ollamaListAria": "List installed models from Ollama",
+    "ollamaListButton": "Models",
+    "ollamaListTitle": "Models available on this machine",
+    "ollamaListSubtitle": "(CLI equivalent: ollama list)",
+    "ollamaListEmpty": "No models. Run `ollama pull <name>` and try again.",
+    "ollamaListErrorTitle": "Unavailable",
+    "ollamaRoutingInactive": "`MODEL_BACKEND=ollama` is required to apply routing from the UI.",
+    "ollamaRuntimeHeading": "Routing for upcoming workflows",
+    "ollamaRuntimeDefaultLabel": "Default model",
+    "ollamaRuntimeRunnerHelp": "Model for step",
+    "ollamaSaveRuntime": "Save configuration",
+    "ollamaRuntimeSaved": "Saved Ollama routing settings.",
+    "ollamaRuntimeSettingsFetchError": "Runtime settings could not be read from the API (GET /v1/runtime/ollama/settings).",
+    "ollamaPersistPathPrefix": "Persistence file:",
+    "ollamaWarm": "Preload",
+    "ollamaUnload": "Unload",
+    "ollamaWarmOk": "Preload complete for {{name}}.",
+    "ollamaUnloadOk": "Unload triggered for {{name}}.",
+    "ollamaModelsInstalledTitle": "Installed tags"
+  },
+  "common": {
+    "none": "none",
+    "notAvailable": "n/a",
+    "unavailable": "unavailable",
+    "unreachable": "unreachable",
+    "unknown": "unknown",
+    "emDash": "—",
+    "durationMs": "{{value}} ms",
+    "pipelineSeparator": " → ",
+    "jsonNull": "null",
+    "languageFr": "FR",
+    "languageEn": "EN",
+    "noReasonProvided": "No reason provided",
+    "createInProgress": "Creating...",
+    "execute": "Run",
+    "close": "Close",
+    "remove": "Remove",
+    "addStep": "Add step"
+  },
+  "status": {
+    "passed": "passed",
+    "blocked": "blocked",
+    "approved": "approved",
+    "inFlow": "in flow"
+  },
+  "runtime": {
+    "roleLabels": {
+      "plan": "Planner",
+      "research": "Researcher",
+      "execute": "Executor",
+      "verify": "Verifier",
+      "write_tests": "Tests first",
+      "code": "Code",
+      "code_backend": "Backend code",
+      "code_frontend": "Frontend code",
+      "api_contract": "API contract",
+      "integration": "End-to-end tests",
+      "security": "Security",
+      "review": "Code review",
+      "database": "Database",
+      "devops": "DevOps",
+      "run_fix": "Run / fix",
+      "document": "Documentation",
+      "schematic": "Schematic / plan",
+      "test_and_verify": "Test and verify",
+      "Planner": "Planner",
+      "Researcher": "Researcher",
+      "Executor": "Executor",
+      "Verifier": "Verifier"
+    }
+  },
+  "errors": {
+    "invalidContextLine": "The line \"{{line}}\" must follow the key=value format.",
+    "emptyContextKey": "Each context line must have a non-empty key.",
+    "createAgentFallback": "Unable to create the agent.",
+    "createWorkflowFallback": "Unable to create the workflow.",
+    "httpFallback": "HTTP {{status}} on {{path}}"
+  },
+  "memory": {
+    "updated": "Memory updated: {{key}}"
+  },
+  "hero": {
+    "internalDescription": "The orchestrator exposes the API on :8000 and runs the local stages plan → research → execute → verify in the same process.",
+    "externalDescription": "The orchestrator probes an HTTP mesh of dedicated runners and a shared Ollama model runtime."
+  },
+  "apiHealth": {
+    "subtitle": "Central orchestrator",
+    "title": "API health",
+    "loading": "Loading bootstrap information...",
+    "service": "Service",
+    "execution": "Execution",
+    "state": "State",
+    "team": "Team",
+    "useCases": "Use cases",
+    "internalRole": "internal role",
+    "internalRoles": "internal roles",
+    "httpMesh": "mesh HTTP",
+    "statusLabels": {
+      "ok": "OK"
+    },
+    "rolesCount": "{{count}} runners declared",
+    "useCasesCount": "{{count}} exposed"
+  },
+  "catalog": {
+    "subtitle": "Catalog",
+    "methodologies": {
+      "test-driven-development": "Test-Driven Development",
+      "plan-code-test-document": "Plan · code · test · document"
+    },
+    "teams": {
+      "team-tdd": {
+        "name": "TDD Team",
+        "purpose": "Deliver a feature using full-stack Test-Driven Development.",
+        "guardrails": [
+          "Tests are written before production code.",
+          "Backend, then frontend, then E2E validation."
+        ],
+        "handoffs": [
+          "write_tests -> code_backend: Tests first → Backend",
+          "code_backend -> code_frontend: Backend → Frontend",
+          "code_frontend -> integration: Frontend → End-to-end tests",
+          "integration -> run_fix: E2E tests → Run / fix",
+          "run_fix -> document: Run / fix → Documentation"
+        ]
+      },
+      "team-classic": {
+        "name": "Plan-Code-Test Team",
+        "purpose": "Deliver using plan, API contract, code, tests, E2E, security review, and documentation.",
+        "guardrails": [
+          "Schema and API contract guide implementation.",
+          "Documentation must match test verdicts."
+        ],
+        "handoffs": [
+          "schematic -> api_contract: Schematic / plan → API contract",
+          "api_contract -> database: API contract → Database schema",
+          "database -> code_backend: Database schema → Backend",
+          "code_backend -> code_frontend: Backend → Frontend",
+          "code_frontend -> test_and_verify: Frontend → Layer tests",
+          "test_and_verify -> integration: Layer tests → End-to-end tests",
+          "integration -> run_fix: E2E tests → Run / fix",
+          "run_fix -> review: Run / fix → Code review",
+          "review -> security: Code review → Security review",
+          "security -> document: Security review → Documentation"
+        ]
+      }
+    },
+    "agents": {
+      "write_tests": {
+        "mission": "Write tests and acceptance criteria before any implementation (TDD)."
+      },
+      "code_backend": {
+        "mission": "Implement the API and server logic."
+      },
+      "code_frontend": {
+        "mission": "Implement the UI and API client calls."
+      },
+      "integration": {
+        "mission": "Validate the full UI + API journey."
+      },
+      "run_fix": {
+        "mission": "Run all suites and apply targeted fixes."
+      },
+      "document": {
+        "mission": "Document the deliverable and execution evidence."
+      },
+      "schematic": {
+        "mission": "Plan and schematic the solution (modules, flows, interfaces) before coding."
+      },
+      "api_contract": {
+        "mission": "Define shared routes and schemas before implementation."
+      },
+      "database": {
+        "mission": "Prepare migrations and constraints."
+      },
+      "test_and_verify": {
+        "mission": "Automated tests on backend and frontend."
+      },
+      "review": {
+        "mission": "Review consistency and maintainability."
+      },
+      "security": {
+        "mission": "Check for obvious security risks."
+      }
+    }
+  },
+  "mesh": {
+    "serviceLabels": {
+      "po": "Orchestrator",
+      "sampling": "Sampling",
+      "plan": "Planning",
+      "research": "Research",
+      "execute": "Execution",
+      "verify": "Verification",
+      "ollama": "Ollama"
+    }
+  },
+  "sampling": {
+    "title": "Live sampling",
+    "intro": "Same Ollama model as the orchestrator (see Models), with two profiles: orchestration (fixed, workflows) and live (tunable here + trial).",
+    "orchestrationHeading": "Orchestration profile (read-only)",
+    "orchestrationHelp": "Set via OLLAMA_* env vars at startup. Agent workflows always use this profile.",
+    "liveHeading": "Live profile (hot-tunable)",
+    "liveHelp": "Used for the trial below only — does not affect running workflows.",
+    "loading": "Loading profiles...",
+    "save": "Apply live profile",
+    "saved": "Live profile saved.",
+    "saveError": "Could not save the live profile.",
+    "preview": "Try live profile",
+    "previewPromptLabel": "Trial prompt",
+    "previewPromptPlaceholder": "E.g. Summarize in one sentence: what is top-p?",
+    "previewOk": "Response generated with the live profile.",
+    "previewError": "Live trial failed.",
+    "ollamaInactive": "MODEL_BACKEND=ollama is required for a real trial. The live profile is still saved.",
+    "persistPathPrefix": "Persistence file (live):",
+    "fields": {
+      "temperature": "Temperature",
+      "top_k": "Top-k",
+      "top_p": "Top-p (nucleus)",
+      "min_p": "Min-p",
+      "mirostat": "Mirostat (0, 1, or 2)",
+      "mirostat_eta": "Mirostat eta",
+      "mirostat_tau": "Mirostat tau",
+      "presence_penalty": "Presence penalty",
+      "frequency_penalty": "Frequency penalty",
+      "repeat_penalty": "Repeat penalty",
+      "repeat_last_n": "Repeat last N",
+      "num_predict": "Max tokens (num_predict)",
+      "stop": "Stop sequences",
+      "logit_bias": "Logit bias"
+    },
+    "help": {
+      "temperature": "Randomness: low = deterministic, high = creative.",
+      "top_k": "Restrict sampling to the top-k tokens.",
+      "top_p": "Nucleus threshold on cumulative probability mass.",
+      "min_p": "Minimum probability for a token to be eligible.",
+      "mirostat": "Perplexity control (0 = disabled).",
+      "mirostat_eta": "Mirostat learning rate (typ. 0.1).",
+      "mirostat_tau": "Target perplexity for Mirostat (typ. 5.0).",
+      "presence_penalty": "Encourages tokens not yet seen (topics).",
+      "frequency_penalty": "Penalizes frequently used tokens (words).",
+      "repeat_penalty": "Direct repetition penalty.",
+      "repeat_last_n": "Token window for repeat penalty.",
+      "num_predict": "Maximum generated tokens.",
+      "stop": "One sequence per line; stops generation.",
+      "logit_bias": "One entry per line: id:value (positive = favor)."
+    },
+    "placeholders": {
+      "stop": "END\n</s>",
+      "logit_bias": "50256:-1.0"
+    }
+  },
+  "agentForm": {
+    "title": "Create an agent definition",
+    "id": "Identifiant",
+    "displayName": "Display name",
+    "businessRole": "Business role",
+    "mission": "Mission",
+    "capabilities": "Capabilities (one per line)",
+    "inputs": "Expected inputs (one per line)",
+    "outputs": "Produced outputs (one per line)",
+    "guardrails": "Guardrails (une par ligne)",
+    "create": "Create agent",
+    "persistedNote": "The definition is persisted in the repository catalog.",
+    "actionDescription": "Open a modal form to create an agent without making the main page longer.",
+    "openAction": "Open agent form",
+    "idPlaceholder": "directeur-mission",
+    "displayNamePlaceholder": "Engagement director",
+    "businessRolePlaceholder": "Mission leadership",
+    "missionPlaceholder": "Explain this agent's mandate."
+  },
+  "agentList": {
+    "title": "Defined agents",
+    "empty": "No agent definitions yet."
+  },
+  "workflowForm": {
+    "title": "Create a workflow",
+    "id": "Identifiant",
+    "name": "Workflow name",
+    "goal": "Goal",
+    "context": "Context (key=value per line)",
+    "constraints": "Constraints (one per line)",
+    "successCriteria": "Success criteria (one per line)",
+    "step": "Step {{index}}",
+    "stepId": "Step id",
+    "stepName": "Step name",
+    "linkedAgent": "Assigned agent",
+    "selectAgent": "Select an agent",
+    "objective": "Objectif",
+    "expectedDeliverables": "Expected deliverables (one per line)",
+    "stepSuccessCriteria": "Step success criteria (one per line)",
+    "dependsOn": "Depends on (ids, one per line)",
+    "create": "Create workflow",
+    "actionDescription": "The workflow builder opens in a modal with its steps and dependencies.",
+    "openAction": "Open workflow builder",
+    "actionNote": "The workflow is saved as a preset in the catalog.",
+    "idPlaceholder": "audit-pre-mission",
+    "namePlaceholder": "Pre-engagement audit",
+    "goalPlaceholder": "Explain the expected final outcome.",
+    "contextPlaceholder": "company=Atlas Consulting\nclient=Orion House"
+  },
+  "workflowList": {
+    "title": "Defined workflows",
+    "empty": "No workflows defined yet.",
+    "steps": "Steps"
+  },
+  "devTeams": {
+    "subtitle": "Development pipelines",
+    "title": "Two teams, one feature",
+    "loading": "Loading teams...",
+    "methodology": "Methodologie",
+    "pipeline": "Pipeline",
+    "pipelineChipHint": "Click a step to view the role and its deliverables.",
+    "runnersOne": "1 runner",
+    "runnersMany": "{{count}} runners",
+    "handoffsTitle": "Handoffs",
+    "guardrailsTitle": "Guardrails",
+    "benchmarkSubtitle": "Sequential comparison",
+    "benchmarkTitle": "Run a TDD vs plan-code-test benchmark",
+    "benchmarkObjective": "Functional objective",
+    "benchmarkDefaultObjective": "Implement FizzBuzz for integers 1 to 100 (Fizz, Buzz, FizzBuzz) with pytest tests and documentation.",
+    "benchmarkObjectivePlaceholder": "Describe the feature both teams should deliver.",
+    "benchmarkRun": "Compare both teams",
+    "benchmarkRunning": "Benchmark running (team-tdd then team-classic)...",
+    "benchmarkNote": "Teams run one after another; durations and verdicts are compared at the end.",
+    "benchmarkResultsTitle": "Benchmark result",
+    "benchmarkFastest": "Fastest",
+    "benchmarkSuccess": "Success",
+    "benchmarkDuration": "Duration",
+    "benchmarkNotes": "Notes",
+    "benchmarkYes": "yes",
+    "benchmarkNo": "no",
+    "benchmarkDeliverables": "Deliverables per step",
+    "benchmarkStepSummary": "Agent summary (Ollama detail)",
+    "benchmarkShowFullSummary": "Show full summary",
+    "benchmarkHideFullSummary": "Collapse summary",
+    "benchmarkSectionCode": "Code",
+    "benchmarkSectionTests": "Tests",
+    "benchmarkSectionDocs": "Documentation",
+    "benchmarkSectionOther": "Other artifacts",
+    "benchmarkSimulationNote": "UI artifacts are the pipeline trace; runnable code is materialized in the workspace below.",
+    "benchmarkWorkspaceTitle": "Runnable workspaces",
+    "benchmarkWorkspaceRun": "Run",
+    "benchmarkWorkspaceRoot": "Root",
+    "benchmarkWorkspaceTestsOk": "pytest OK",
+    "benchmarkWorkspaceTestsKo": "pytest failed",
+    "benchmarkWorkspaceTestsSkipped": "tests not run",
+    "benchmarkWorkspaceDisabled": "Workspace was not materialized for this run.",
+    "benchmarkWorkspaceRunHint": "Local / backend: cd the team folder then {{command}}",
+    "benchmarkWorkspaceRunnerLabel": "Docker runner (isolated):"
+  },
+  "repoAudit": {
+    "subtitle": "Observable trace",
+    "title": "Run a repo audit from `:8000`",
+    "objective": "Objectif",
+    "repoPath": "Repo path",
+    "analysisAxes": "Analysis axes",
+    "run": "Run repo audit",
+    "running": "Running workflow...",
+    "note": "This view shows a structured trace, not the hidden raw reasoning.",
+    "defaultObjective": "Audit this repository to surface architecture, testing, documentation, and security signals.",
+    "objectivePlaceholder": "Describe the audit you want the orchestrator to run.",
+    "axisLabels": {
+      "architecture": "Architecture",
+      "tests": "Tests",
+      "docs": "Documentation",
+      "security": "Security",
+      "dependencies": "Dependencies"
+    }
+  },
+  "report": {
+    "summarySubtitle": "Run summary",
+    "summaryTitle": "Overall workflow status",
+    "verification": "Verification",
+    "filesScanned": "Files scanned",
+    "findings": "Findings",
+    "evidenceCount": "Evidence count",
+    "detectedLanguages": "Detected languages",
+    "timelineSubtitle": "Pipeline timeline",
+    "timelineTitle": "Observable reasoning per pipeline stage",
+    "agent": "Stage",
+    "journalSubtitle": "Workflow journal",
+    "journalTitle": "Events traced by the orchestrator",
+    "jsonToggleCaption": "json",
+    "viewModeToggleAria": "Structured view when off; shows raw JSON output when on."
+  },
+  "artifacts": {
+    "searchPlan": "Search plan",
+    "acceptanceCriteria": "Acceptance criteria",
+    "importantFiles": "Important files",
+    "coverageMap": "Coverage map",
+    "evidenceExcerpts": "Evidence excerpts",
+    "repositorySummary": "Repository summary",
+    "findings": "Findings",
+    "recommendedActions": "Recommended actions",
+    "unknowns": "Unknowns",
+    "validationStatus": "Validation status",
+    "approved": "Approved",
+    "evidenceCount": "Nombre de preuves",
+    "coveredAxes": "Covered axes",
+    "policyCompliance": "Policy compliance",
+    "missingRequirements": "Missing requirements",
+    "unsupportedClaims": "Unsupported claims",
+    "capabilities": "Capabilities",
+    "inputs": "Inputs",
+    "outputs": "Outputs",
+    "guardrails": "Guardrails",
+    "constraints": "Constraints",
+    "successCriteria": "Success criteria",
+    "expectedDeliverables": "Expected deliverables",
+    "stepSuccessCriteria": "Step success criteria",
+    "dependsOn": "Depends on",
+    "nextActions": "Next actions"
+  },
+  "artifactKeys": {
+    "source_files": "Source files",
+    "backend_source_files": "Backend source files",
+    "frontend_source_files": "Frontend source files",
+    "api_routes": "API routes",
+    "ui_components": "UI components",
+    "implementation_notes": "Implementation notes",
+    "api_client_usage": "API client usage",
+    "dependencies": "Dependencies",
+    "module_plan": "Module plan",
+    "implementation_order": "Implementation order",
+    "openapi_paths": "OpenAPI paths",
+    "schemas": "Schemas",
+    "error_model": "Error model",
+    "migrations_notes": "Migration notes",
+    "architecture_notes": "Architecture notes",
+    "security_findings": "Security findings",
+    "review_comments": "Review comments",
+    "test_files": "Test files",
+    "test_plan": "Test plan",
+    "acceptance_criteria": "Acceptance criteria",
+    "test_run_report": "Test run report",
+    "tests_passed": "Tests passed",
+    "e2e_scenarios": "E2E scenarios",
+    "e2e_report": "E2E report",
+    "documentation": "Documentation",
+    "operator_notes": "Operator notes",
+    "delivery_summary": "Delivery summary",
+    "search_plan": "Search plan",
+    "evidence_refs": "Evidence references",
+    "important_files": "Important files",
+    "coverage_map": "Coverage map",
+    "repo_summary": "Repository summary",
+    "recommended_actions": "Recommended actions",
+    "validation_report": "Validation report"
+  },
+  "team": {
+    "subtitleLive_one": "Current team — {{count}} runner",
+    "subtitleLive_many": "Current team — {{count}} runners",
+    "fallbackName": "Specification Team",
+    "fallbackPurpose": "The frontend displays the four standard stages (plan · research · execute · verify) and the handoff contracts exposed by the API.",
+    "capabilities": "Capabilities",
+    "handoffsTitle": "Handoff contracts",
+    "guardrailsTitle": "Guardrails",
+    "loadingRoles": "Loading team..."
+  },
+  "useCases": {
+    "subtitleLive_one": "Exposed workflows — {{count}} use case",
+    "subtitleLive_many": "Exposed workflows — {{count}} use cases",
+    "title": "Available use cases",
+    "expectedOutcome": "Expected outcome",
+    "loading": "Loading use cases...",
+    "empty": "No use cases exposed for this team."
+  }
+}

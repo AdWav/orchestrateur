@@ -2,117 +2,55 @@
 
 ## Philosophie
 
-Le depot est maintenant pense pour demarrer via `Docker Compose`.
+Le depot demarre via `Docker Compose` avec un reseau interne `orchestrateur-agent-mesh`.
 
-Le reseau `orchestrateur-agent-mesh` joue le role de backbone local:
+- le **backend** orchestre les quatre roles in-process
+- **Ollama** est partage pour l'inference
+- seuls **frontend**, **backend** et **ollama** exposent des ports vers l'hote
 
-- l'API centrale y dialogue avec les agents
-- les agents partagent un service `Ollama`
-- les agents ne sont pas exposes publiquement
-- seul `orchestrator-api` publie un port vers l'hote
+## Services (`compose.yaml`)
 
-## Services
+### `frontend`
 
-### `orchestrator-api`
+- UI Ionic/React servie par nginx
+- Port hote : **3000**
 
-Responsabilites:
+### `backend`
 
-- exposer l'API publique
-- choisir entre gateway locale et gateway HTTP
-- piloter l'ordre des handoffs
-- centraliser la memoire de workflow
+- API FastAPI (MVC), pipeline `plan` → `research` → `execute` → `verify`
+- Port hote : **8000**
+- Variables : `MODEL_BACKEND=ollama`, `OLLAMA_BASE_URL=http://ollama:11434`
 
-Port expose:
+### `db`
 
-- `8000`
+- MariaDB 11, catalogue agents / workflows
+- Port hote : **3306** (non requis pour l'UI seule)
 
 ### `ollama`
 
-Responsabilites:
-
-- exposer l'API de generation locale
-- charger les modeles utilises par les agents
-- rester partage entre tous les services
-
-Port expose:
-
-- `11434`
+- Runtime d'inference local
+- Port hote : **11434**
+- Limites : `OLLAMA_NUM_PARALLEL=1`, `OLLAMA_MAX_LOADED_MODELS=1`
 
 ### `ollama-init`
 
-Responsabilites:
-
-- attendre que `ollama` soit disponible
-- telecharger le modele par defaut
-- rendre la stack directement testable
-
-Dans la configuration actuelle, le modele initialise automatiquement est:
-
-- `qwen2.5:0.5b`
-
-### `planner-agent`
-
-Responsabilites:
-
-- cadrer la demande
-- decomposer en etapes
-- produire le brief initial
-
-Port interne:
-
-- `8001`
-
-### `researcher-agent`
-
-Responsabilites:
-
-- trouver les inconnues
-- formuler les preuves attendues
-- enrichir le contexte de decision
-
-Port interne:
-
-- `8002`
-
-### `executor-agent`
-
-Responsabilites:
-
-- produire le livrable operationnel
-- structurer l'ordre d'execution
-- fournir checklist et notes operateur
-
-Port interne:
-
-- `8003`
-
-### `verifier-agent`
-
-Responsabilites:
-
-- verifier les criteres de succes
-- controler les garde-fous
-- emettre un verdict `go/no-go`
-
-Port interne:
-
-- `8004`
+- Attend qu'`ollama` soit healthy
+- Execute `ollama pull` sur le modele par defaut
+- Modele initialise : **`qwen2.5-coder:1.5b`** (surcharge via `OLLAMA_DEFAULT_MODEL`)
 
 ## Demarrage
-
-Depuis la racine du depot:
 
 ```bash
 docker compose up --build
 ```
 
-Pour lancer en arriere-plan:
+Arriere-plan :
 
 ```bash
 docker compose up --build -d
 ```
 
-Pour arreter:
+Arret :
 
 ```bash
 docker compose down
@@ -122,39 +60,16 @@ docker compose down
 
 ```mermaid
 flowchart LR
-    client[HostClient] --> api[orchestrator-api:8000]
-    client --> ollama[ollama:11434]
-    api --> planner[planner-agent:8001]
-    api --> researcher[researcher-agent:8002]
-    api --> executor[executor-agent:8003]
-    api --> verifier[verifier-agent:8004]
-    planner --> ollama
-    researcher --> ollama
-    executor --> ollama
-    verifier --> ollama
+    browser[Navigateur] --> frontend[frontend:3000]
+    frontend --> backend[backend:8000]
+    backend --> db[(MariaDB)]
+    backend --> ollama[ollama:11434]
 ```
 
-## Pourquoi utiliser un seul service `Ollama` partage au debut
+## Modeles
 
-Pour la validation fonctionnelle, un seul runtime de modele partage est preferable:
+Voir [`models.md`](models.md) pour le catalogue et les surcharges par etape pipeline.
 
-- plus simple a exploiter
-- moins gourmand en RAM
-- plus rapide a valider sur un laptop
-- plus facile a remplacer plus tard
+## Evolution future
 
-Quand tu voudras specialiser davantage, tu pourras:
-
-- changer le modele global `OLLAMA_DEFAULT_MODEL`
-- definir un modele par role
-- ou separer certains agents vers leur propre runtime
-
-## Recommandation pour ton contexte
-
-Comme tu es sur Windows et que la cible exacte reste ouverte, la bonne base est:
-
-- `Docker Desktop` ou `WSL2 + Docker`
-- services Python isoles par role
-- `Ollama` partage avec un modele ultra-compact pour valider le plumbing
-
-Si tu passes plus tard sur une machine Linux GPU dediee, la topologie restera compatible.
+La topologie peut evoluer vers des agents dans des conteneurs separes ; l'orchestrateur actuel garde les roles dans le backend pour simplifier les handoffs et les tests.

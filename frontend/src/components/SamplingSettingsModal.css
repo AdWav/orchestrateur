@@ -1,0 +1,54 @@
+ion-modal.sampling-settings-modal {
+  --width: min(560px, 94vw);
+}
+
+.sampling-settings-modal__intro {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.sampling-settings-modal__note {
+  display: block;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.sampling-settings-modal__section-title {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sampling-settings-modal__readonly {
+  margin-bottom: 8px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  border-radius: 12px;
+  overflow: hidden;
+  opacity: 0.92;
+}
+
+.sampling-settings-modal__form {
+  margin-bottom: 16px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sampling-settings-modal__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.sampling-settings-modal__preview-output {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

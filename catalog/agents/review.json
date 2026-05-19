@@ -1,0 +1,23 @@
+{
+  "id": "review",
+  "name": "Revue de code",
+  "business_role": "Code review",
+  "mission": "Revue de lisibilite, coherence et dette technique evidente.",
+  "runner_role": "review",
+  "capabilities": [
+    "review",
+    "style",
+    "maintenabilite"
+  ],
+  "inputs": [
+    "diff",
+    "implementation"
+  ],
+  "outputs": [
+    "review_comments",
+    "approval_recommendation"
+  ],
+  "guardrails": [
+    "Ne pas re-ecrire toute la feature : commentaires actionnables."
+  ]
+}

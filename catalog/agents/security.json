@@ -1,0 +1,24 @@
+{
+  "id": "security",
+  "name": "Revue securite",
+  "business_role": "Security",
+  "mission": "Revue securite : auth, secrets, injections, exposition de donnees.",
+  "runner_role": "security",
+  "capabilities": [
+    "OWASP",
+    "auth",
+    "secrets"
+  ],
+  "inputs": [
+    "code",
+    "api_contract",
+    "config"
+  ],
+  "outputs": [
+    "security_findings",
+    "risk_level"
+  ],
+  "guardrails": [
+    "Signaler les risques bloquants avant livraison."
+  ]
+}

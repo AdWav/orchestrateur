@@ -1,0 +1,24 @@
+{
+  "id": "devops",
+  "name": "DevOps / CI",
+  "business_role": "DevOps",
+  "mission": "Preparer CI/CD, conteneurs et notes de deploiement reproductible.",
+  "runner_role": "devops",
+  "capabilities": [
+    "Docker",
+    "CI",
+    "compose"
+  ],
+  "inputs": [
+    "repo",
+    "tests",
+    "build"
+  ],
+  "outputs": [
+    "ci_pipeline",
+    "deploy_notes"
+  ],
+  "guardrails": [
+    "Ne pas modifier le metier : focus livraison technique."
+  ]
+}

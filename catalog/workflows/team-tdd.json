@@ -1,0 +1,88 @@
+{
+  "id": "team-tdd",
+  "name": "Equipe TDD",
+  "goal": "Livrer une fonctionnalite en Test-Driven Development (full stack).",
+  "context": {
+    "methodology": "test-driven-development"
+  },
+  "constraints": [
+    "Les tests sont ecrits avant le code de production.",
+    "Backend puis frontend, puis validation E2E."
+  ],
+  "success_criteria": [
+    "Tests, code, E2E et documentation sont traces.",
+    "Le verdict final est explicite."
+  ],
+  "steps": [
+    {
+      "id": "tests-first",
+      "name": "Tests d'abord",
+      "agent_definition_id": "write_tests",
+      "objective": "Rediger les tests et criteres d'acceptation avant toute implementation.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": []
+    },
+    {
+      "id": "backend",
+      "name": "Backend",
+      "agent_definition_id": "code_backend",
+      "objective": "Implementer l'API et la logique serveur.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "tests-first"
+      ]
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "agent_definition_id": "code_frontend",
+      "objective": "Implementer l'interface et les appels API.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "backend"
+      ]
+    },
+    {
+      "id": "e2e",
+      "name": "Tests bout-en-bout",
+      "agent_definition_id": "integration",
+      "objective": "Valider le parcours complet UI + API.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "frontend"
+      ]
+    },
+    {
+      "id": "run-fix",
+      "name": "Execution et correctifs",
+      "agent_definition_id": "run_fix",
+      "objective": "Executer toutes les suites et corriger.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "e2e"
+      ]
+    },
+    {
+      "id": "document",
+      "name": "Documentation",
+      "agent_definition_id": "document",
+      "objective": "Documenter le livrable et les preuves.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "run-fix"
+      ]
+    }
+  ]
+}

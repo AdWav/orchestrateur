@@ -1,1 +1,1 @@
-"""FastAPI control plane for the local orchestrator."""
+"""Shim de compatibilite vers backend/app."""

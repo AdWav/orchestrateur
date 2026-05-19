@@ -36,7 +36,7 @@ def test_demo_command_runs_end_to_end(tmp_path, capsys) -> None:
     assert payload["mode"] == "local"
     assert payload["business_story"]["company"]["name"] == "Acme Delivery"
     assert payload["business_story"]["client"]["name"] == "Client Polaris"
-    assert payload["team"]["name"] == "Specification Team"
+    assert payload["team"]["name"] == "Equipe TDD"
     assert payload["specification"]["verification_passed"] is True
     assert payload["repo_audit"]["verification_passed"] is True
     assert payload["repo_audit"]["inventory"]["root_path"] == str(tmp_path)

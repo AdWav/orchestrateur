@@ -1,107 +1,69 @@
-# Equipe d'agents
+# Equipes d'agents
 
-## Equipe actuelle
+## Equipes de developpement (benchmark)
 
-L'equipe initiale est volontairement limitee a quatre agents ultra specialises.
+Deux pipelines de **4 roles** sont disponibles pour comparer des methodologies sur la **meme fonctionnalite**. Les equipes s'executent **l'une apres l'autre** via `POST /workflows/dev-team-benchmark`.
 
-Depuis la V2 `local-repo-audit`, ces roles gardent la meme topologie mais produisent des artefacts plus structures et relies a des preuves.
+### Team 1 — `team-tdd` (Test-Driven Development)
 
-## `Planner`
+| Etape | Role | Mission |
+|-------|------|---------|
+| `write_tests` | Test Author | Creer les tests avant toute implementation |
+| `code` | Developer | Coder le minimum pour faire passer les tests |
+| `run_fix` | Runner | Executer la suite et corriger si necessaire |
+| `document` | Tech Writer | Documenter le livrable et les preuves d'execution |
 
-Mission:
+Handoffs : tests → code → execution/correctifs → documentation.
 
-- transformer l'objectif utilisateur en plan de travail
-- identifier les hypotheses
-- preparer les handoffs
+### Team 2 — `team-classic` (Plan → Code → Test → Document)
 
-Entrees attendues:
+| Etape | Role | Mission |
+|-------|------|---------|
+| `schematic` | Planner | Planifier et schematiser (modules, flux) |
+| `code` | Developer | Implementer selon le schema |
+| `test_and_verify` | QA | Creer les tests puis executer et valider |
+| `document` | Tech Writer | Documenter selon le verdict des tests |
 
-- objectif
-- contraintes
-- criteres de succes
-- contexte
+Handoffs : schema → code → tests + execution → documentation.
 
-Sorties:
+### Comparaison
 
-- `plan_steps`
-- `assumptions`
-- `handoff_brief`
-- `audit_scope`
-- `search_plan`
+Le rapport `DevTeamBenchmarkReport` contient :
 
-## `Researcher`
+- `runs` : un `WorkflowRun` par equipe (`team_id`, `outputs`, `step_timings`, `total_duration_ms`, `verification_passed`)
+- `comparison` : `success_by_team`, `duration_ms_by_team`, `fastest_team_id`, `winner_by_success`, `notes`
 
-Mission:
+Ordre par defaut : `team-tdd` puis `team-classic` (surcharge via `team_order` dans le payload).
 
-- convertir le contexte en hypotheses testables
-- signaler les manques d'information
-- preparer les preuves attendues
-- mapper le depot en lecture seule pour l'audit de repo
+Exemple :
 
-Entrees attendues:
+```json
+{
+  "objective": "Ajouter un endpoint POST /items avec validation",
+  "team_order": ["team-tdd", "team-classic"]
+}
+```
 
-- brief du `Planner`
-- contexte utilisateur
-- cas d'usage
+API : `GET /teams`, `GET /team?team_id=team-tdd`, `POST /workflows/dev-team-benchmark`.
 
-Sorties:
+Cas d'usage : `dev-team-benchmark`.
 
-- `knowledge_gaps`
-- `evidence_plan`
-- `decision_inputs`
-- `repo_inventory`
-- `evidence_refs`
-- `coverage_map`
+## Equipe legacy — `specification-team`
 
-## `Executor`
+L'equipe initiale reste disponible pour specification, audit repo et cas d'usage historiques.
 
-Mission:
+| Etape | Role |
+|-------|------|
+| `plan` | Planner |
+| `research` | Researcher |
+| `execute` | Executor |
+| `verify` | Verifier |
 
-- produire le livrable exploitable
-- structurer une checklist d'execution
-- preparer les notes operateur
-- transformer les preuves repo en constats priorises
-
-Entrees attendues:
-
-- brief du `Planner`
-- resultats du `Researcher`
-- criteres de succes
-
-Sorties:
-
-- `execution_brief`
-- `checklist`
-- `operator_notes`
-- `findings`
-- `repo_summary`
-- `recommended_actions`
-
-## `Verifier`
-
-Mission:
-
-- controler la conformite du livrable
-- verifier les garde-fous
-- emettre un verdict final
-- refuser un audit sans preuve ou hors du scope
-
-Entrees attendues:
-
-- sorties des trois autres roles
-- criteres de succes
-- stop conditions
-
-Sorties:
-
-- `verification_report`
-- `approval`
-- `missing_items`
-- `validation_report`
+`GET /team` sans parametre renvoie cette equipe.
 
 ## Contrat de handoff
 
-Chaque handoff doit transporter:
+Chaque handoff doit transporter :
 
 - l'objectif de travail
 - les contraintes explicites
@@ -111,7 +73,7 @@ Chaque handoff doit transporter:
 
 ## Garde-fous actuels
 
-- une seule iteration de workflow
+- une seule iteration de workflow par run
 - aucun elargissement implicite du scope
 - tous les handoffs sont traces
 - le workflow s'arrete si une sortie attendue manque
@@ -124,4 +86,5 @@ Chaque handoff doit transporter:
 2. `local-model-benchmark`
 3. `dataset-readiness`
 4. `operator-runbook`
-5. `local-repo-audit`
+5. `dev-team-benchmark`
+6. `local-repo-audit`

@@ -1,5 +1,13 @@
+from core.catalog_bootstrap import ensure_dev_team_catalog
 from core.contracts import AuditScope, RepoAuditRequest, RepoTarget, WorkItem
+from core.definition_catalog import FileDefinitionCatalog
 from core.orchestrator import MultiAgentOrchestrator
+
+
+def _orchestrator(tmp_path) -> MultiAgentOrchestrator:
+    catalog = FileDefinitionCatalog(tmp_path)
+    ensure_dev_team_catalog(catalog)
+    return MultiAgentOrchestrator(catalog=catalog)
 
 
 def _create_repo_fixture(tmp_path) -> None:
@@ -12,23 +20,20 @@ def _create_repo_fixture(tmp_path) -> None:
     (docs_dir / "architecture.md").write_text("System architecture notes.\n", encoding="utf-8")
 
 
-def test_team_specification_exposes_four_specialists() -> None:
-    orchestrator = MultiAgentOrchestrator()
+def test_default_team_specification_is_team_tdd(tmp_path) -> None:
+    orchestrator = _orchestrator(tmp_path)
 
     team = orchestrator.team_specification()
 
-    assert team.name == "Specification Team"
-    assert [role.role for role in team.roles] == [
-        "plan",
-        "research",
-        "execute",
-        "verify",
-    ]
-    assert "local-repo-audit" in team.use_case_ids
+    assert team.id == "team-tdd"
+    assert team.name == "Equipe TDD"
+    assert "code_backend" in [role.role for role in team.roles]
+    assert "code_frontend" in [role.role for role in team.roles]
+    assert team.use_case_ids == ["dev-team-benchmark"]
 
 
-def test_specification_workflow_runs_end_to_end() -> None:
-    orchestrator = MultiAgentOrchestrator()
+def test_specification_workflow_runs_end_to_end(tmp_path) -> None:
+    orchestrator = _orchestrator(tmp_path)
     item = WorkItem(
         objective="Produire un runbook pour benchmarker trois modeles locaux",
         constraints=["Rester en local", "Conserver une trace des etapes"],
@@ -36,12 +41,14 @@ def test_specification_workflow_runs_end_to_end() -> None:
             "Le livrable doit etre actionnable.",
             "Les handoffs doivent etre explicites.",
         ],
-        use_case_id="local-model-benchmark",
+        use_case_id="dev-team-benchmark",
     )
 
     result = orchestrator.run_specification_workflow(item)
 
     assert result.verification_passed is True
+    assert result.team_id is None
+    assert result.total_duration_ms is not None
     assert [output.role for output in result.outputs] == [
         "plan",
         "research",
@@ -54,7 +61,7 @@ def test_specification_workflow_runs_end_to_end() -> None:
 
 def test_repo_audit_workflow_runs_end_to_end(tmp_path) -> None:
     _create_repo_fixture(tmp_path)
-    orchestrator = MultiAgentOrchestrator()
+    orchestrator = _orchestrator(tmp_path)
     request = RepoAuditRequest(
         objective="Auditer le depot local pour confirmer sa structure et sa documentation",
         repo_target=RepoTarget(root_path=str(tmp_path)),

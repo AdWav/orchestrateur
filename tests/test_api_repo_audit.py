@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from importlib import reload
 from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-import api.main as api_main
+from tests.conftest import reload_api_app
 
 
 def test_repo_audit_endpoint_returns_structured_report(tmp_path, monkeypatch) -> None:
@@ -15,7 +14,7 @@ def test_repo_audit_endpoint_returns_structured_report(tmp_path, monkeypatch) ->
 
     monkeypatch.delenv("ORCHESTRATOR_MODE", raising=False)
     monkeypatch.delenv("MODEL_BACKEND", raising=False)
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     client = TestClient(reloaded.app)
 
     response = client.post(

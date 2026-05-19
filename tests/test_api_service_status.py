@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from importlib import reload
-
 from fastapi.testclient import TestClient
 
-import api.main as api_main
-import api.service_status as service_status
+import app.services.service_status as service_status
+from tests.conftest import reload_api_app
 
 
 class _Response:
@@ -28,7 +26,7 @@ def test_service_status_endpoint_reports_internal_roles_in_local_mode(monkeypatc
 
     monkeypatch.setattr(service_status.httpx, "get", fake_get)
 
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     client = TestClient(reloaded.app)
 
     response = client.get("/services/status")
@@ -36,17 +34,20 @@ def test_service_status_endpoint_reports_internal_roles_in_local_mode(monkeypatc
     assert response.status_code == 200
     payload = response.json()
     assert [service["label"] for service in payload["services"]] == [
-        "PO",
+        "API",
+        "Sampling",
         "plan",
         "research",
         "execute",
         "verify",
         "Ollama",
     ]
+    assert payload["services"][0]["key"] == "po"
+    assert payload["services"][1]["key"] == "sampling"
     assert payload["services"][1]["target"] == "in-process"
     assert payload["services"][1]["active"] is True
-    assert payload["services"][4]["target"] == "in-process"
-    assert payload["services"][5]["active"] is True
+    assert payload["services"][3]["target"] == "in-process"
+    assert payload["services"][6]["active"] is True
 
 
 def test_service_status_endpoint_reports_mesh_lights_in_compose_mode(monkeypatch) -> None:
@@ -64,7 +65,7 @@ def test_service_status_endpoint_reports_mesh_lights_in_compose_mode(monkeypatch
 
     monkeypatch.setattr(service_status.httpx, "get", fake_get)
 
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     client = TestClient(reloaded.app)
 
     response = client.get("/services/status")
@@ -72,13 +73,16 @@ def test_service_status_endpoint_reports_mesh_lights_in_compose_mode(monkeypatch
     assert response.status_code == 200
     payload = response.json()
     assert [service["label"] for service in payload["services"]] == [
-        "PO",
+        "API",
+        "Sampling",
         "plan",
         "research",
         "execute",
         "verify",
         "Ollama",
     ]
+    assert payload["services"][0]["key"] == "po"
+    assert payload["services"][1]["key"] == "sampling"
     assert payload["services"][0]["active"] is True
-    assert payload["services"][2]["active"] is False
-    assert payload["services"][5]["active"] is False
+    assert payload["services"][3]["active"] is False
+    assert payload["services"][6]["active"] is False

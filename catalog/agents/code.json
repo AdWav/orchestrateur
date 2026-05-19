@@ -1,0 +1,23 @@
+{
+  "id": "code",
+  "name": "Implementation (generique)",
+  "business_role": "Developer",
+  "mission": "Implementer le code minimal lorsque la stack n'est pas scindee backend/frontend.",
+  "runner_role": "code",
+  "capabilities": [
+    "implementation",
+    "refactoring local"
+  ],
+  "inputs": [
+    "schematic",
+    "tests",
+    "contraintes techniques"
+  ],
+  "outputs": [
+    "source_files",
+    "implementation_notes"
+  ],
+  "guardrails": [
+    "Preferer code_backend + code_frontend si la feature est full stack."
+  ]
+}
