@@ -1,0 +1,300 @@
+.dial-regulator {
+  --dial-size: 120px;
+  --dial-accent: #5dffa0;
+  --dial-inactive: rgba(255, 255, 255, 0.08);
+  position: relative;
+  width: var(--dial-size);
+  height: var(--dial-size);
+  flex-shrink: 0;
+  touch-action: none;
+  user-select: none;
+}
+
+.dial-regulator--sm {
+  --dial-size: 72px;
+}
+
+.dial-regulator--md {
+  --dial-size: 120px;
+}
+
+.dial-regulator--lg {
+  --dial-size: 200px;
+}
+
+.dial-regulator--interactive {
+  cursor: grab;
+}
+
+.dial-regulator--interactive:active {
+  cursor: grabbing;
+}
+
+.dial-regulator--wheel.dial-regulator--interactive {
+  cursor: ns-resize;
+}
+
+.dial-regulator--wheel.dial-regulator--interactive:active {
+  cursor: ns-resize;
+}
+
+.dial-regulator--disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.dial-regulator__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* —— Variante digital (chrome + affichage numérique) —— */
+
+.dial-regulator--digital .dial-regulator__bezel {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  padding: 5%;
+  background:
+    linear-gradient(145deg, #f4f7fc 0%, #b8c0cc 38%, #8a939f 52%, #d8dde5 68%, #eef1f6 100%);
+  box-shadow:
+    0 10px 24px rgba(15, 23, 42, 0.22),
+    inset 0 2px 4px rgba(255, 255, 255, 0.85),
+    inset 0 -3px 6px rgba(15, 23, 42, 0.18);
+}
+
+.dial-regulator--digital .dial-regulator__face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 35% 28%, #3a4558 0%, #12151c 55%, #050608 100%);
+  box-shadow:
+    inset 0 0 18px rgba(0, 0, 0, 0.65),
+    inset 0 2px 8px rgba(255, 255, 255, 0.06);
+}
+
+.dial-regulator--digital .dial-regulator__glass {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.22) 0%,
+    rgba(255, 255, 255, 0.04) 38%,
+    transparent 55%
+  );
+  z-index: 2;
+}
+
+.dial-regulator--digital .dial-regulator__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  font-family: "Consolas", "Courier New", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: calc(var(--dial-size) * 0.26);
+  letter-spacing: 0.04em;
+  color: var(--dial-accent);
+  text-shadow:
+    0 0 12px color-mix(in srgb, var(--dial-accent) 70%, transparent),
+    0 0 28px color-mix(in srgb, var(--dial-accent) 35%, transparent);
+}
+
+.dial-regulator--digital .dial-regulator__value--slot {
+  z-index: 3;
+  pointer-events: auto;
+}
+
+.dial-regulator__value-button {
+  margin: 0;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  letter-spacing: inherit;
+  text-shadow: inherit;
+  cursor: text;
+  border-radius: 4px;
+}
+
+.dial-regulator__value-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.dial-regulator__value-button:focus-visible {
+  outline: 2px solid var(--ion-color-primary, #3880ff);
+  outline-offset: 2px;
+}
+
+.dial-regulator__value-input {
+  width: 72%;
+  max-width: 5.5em;
+  margin: 0;
+  padding: 2px 4px;
+  border: 1px solid var(--dial-accent);
+  border-radius: 4px;
+  background: rgba(5, 8, 12, 0.92);
+  font: inherit;
+  color: var(--dial-accent);
+  text-align: center;
+  text-shadow: inherit;
+  -moz-appearance: textfield;
+}
+
+.dial-regulator__value-input::-webkit-outer-spin-button,
+.dial-regulator__value-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.dial-regulator__value-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--dial-accent) 55%, transparent);
+}
+
+.dial-regulator__tick--lit {
+  filter: drop-shadow(0 0 3px var(--dial-accent))
+    drop-shadow(0 0 6px color-mix(in srgb, var(--dial-accent) 55%, transparent));
+}
+
+.dial-regulator__tick--off {
+  fill: var(--dial-inactive);
+}
+
+/* —— Variante rotary (panneau sombre + bouton métal) —— */
+
+.dial-regulator--rotary {
+  width: calc(var(--dial-size) * 1.12);
+  height: calc(var(--dial-size) * 1.12);
+}
+
+.dial-regulator--rotary .dial-regulator__panel {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 22%;
+  background:
+    radial-gradient(circle at 50% 42%, #2a241f 0%, #14100d 72%, #0a0806 100%);
+  box-shadow:
+    0 14px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.dial-regulator--rotary .dial-regulator__panel > .dial-regulator__svg,
+.dial-regulator--rotary .dial-regulator__knob {
+  grid-area: 1 / 1;
+}
+
+.dial-regulator--rotary .dial-regulator__panel > .dial-regulator__svg {
+  width: 88%;
+  height: 88%;
+}
+
+.dial-regulator--rotary .dial-regulator__knob {
+  width: 52%;
+  height: 52%;
+  justify-self: center;
+  align-self: center;
+  z-index: 2;
+  border: none;
+  border-radius: 50%;
+  padding: 0;
+  background:
+    conic-gradient(
+      from 25deg,
+      #8f959c 0deg,
+      #eceff3 42deg,
+      #6d737a 95deg,
+      #f5f7fa 145deg,
+      #7a8088 210deg,
+      #e8ebef 280deg,
+      #848a92 330deg,
+      #8f959c 360deg
+    );
+  box-shadow:
+    0 4px 14px rgba(0, 0, 0, 0.55),
+    inset 0 2px 5px rgba(255, 255, 255, 0.35),
+    inset 0 -3px 8px rgba(0, 0, 0, 0.35);
+  cursor: inherit;
+  z-index: 2;
+}
+
+.dial-regulator--rotary .dial-regulator__knob:focus-visible {
+  outline: 2px solid var(--ion-color-primary, #246bff);
+  outline-offset: 3px;
+}
+
+.dial-regulator--rotary .dial-regulator__tick--lit {
+  fill: var(--dial-accent);
+  filter: drop-shadow(0 0 4px var(--dial-accent))
+    drop-shadow(0 0 10px color-mix(in srgb, var(--dial-accent) 50%, transparent));
+}
+
+.dial-regulator--rotary .dial-regulator__tick--off {
+  fill: #3a3530;
+}
+
+.dial-regulator__major-tick {
+  stroke: rgba(255, 255, 255, 0.12);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* —— Showcase —— */
+
+.dial-regulator-showcase {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  padding: 20px 16px 32px;
+}
+
+.dial-regulator-showcase__section {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dial-regulator-showcase__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ion-color-medium, #6b7280);
+}
+
+.dial-regulator-showcase__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 20px;
+}
+
+.dial-regulator-showcase__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.dial-regulator-showcase__caption {
+  font-size: 0.75rem;
+  color: var(--ion-color-medium, #6b7280);
+}

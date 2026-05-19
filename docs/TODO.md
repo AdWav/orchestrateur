@@ -23,7 +23,7 @@
 - Mirostat : Contrôle la perplexité (stabilité) du texte généré.  Mirostat=1 ou 2 ajuste dynamiquement la température pour maintenir un niveau de surprise constant.
 - Mirostat Eta : Taux d'apprentissage pour l'ajustement de la température dans Mirostat (valeur typique : 0.1). 
 - Mirostat Tau : Niveau cible de perplexité pour Mirostat (valeur typique : 5.0). 
-Presence Penalty : Augmente la probabilité d'utiliser des tokens nouveaux, réduisant la répétition de sujets. 
+- Presence Penalty : Augmente la probabilité d'utiliser des tokens nouveaux, réduisant la répétition de sujets. 
 - Frequency Penalty : Diminue la probabilité d'utiliser des tokens fréquemment utilisés, réduisant la répétition de mots. 
 - Repeat Penalty : Pénalise directement la répétition de tokens ou de séquences. 
 - Repeat Last N : Nombre de tokens précédents à considérer pour appliquer la pénalité de répétition. 

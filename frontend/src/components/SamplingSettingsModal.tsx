@@ -1,9 +1,9 @@
 import {
   IonButton,
   IonButtons,
+  IonChip,
   IonContent,
   IonHeader,
-  IonInput,
   IonItem,
   IonLabel,
   IonList,
@@ -15,7 +15,7 @@ import {
   IonToolbar,
   useIonToast,
 } from "@ionic/react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { useI18n } from "../i18n/I18nProvider";
 import {
@@ -25,123 +25,72 @@ import {
   putLiveSamplingSettings,
 } from "../lib/api";
 
+import {
+  LIVE_NUMERIC_FIELD_ORDER,
+  SAMPLING_FIELD_SPECS,
+  type FieldSpec,
+  type LiveFormState,
+  type LiveNumericKey,
+  DIAL_STEPS,
+  dialToSamplingValue,
+  formatNumericDisplay,
+  formToSamplingProfile,
+  profileToLiveForm,
+  samplingValueToDial,
+  snapToSpec,
+} from "./samplingFieldSpecs";
+import DialRegulator from "./DialRegulator";
+import type { DialRegulatorVariant } from "./dialRegulatorUtils";
+import MirostatRockerSwitch, { stepMirostatValue } from "./MirostatRockerSwitch";
+import {
+  groupsForMode,
+  type SamplingFieldGroup,
+  type SamplingGroupMode,
+  type SamplingTextFieldKey,
+} from "./samplingFieldGroups";
 import "./SamplingSettingsModal.css";
+
+const SAMPLING_DIAL_VARIANTS: Record<LiveNumericKey, DialRegulatorVariant> = {
+  temperature: "digital",
+  top_k: "digital",
+  top_p: "digital",
+  min_p: "digital",
+  mirostat: "digital",
+  mirostat_eta: "digital",
+  mirostat_tau: "digital",
+  presence_penalty: "digital",
+  frequency_penalty: "digital",
+  repeat_penalty: "digital",
+  repeat_last_n: "digital",
+  num_predict: "digital",
+};
+
+const GROUPING_MODES: SamplingGroupMode[] = ["flat", "role", "impact"];
+
+type RoleGroupMeta = (typeof import("../i18n/locales/fr.json"))["sampling"]["roleGroups"];
+type ImpactGroupMeta = (typeof import("../i18n/locales/fr.json"))["sampling"]["impactGroups"];
+type GroupMetaEntry = { title: string; hint: string };
+
+function lookupGroupMeta(
+  groupMode: SamplingGroupMode,
+  groupId: string,
+  roleGroups: RoleGroupMeta,
+  impactGroups: ImpactGroupMeta,
+): GroupMetaEntry | undefined {
+  if (groupMode === "role") {
+    return roleGroups[groupId as keyof RoleGroupMeta];
+  }
+  if (groupMode === "impact") {
+    return impactGroups[groupId as keyof ImpactGroupMeta];
+  }
+  return undefined;
+}
 
 type SamplingSettingsModalProps = {
   isOpen: boolean;
   onDismiss?: () => void;
-  /** Affiche le contenu en page (onglet nav) plutot qu'en modal. */
   embedded?: boolean;
 };
-
-type LiveFormState = {
-  temperature: string;
-  top_k: string;
-  top_p: string;
-  min_p: string;
-  mirostat: string;
-  mirostat_eta: string;
-  mirostat_tau: string;
-  presence_penalty: string;
-  frequency_penalty: string;
-  repeat_penalty: string;
-  repeat_last_n: string;
-  num_predict: string;
-  stopText: string;
-  logitBiasText: string;
-};
-
-function profileToForm(profile: SamplingProfile): LiveFormState {
-  return {
-    temperature: formatOptionalNumber(profile.temperature),
-    top_k: formatOptionalNumber(profile.top_k),
-    top_p: formatOptionalNumber(profile.top_p),
-    min_p: formatOptionalNumber(profile.min_p),
-    mirostat: formatOptionalNumber(profile.mirostat),
-    mirostat_eta: formatOptionalNumber(profile.mirostat_eta),
-    mirostat_tau: formatOptionalNumber(profile.mirostat_tau),
-    presence_penalty: formatOptionalNumber(profile.presence_penalty),
-    frequency_penalty: formatOptionalNumber(profile.frequency_penalty),
-    repeat_penalty: formatOptionalNumber(profile.repeat_penalty),
-    repeat_last_n: formatOptionalNumber(profile.repeat_last_n),
-    num_predict: formatOptionalNumber(profile.num_predict),
-    stopText: (profile.stop ?? []).join("\n"),
-    logitBiasText: formatLogitBias(profile.logit_bias),
-  };
-}
-
-function formatOptionalNumber(value: number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return "";
-  }
-  return String(value);
-}
-
-function formatLogitBias(bias: Record<string, number> | null | undefined): string {
-  if (!bias) {
-    return "";
-  }
-  return Object.entries(bias)
-    .map(([token, weight]) => `${token}:${weight}`)
-    .join("\n");
-}
-
-function parseOptionalNumber(raw: string): number | null {
-  const trimmed = raw.trim();
-  if (!trimmed) {
-    return null;
-  }
-  const parsed = Number(trimmed);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function parseStopLines(raw: string): string[] | null {
-  const lines = raw
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter((line) => line.length > 0);
-  return lines.length > 0 ? lines : null;
-}
-
-function parseLogitBiasLines(raw: string): Record<string, number> | null {
-  const entries: Record<string, number> = {};
-  for (const line of raw.split(/\r?\n/)) {
-    const trimmed = line.trim();
-    if (!trimmed) {
-      continue;
-    }
-    const separator = trimmed.indexOf(":");
-    if (separator <= 0) {
-      continue;
-    }
-    const token = trimmed.slice(0, separator).trim();
-    const weight = Number(trimmed.slice(separator + 1).trim());
-    if (!token || !Number.isFinite(weight)) {
-      continue;
-    }
-    entries[token] = weight;
-  }
-  return Object.keys(entries).length > 0 ? entries : null;
-}
-
-function formToPayload(form: LiveFormState): SamplingProfile {
-  return {
-    temperature: parseOptionalNumber(form.temperature),
-    top_k: parseOptionalNumber(form.top_k),
-    top_p: parseOptionalNumber(form.top_p),
-    min_p: parseOptionalNumber(form.min_p),
-    mirostat: parseOptionalNumber(form.mirostat),
-    mirostat_eta: parseOptionalNumber(form.mirostat_eta),
-    mirostat_tau: parseOptionalNumber(form.mirostat_tau),
-    presence_penalty: parseOptionalNumber(form.presence_penalty),
-    frequency_penalty: parseOptionalNumber(form.frequency_penalty),
-    repeat_penalty: parseOptionalNumber(form.repeat_penalty),
-    repeat_last_n: parseOptionalNumber(form.repeat_last_n),
-    num_predict: parseOptionalNumber(form.num_predict),
-    stop: parseStopLines(form.stopText),
-    logit_bias: parseLogitBiasLines(form.logitBiasText),
-  };
-}
 
 function profileSummaryLines(
   profile: SamplingProfile,
@@ -184,6 +133,8 @@ const SamplingSettingsModal = ({
     settings_persist_path: string | null;
     ollama_active: boolean;
   } | null>(null);
+  const [groupMode, setGroupMode] = useState<SamplingGroupMode>("flat");
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
 
   const shouldLoad = embedded || isOpen;
 
@@ -201,7 +152,7 @@ const SamplingSettingsModal = ({
           return;
         }
         setOrchestration(settings.orchestration);
-        setLiveForm(profileToForm(settings.live));
+        setLiveForm(profileToLiveForm(settings.live));
         setMeta({
           settings_persist_path: settings.settings_persist_path,
           ollama_active: settings.ollama_active,
@@ -225,7 +176,11 @@ const SamplingSettingsModal = ({
     };
   }, [shouldLoad]);
 
-  const updateField = (field: keyof LiveFormState, value: string) => {
+  const updateNumericField = (field: LiveNumericKey, value: number | null) => {
+    setLiveForm((current) => (current ? { ...current, [field]: value } : current));
+  };
+
+  const updateTextField = (field: "stopText" | "logitBiasText", value: string) => {
     setLiveForm((current) => (current ? { ...current, [field]: value } : current));
   };
 
@@ -235,9 +190,9 @@ const SamplingSettingsModal = ({
     }
     setSaveBusy(true);
     try {
-      const saved = await putLiveSamplingSettings(formToPayload(liveForm));
+      const saved = await putLiveSamplingSettings(formToSamplingProfile(liveForm));
       setOrchestration(saved.orchestration);
-      setLiveForm(profileToForm(saved.live));
+      setLiveForm(profileToLiveForm(saved.live));
       setMeta({
         settings_persist_path: saved.settings_persist_path,
         ollama_active: saved.ollama_active,
@@ -289,14 +244,12 @@ const SamplingSettingsModal = ({
       ? profileSummaryLines(orchestration, messages.sampling.fields)
       : [];
 
+  const shellClass = embedded
+    ? "sampling-settings-panel ion-padding"
+    : "sampling-settings-modal__body ion-padding";
+
   const body = (
-    <div
-      className={
-        embedded
-          ? "sampling-settings-panel ion-padding"
-          : "sampling-settings-modal__body ion-padding"
-      }
-    >
+    <div className={shellClass}>
         {loading ? (
           <div className="sampling-settings-modal__loading">
             <IonSpinner name="crescent" />
@@ -345,102 +298,25 @@ const SamplingSettingsModal = ({
             <IonNote className="sampling-settings-modal__note">
               {messages.sampling.liveHelp}
             </IonNote>
-            <IonList className="sampling-settings-modal__form" lines="full">
-              <NumericField
-                label={messages.sampling.fields.temperature}
-                help={messages.sampling.help.temperature}
-                value={liveForm.temperature}
-                onChange={(value) => updateField("temperature", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.top_k}
-                help={messages.sampling.help.top_k}
-                value={liveForm.top_k}
-                onChange={(value) => updateField("top_k", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.top_p}
-                help={messages.sampling.help.top_p}
-                value={liveForm.top_p}
-                onChange={(value) => updateField("top_p", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.min_p}
-                help={messages.sampling.help.min_p}
-                value={liveForm.min_p}
-                onChange={(value) => updateField("min_p", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.mirostat}
-                help={messages.sampling.help.mirostat}
-                value={liveForm.mirostat}
-                onChange={(value) => updateField("mirostat", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.mirostat_eta}
-                help={messages.sampling.help.mirostat_eta}
-                value={liveForm.mirostat_eta}
-                onChange={(value) => updateField("mirostat_eta", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.mirostat_tau}
-                help={messages.sampling.help.mirostat_tau}
-                value={liveForm.mirostat_tau}
-                onChange={(value) => updateField("mirostat_tau", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.presence_penalty}
-                help={messages.sampling.help.presence_penalty}
-                value={liveForm.presence_penalty}
-                onChange={(value) => updateField("presence_penalty", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.frequency_penalty}
-                help={messages.sampling.help.frequency_penalty}
-                value={liveForm.frequency_penalty}
-                onChange={(value) => updateField("frequency_penalty", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.repeat_penalty}
-                help={messages.sampling.help.repeat_penalty}
-                value={liveForm.repeat_penalty}
-                onChange={(value) => updateField("repeat_penalty", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.repeat_last_n}
-                help={messages.sampling.help.repeat_last_n}
-                value={liveForm.repeat_last_n}
-                onChange={(value) => updateField("repeat_last_n", value)}
-              />
-              <NumericField
-                label={messages.sampling.fields.num_predict}
-                help={messages.sampling.help.num_predict}
-                value={liveForm.num_predict}
-                onChange={(value) => updateField("num_predict", value)}
-              />
-              <IonItem>
-                <IonLabel position="stacked">{messages.sampling.fields.stop}</IonLabel>
-                <IonTextarea
-                  autoGrow
-                  value={liveForm.stopText}
-                  placeholder={messages.sampling.placeholders.stop}
-                  onIonInput={(event) => updateField("stopText", event.detail.value ?? "")}
-                />
-                <IonNote slot="helper">{messages.sampling.help.stop}</IonNote>
-              </IonItem>
-              <IonItem>
-                <IonLabel position="stacked">{messages.sampling.fields.logit_bias}</IonLabel>
-                <IonTextarea
-                  autoGrow
-                  value={liveForm.logitBiasText}
-                  placeholder={messages.sampling.placeholders.logit_bias}
-                  onIonInput={(event) =>
-                    updateField("logitBiasText", event.detail.value ?? "")
-                  }
-                />
-                <IonNote slot="helper">{messages.sampling.help.logit_bias}</IonNote>
-              </IonItem>
-            </IonList>
+
+            <SamplingGroupingToolbar
+              groupMode={groupMode}
+              activeGroupId={activeGroupId}
+              onGroupModeChange={(mode) => {
+                setGroupMode(mode);
+                setActiveGroupId(null);
+              }}
+              onActiveGroupChange={setActiveGroupId}
+            />
+
+            <LiveSamplingDials
+              liveForm={liveForm}
+              groupMode={groupMode}
+              activeGroupId={activeGroupId}
+              onNumericChange={updateNumericField}
+              onTextChange={updateTextField}
+            />
+
             <IonButton expand="block" disabled={saveBusy} onClick={() => void handleSave()}>
               {saveBusy ? <IonSpinner name="crescent" /> : messages.sampling.save}
             </IonButton>
@@ -497,28 +373,505 @@ const SamplingSettingsModal = ({
   );
 };
 
-function NumericField({
-  label,
-  help,
+function SamplingGroupingToolbar({
+  groupMode,
+  activeGroupId,
+  onGroupModeChange,
+  onActiveGroupChange,
+}: {
+  groupMode: SamplingGroupMode;
+  activeGroupId: string | null;
+  onGroupModeChange: (mode: SamplingGroupMode) => void;
+  onActiveGroupChange: (groupId: string | null) => void;
+}) {
+  const { messages } = useI18n();
+  const groups = groupsForMode(groupMode);
+
+  return (
+    <div
+      className="sampling-settings-modal__grouping"
+      role="toolbar"
+      aria-label={messages.sampling.groupingModeLabel}
+    >
+      <p className="sampling-settings-modal__grouping-label">
+        {messages.sampling.groupingModeLabel}
+      </p>
+      <div className="sampling-settings-modal__grouping-chips">
+        {GROUPING_MODES.map((mode) => (
+          <IonChip
+            key={mode}
+            outline={groupMode !== mode}
+            color={groupMode === mode ? "primary" : undefined}
+            onClick={() => onGroupModeChange(mode)}
+          >
+            {messages.sampling.groupingModes[mode]}
+          </IonChip>
+        ))}
+      </div>
+      {groups.length > 0 && groupMode !== "flat" ? (
+        <>
+          <p className="sampling-settings-modal__grouping-label">
+            {messages.sampling.groupingFilterLabel}
+          </p>
+          <div className="sampling-settings-modal__grouping-chips">
+            <IonChip
+              outline={activeGroupId !== null}
+              color={activeGroupId === null ? "primary" : undefined}
+              onClick={() => onActiveGroupChange(null)}
+            >
+              {messages.sampling.groupingFilterAll}
+            </IonChip>
+            {groups.map((group) => {
+              const meta = lookupGroupMeta(
+                groupMode,
+                group.id,
+                messages.sampling.roleGroups,
+                messages.sampling.impactGroups,
+              );
+              if (!meta) {
+                return null;
+              }
+              return (
+                <IonChip
+                  key={group.id}
+                  outline={activeGroupId !== group.id}
+                  color={activeGroupId === group.id ? "primary" : undefined}
+                  onClick={() => onActiveGroupChange(group.id)}
+                >
+                  {meta.title}
+                </IonChip>
+              );
+            })}
+          </div>
+        </>
+      ) : null}
+    </div>
+  );
+}
+
+function LiveSamplingDials({
+  liveForm,
+  groupMode,
+  activeGroupId,
+  onNumericChange,
+  onTextChange,
+}: {
+  liveForm: LiveFormState;
+  groupMode: SamplingGroupMode;
+  activeGroupId: string | null;
+  onNumericChange: (field: LiveNumericKey, value: number | null) => void;
+  onTextChange: (field: "stopText" | "logitBiasText", value: string) => void;
+}) {
+  const { messages } = useI18n();
+
+  if (groupMode === "flat") {
+    return (
+      <div
+        className="sampling-settings-modal__dials"
+        role="group"
+        aria-label={messages.sampling.liveHeading}
+      >
+        <div className="sampling-settings-modal__dials-grid">
+          {LIVE_NUMERIC_FIELD_ORDER.map((fieldKey) => (
+            <NumericDialField
+              key={fieldKey}
+              fieldKey={fieldKey}
+              label={messages.sampling.fields[fieldKey]}
+              help={messages.sampling.help[fieldKey]}
+              wheelHint={messages.sampling.wheelHint}
+              spec={SAMPLING_FIELD_SPECS[fieldKey]}
+              variant={SAMPLING_DIAL_VARIANTS[fieldKey]}
+              value={liveForm[fieldKey]}
+              unsetLabel={messages.common.none}
+              closeLabel={messages.common.close}
+              onChange={(value) => onNumericChange(fieldKey, value)}
+            />
+          ))}
+        </div>
+        <SamplingTextFields liveForm={liveForm} onTextChange={onTextChange} />
+      </div>
+    );
+  }
+
+  const groups = groupsForMode(groupMode).filter(
+    (group) => activeGroupId === null || group.id === activeGroupId,
+  );
+
+  return (
+    <div
+      className="sampling-settings-modal__dials sampling-settings-modal__dials--grouped"
+      role="group"
+      aria-label={messages.sampling.liveHeading}
+    >
+      {groups.map((group) => {
+        const meta = lookupGroupMeta(
+          groupMode,
+          group.id,
+          messages.sampling.roleGroups,
+          messages.sampling.impactGroups,
+        );
+        if (!meta) {
+          return null;
+        }
+        return (
+          <SamplingFieldGroupSection
+            key={group.id}
+            group={group}
+            title={meta.title}
+            hint={meta.hint}
+            liveForm={liveForm}
+            onNumericChange={onNumericChange}
+            onTextChange={onTextChange}
+          />
+        );
+      })}
+    </div>
+  );
+}
+
+function SamplingFieldGroupSection({
+  group,
+  title,
+  hint,
+  liveForm,
+  onNumericChange,
+  onTextChange,
+}: {
+  group: SamplingFieldGroup;
+  title: string;
+  hint: string;
+  liveForm: LiveFormState;
+  onNumericChange: (field: LiveNumericKey, value: number | null) => void;
+  onTextChange: (field: "stopText" | "logitBiasText", value: string) => void;
+}) {
+  const { messages } = useI18n();
+  if (group.numeric.length === 0 && !group.text?.length) {
+    return null;
+  }
+
+  return (
+    <section className="sampling-settings-modal__dial-group">
+      <header className="sampling-settings-modal__dial-group-header">
+        <h3 className="sampling-settings-modal__dial-group-title">{title}</h3>
+        <p className="sampling-settings-modal__dial-group-hint">{hint}</p>
+      </header>
+      {group.numeric.length > 0 ? (
+        <div className="sampling-settings-modal__dials-grid">
+          {group.numeric.map((fieldKey) => (
+            <NumericDialField
+              key={fieldKey}
+              fieldKey={fieldKey}
+              label={messages.sampling.fields[fieldKey]}
+              help={messages.sampling.help[fieldKey]}
+              wheelHint={messages.sampling.wheelHint}
+              spec={SAMPLING_FIELD_SPECS[fieldKey]}
+              variant={SAMPLING_DIAL_VARIANTS[fieldKey]}
+              value={liveForm[fieldKey]}
+              unsetLabel={messages.common.none}
+              closeLabel={messages.common.close}
+              onChange={(value) => onNumericChange(fieldKey, value)}
+            />
+          ))}
+        </div>
+      ) : null}
+      {group.text && group.text.length > 0 ? (
+        <SamplingTextFields
+          liveForm={liveForm}
+          fields={group.text}
+          onTextChange={onTextChange}
+          compact
+        />
+      ) : null}
+    </section>
+  );
+}
+
+function SamplingTextFields({
+  liveForm,
+  onTextChange,
+  fields = ["stop", "logit_bias"],
+  compact = false,
+}: {
+  liveForm: LiveFormState;
+  onTextChange: (field: "stopText" | "logitBiasText", value: string) => void;
+  fields?: SamplingTextFieldKey[];
+  compact?: boolean;
+}) {
+  const { messages } = useI18n();
+
+  const listClass = [
+    "sampling-settings-modal__form",
+    "sampling-settings-modal__form--text",
+    compact ? "sampling-settings-modal__form--text-compact" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    <IonList className={listClass} lines="full">
+      {fields.includes("stop") ? (
+        <IonItem>
+          <IonLabel position="stacked">{messages.sampling.fields.stop}</IonLabel>
+          <IonTextarea
+            autoGrow
+            value={liveForm.stopText}
+            placeholder={messages.sampling.placeholders.stop}
+            onIonInput={(event) => onTextChange("stopText", event.detail.value ?? "")}
+          />
+          <IonNote slot="helper">{messages.sampling.help.stop}</IonNote>
+        </IonItem>
+      ) : null}
+      {fields.includes("logit_bias") ? (
+        <IonItem>
+          <IonLabel position="stacked">{messages.sampling.fields.logit_bias}</IonLabel>
+          <IonTextarea
+            autoGrow
+            value={liveForm.logitBiasText}
+            placeholder={messages.sampling.placeholders.logit_bias}
+            onIonInput={(event) => onTextChange("logitBiasText", event.detail.value ?? "")}
+          />
+          <IonNote slot="helper">{messages.sampling.help.logit_bias}</IonNote>
+        </IonItem>
+      ) : null}
+    </IonList>
+  );
+}
+
+function EditableDialCenterValue({
   value,
+  spec,
+  unsetLabel,
+  editAriaLabel,
   onChange,
 }: {
+  value: number | null;
+  spec: FieldSpec;
+  unsetLabel: string;
+  editAriaLabel: string;
+  onChange: (value: number | null) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+
+  const active = value !== null;
+  const display = active ? formatNumericDisplay(value, spec) : unsetLabel;
+
+  useEffect(() => {
+    if (editing) {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    }
+  }, [editing]);
+
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (!trimmed) {
+      onChange(null);
+    } else {
+      const parsed = Number(trimmed);
+      if (Number.isFinite(parsed)) {
+        onChange(snapToSpec(parsed, spec));
+      }
+    }
+    setEditing(false);
+  };
+
+  if (editing) {
+    return (
+      <input
+        ref={inputRef}
+        type="number"
+        className="dial-regulator__value-input"
+        value={draft}
+        min={spec.min}
+        max={spec.max}
+        step={spec.step}
+        aria-label={editAriaLabel}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          event.stopPropagation();
+          if (event.key === "Enter") {
+            event.preventDefault();
+            commit();
+          } else if (event.key === "Escape") {
+            event.preventDefault();
+            setEditing(false);
+          }
+        }}
+        onPointerDown={(event) => event.stopPropagation()}
+        onClick={(event) => event.stopPropagation()}
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      className="dial-regulator__value-button"
+      aria-label={editAriaLabel}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => {
+        event.stopPropagation();
+        setDraft(active ? formatNumericDisplay(value, spec) : String(spec.min));
+        setEditing(true);
+      }}
+    >
+      {display}
+    </button>
+  );
+}
+
+function NumericDialField({
+  fieldKey,
+  label,
+  help,
+  wheelHint,
+  spec,
+  variant,
+  value,
+  unsetLabel,
+  closeLabel,
+  onChange,
+}: {
+  fieldKey: LiveNumericKey;
   label: string;
   help: string;
-  value: string;
-  onChange: (value: string) => void;
+  wheelHint: string;
+  spec: FieldSpec;
+  variant: DialRegulatorVariant;
+  value: number | null;
+  unsetLabel: string;
+  closeLabel: string;
+  onChange: (value: number | null) => void;
 }) {
+  const fieldRef = useRef<HTMLElement>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+  const isMirostat = fieldKey === "mirostat";
+  const isEditableCenter = fieldKey === "num_predict";
+  const active = value !== null;
+  const display = active ? formatNumericDisplay(value, spec) : unsetLabel;
+  const dialValue = active ? samplingValueToDial(value, spec, DIAL_STEPS) : 0;
+  const helpText = `${help} ${wheelHint}`;
+
+  useEffect(() => {
+    const node = fieldRef.current;
+    if (!node) {
+      return;
+    }
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      event.stopPropagation();
+      const direction = event.deltaY < 0 ? 1 : -1;
+      if (isMirostat) {
+        onChange(stepMirostatValue(value, direction > 0 ? 1 : -1));
+        return;
+      }
+      const base = value ?? spec.min;
+      onChange(snapToSpec(base + direction * spec.step, spec));
+    };
+    node.addEventListener("wheel", onWheel, { passive: false });
+    return () => node.removeEventListener("wheel", onWheel);
+  }, [isMirostat, onChange, spec, value]);
+
+  const fieldClass = [
+    "sampling-settings-modal__dial-field",
+    "sampling-settings-modal__dial-field--wheel",
+    isMirostat ? "sampling-settings-modal__dial-field--mirostat" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <IonItem>
-      <IonLabel position="stacked">{label}</IonLabel>
-      <IonInput
-        type="number"
-        inputMode="decimal"
-        value={value}
-        onIonInput={(event) => onChange(event.detail.value ?? "")}
-      />
-      <IonNote slot="helper">{help}</IonNote>
-    </IonItem>
+    <article ref={fieldRef} className={fieldClass}>
+      <div className="sampling-settings-modal__dial-field-header">
+        <h3 className="sampling-settings-modal__dial-field-label">{label}</h3>
+        <button
+          type="button"
+          className="sampling-settings-modal__dial-info"
+          aria-label={`${label}, informations`}
+          aria-expanded={helpOpen}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            setHelpOpen(true);
+          }}
+        >
+          i
+        </button>
+        {helpOpen ? (
+          <div
+            className="sampling-settings-modal__dial-help-panel"
+            role="dialog"
+            aria-label={label}
+          >
+            <p className="sampling-settings-modal__dial-help">{helpText}</p>
+            <IonButton
+              fill="clear"
+              size="small"
+              className="sampling-settings-modal__dial-help-close"
+              aria-label={closeLabel}
+              onClick={() => setHelpOpen(false)}
+            >
+              ×
+            </IonButton>
+          </div>
+        ) : null}
+      </div>
+      <div className="sampling-settings-modal__dial-wrap">
+        {isMirostat ? (
+          <MirostatRockerSwitch
+            value={value}
+            onChange={(next) => onChange(next)}
+            ariaLabel={`${label}, ${display}`}
+          />
+        ) : (
+          <DialRegulator
+            variant={variant}
+            size="sm"
+            value={dialValue}
+            min={0}
+            max={DIAL_STEPS}
+            valueLabel={!isEditableCenter ? display : undefined}
+            valueContent={
+              isEditableCenter ? (
+                <EditableDialCenterValue
+                  value={value}
+                  spec={spec}
+                  unsetLabel={unsetLabel}
+                  editAriaLabel={`${label}, modifier la valeur`}
+                  onChange={onChange}
+                />
+              ) : undefined
+            }
+            ariaLabel={`${label}, ${display}`}
+            className={
+              active
+                ? "sampling-settings-modal__dial"
+                : "sampling-settings-modal__dial sampling-settings-modal__dial--inactive"
+            }
+            onChange={(next) => onChange(dialToSamplingValue(next, spec, DIAL_STEPS))}
+          />
+        )}
+        {active ? (
+          <IonButton
+            fill="clear"
+            size="small"
+            className="sampling-settings-modal__dial-unset"
+            aria-label={unsetLabel}
+            onClick={() => onChange(null)}
+          >
+            ×
+          </IonButton>
+        ) : null}
+      </div>
+      <p className="sampling-settings-modal__dial-bounds">
+        {isMirostat
+          ? "0, 1 ou 2"
+          : `${formatNumericDisplay(spec.min, spec)} — ${formatNumericDisplay(spec.max, spec)}`}
+      </p>
+    </article>
   );
 }
 

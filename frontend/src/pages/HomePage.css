@@ -14,6 +14,17 @@
   --min-height: auto;
 }
 
+/* Keep header actions (Modeles, API docs) above scrollable tab content */
+ion-page ion-header {
+  z-index: 10;
+}
+
+ion-toolbar ion-buttons[slot="end"] {
+  flex-shrink: 0;
+  max-width: none;
+  overflow: visible;
+}
+
 .service-status-bar {
   display: flex;
   flex-wrap: wrap;

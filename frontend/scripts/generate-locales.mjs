@@ -234,6 +234,55 @@ const fr = {
     ollamaInactive:
       "MODEL_BACKEND=ollama requis pour un essai reel. Le profil live reste enregistre.",
     persistPathPrefix: "Fichier de persistance (live) :",
+    groupingModeLabel: "Affichage des reglages",
+    groupingModes: {
+      flat: "Tout",
+      role: "Par role",
+      impact: "Par impact",
+    },
+    groupingFilterAll: "Tous les groupes",
+    groupingFilterLabel: "Groupe affiche",
+    wheelHint: "Molette au survol.",
+    roleGroups: {
+      length: {
+        title: "A. Longueur et fin",
+        hint: "Reponse courte ou longue, arret sur une sequence.",
+      },
+      creativity: {
+        title: "B. Creativite globale",
+        hint: "Froid et precis ou inventif — ne monte pas temperature et Mirostat en meme temps.",
+      },
+      pool: {
+        title: "C. Vivier de mots",
+        hint: "Moins de derapages ; 1 a 2 reglages, pas les trois au max.",
+      },
+      antiRepeat: {
+        title: "D. Anti-repetition",
+        hint: "Si le texte tourne en rond.",
+      },
+      surgery: {
+        title: "E. Chirurgie",
+        hint: "Forcer ou interdire un token precis (rare).",
+      },
+    },
+    impactGroups: {
+      veryStrong: {
+        title: "Tres fort",
+        hint: "Ton, diversite, boucles ou taille changent vite.",
+      },
+      strong: {
+        title: "Fort",
+        hint: "Redefinit fortement le choix du prochain mot.",
+      },
+      medium: {
+        title: "Moyen",
+        hint: "Affinage surtout si repetitions genantes.",
+      },
+      targeted: {
+        title: "Cible / faible",
+        hint: "Effet local (un mot, une coupure).",
+      },
+    },
     fields: {
       temperature: "Temperature",
       top_k: "Top-k",
@@ -705,6 +754,55 @@ Object.assign(en, {
     ollamaInactive:
       "MODEL_BACKEND=ollama is required for a real trial. The live profile is still saved.",
     persistPathPrefix: "Persistence file (live):",
+    groupingModeLabel: "Settings layout",
+    groupingModes: {
+      flat: "All",
+      role: "By role",
+      impact: "By impact",
+    },
+    groupingFilterAll: "All groups",
+    groupingFilterLabel: "Visible group",
+    wheelHint: "Scroll wheel on hover.",
+    roleGroups: {
+      length: {
+        title: "A. Length and stop",
+        hint: "Short or long reply, stop on a sequence.",
+      },
+      creativity: {
+        title: "B. Global creativity",
+        hint: "Precise vs inventive — do not crank temperature and Mirostat together.",
+      },
+      pool: {
+        title: "C. Token pool",
+        hint: "Fewer derailments; tune 1–2 knobs, not all three maxed.",
+      },
+      antiRepeat: {
+        title: "D. Anti-repetition",
+        hint: "When the text loops.",
+      },
+      surgery: {
+        title: "E. Surgery",
+        hint: "Force or block a specific token (rare).",
+      },
+    },
+    impactGroups: {
+      veryStrong: {
+        title: "Very strong",
+        hint: "Tone, diversity, loops, or length change quickly.",
+      },
+      strong: {
+        title: "Strong",
+        hint: "Strongly reshapes the next-token choice.",
+      },
+      medium: {
+        title: "Medium",
+        hint: "Mostly when repetitions are annoying.",
+      },
+      targeted: {
+        title: "Targeted / mild",
+        hint: "Local effect (one token, one cut).",
+      },
+    },
     fields: {
       temperature: "Temperature",
       top_k: "Top-k",

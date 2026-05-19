@@ -230,12 +230,61 @@
     "previewError": "Live trial failed.",
     "ollamaInactive": "MODEL_BACKEND=ollama is required for a real trial. The live profile is still saved.",
     "persistPathPrefix": "Persistence file (live):",
+    "groupingModeLabel": "Settings layout",
+    "groupingModes": {
+      "flat": "All",
+      "role": "By role",
+      "impact": "By impact"
+    },
+    "groupingFilterAll": "All groups",
+    "groupingFilterLabel": "Visible group",
+    "wheelHint": "Scroll wheel on hover.",
+    "roleGroups": {
+      "length": {
+        "title": "A. Length and stop",
+        "hint": "Short or long reply, stop on a sequence."
+      },
+      "creativity": {
+        "title": "B. Global creativity",
+        "hint": "Precise vs inventive — do not crank temperature and Mirostat together."
+      },
+      "pool": {
+        "title": "C. Token pool",
+        "hint": "Fewer derailments; tune 1–2 knobs, not all three maxed."
+      },
+      "antiRepeat": {
+        "title": "D. Anti-repetition",
+        "hint": "When the text loops."
+      },
+      "surgery": {
+        "title": "E. Surgery",
+        "hint": "Force or block a specific token (rare)."
+      }
+    },
+    "impactGroups": {
+      "veryStrong": {
+        "title": "Very strong",
+        "hint": "Tone, diversity, loops, or length change quickly."
+      },
+      "strong": {
+        "title": "Strong",
+        "hint": "Strongly reshapes the next-token choice."
+      },
+      "medium": {
+        "title": "Medium",
+        "hint": "Mostly when repetitions are annoying."
+      },
+      "targeted": {
+        "title": "Targeted / mild",
+        "hint": "Local effect (one token, one cut)."
+      }
+    },
     "fields": {
       "temperature": "Temperature",
       "top_k": "Top-k",
       "top_p": "Top-p (nucleus)",
       "min_p": "Min-p",
-      "mirostat": "Mirostat (0, 1, or 2)",
+      "mirostat": "Mirostat",
       "mirostat_eta": "Mirostat eta",
       "mirostat_tau": "Mirostat tau",
       "presence_penalty": "Presence penalty",

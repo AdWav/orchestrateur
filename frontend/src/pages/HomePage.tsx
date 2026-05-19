@@ -628,192 +628,6 @@ const HomePage = ({
               </div>
             </IonContent>
           </IonModal>
-
-          <IonModal
-            id="ollama-models-modal"
-            className="popup-modal ollama-models-modal"
-            isOpen={ollamaModelsModal !== null}
-            onDidDismiss={() => setOllamaModelsModal(null)}
-          >
-            <IonHeader>
-              <IonToolbar>
-                <IonTitle>
-                  {ollamaModelsModal?.kind === "error"
-                    ? messages.header.ollamaListErrorTitle
-                    : messages.header.ollamaListTitle}
-                </IonTitle>
-                <IonButtons slot="end">
-                  <IonButton onClick={() => setOllamaModelsModal(null)}>
-                    {messages.common.close}
-                  </IonButton>
-                </IonButtons>
-              </IonToolbar>
-            </IonHeader>
-            <IonContent className="ion-padding">
-              {ollamaModelsModal?.kind === "list" ? (
-                <>
-                  <h2 className="ollama-models-modal__heading">
-                    {messages.header.ollamaRuntimeHeading}
-                  </h2>
-                  {ollamaModelsModal.settings ? (
-                    <>
-                      {!ollamaModelsModal.settings.ollama_routing_active ? (
-                        <IonNote color="medium" className="ollama-models-modal__note">
-                          {messages.header.ollamaRoutingInactive}
-                        </IonNote>
-                      ) : null}
-                      {ollamaModelsModal.settings.settings_persist_path ? (
-                        <IonNote color="medium" className="ollama-models-modal__note">
-                          {messages.header.ollamaPersistPathPrefix}{" "}
-                          <code>{ollamaModelsModal.settings.settings_persist_path}</code>
-                        </IonNote>
-                      ) : null}
-                      {!runtimeDraft || ollamaModelsModal.models.length === 0 ? (
-                        <IonNote color="warning" className="ollama-models-modal__note">
-                          {messages.header.ollamaListEmpty}
-                        </IonNote>
-                      ) : (
-                        <>
-                          <IonList className="ollama-models-modal__controls" lines="none">
-                            <IonItem lines="full">
-                              <IonLabel>{messages.header.ollamaRuntimeDefaultLabel}</IonLabel>
-                              <IonSelect
-                                interface="popover"
-                                value={runtimeDraft.defaultModel}
-                                disabled={runtimeSaveBusy}
-                                onIonChange={(event) => {
-                                  const value = String(event.detail.value ?? "");
-                                  setRuntimeDraft((draft) =>
-                                    draft ? { ...draft, defaultModel: value } : draft,
-                                  );
-                                }}
-                                slot="end"
-                                aria-label={messages.header.ollamaRuntimeDefaultLabel}
-                              >
-                                {ollamaModelsModal.models.map((name) => (
-                                  <IonSelectOption key={name} value={name}>
-                                    {name}
-                                  </IonSelectOption>
-                                ))}
-                              </IonSelect>
-                            </IonItem>
-                            {ollamaModelsModal.settings.pipeline_steps.map((step: string) => (
-                              <IonItem key={step} lines="full">
-                                <IonLabel position="stacked">
-                                  {runtimeRoleLabel(step)}
-                                  <IonNote>
-                                    <code>{step}</code>
-                                  </IonNote>
-                                </IonLabel>
-                                <IonSelect
-                                  interface="popover"
-                                  value={runtimeDraft.runners[step]}
-                                  disabled={runtimeSaveBusy}
-                                  onIonChange={(event) => {
-                                    const value = String(event.detail.value ?? "");
-                                    setRuntimeDraft((draft) =>
-                                      draft
-                                        ? {
-                                            ...draft,
-                                            runners: {
-                                              ...draft.runners,
-                                              [step]: value,
-                                            },
-                                          }
-                                        : draft,
-                                  );
-                                  }}
-                                  slot="end"
-                                  aria-label={`${runtimeRoleLabel(step)} (${step})`}
-                                >
-                                  {ollamaModelsModal.models.map((name) => (
-                                    <IonSelectOption key={name} value={name}>
-                                      {name}
-                                    </IonSelectOption>
-                                  ))}
-                                </IonSelect>
-                              </IonItem>
-                            ))}
-                          </IonList>
-                          <IonButton
-                            expand="block"
-                            disabled={
-                              runtimeSaveBusy ||
-                              !ollamaModelsModal.settings.ollama_routing_active
-                            }
-                            onClick={() => void saveRuntimeDraft()}
-                          >
-                            {runtimeSaveBusy ? <IonSpinner name="crescent" /> : messages.header.ollamaSaveRuntime}
-                          </IonButton>
-                        </>
-                      )}
-                    </>
-                  ) : (
-                    <IonNote color="medium" className="ollama-models-modal__note">
-                      {messages.header.ollamaRuntimeSettingsFetchError}
-                    </IonNote>
-                  )}
-                  <h3 className="ollama-models-modal__list-title">{messages.header.ollamaModelsInstalledTitle}</h3>
-                  <p className="ollama-models-modal__subtitle">
-                    <IonNote>{messages.header.ollamaListSubtitle}</IonNote>
-                  </p>
-                  {ollamaModelsModal.models.length > 0 ? (
-                    <IonList className="ollama-models-modal__list" lines="full">
-                      {ollamaModelsModal.models.map((name) => (
-                        <IonItem key={name}>
-                          <IonLabel>
-                            <code className="ollama-models-modal__model-name">{name}</code>
-                          </IonLabel>
-                          <IonButtons slot="end">
-                            <IonButton
-                              size="small"
-                              fill="outline"
-                              disabled={
-                                modelActionBusy === `warm:${name}` ||
-                                modelActionBusy === `unload:${name}`
-                              }
-                              onClick={() => void triggerModelWarm(name)}
-                            >
-                              {modelActionBusy === `warm:${name}` ? (
-                                <IonSpinner name="crescent" />
-                              ) : (
-                                messages.header.ollamaWarm
-                              )}
-                            </IonButton>
-                            <IonButton
-                              size="small"
-                              fill="outline"
-                              color="medium"
-                              disabled={
-                                modelActionBusy === `warm:${name}` ||
-                                modelActionBusy === `unload:${name}`
-                              }
-                              onClick={() => void triggerModelUnload(name)}
-                            >
-                              {modelActionBusy === `unload:${name}` ? (
-                                <IonSpinner name="crescent" />
-                              ) : (
-                                messages.header.ollamaUnload
-                              )}
-                            </IonButton>
-                          </IonButtons>
-                        </IonItem>
-                      ))}
-                    </IonList>
-                  ) : (
-                    <IonNote color="medium" className="ollama-models-modal__empty">
-                      {messages.header.ollamaListEmpty}
-                    </IonNote>
-                  )}
-                </>
-              ) : null}
-              {ollamaModelsModal?.kind === "error" ? (
-                <IonNote color="danger" className="ollama-models-modal__error">
-                  {ollamaModelsModal.message}
-                </IonNote>
-              ) : null}
-            </IonContent>
-          </IonModal>
               <DevTeamsSection />
             </>
           ) : null}
@@ -823,6 +637,198 @@ const HomePage = ({
           ) : null}
         </div>
       </IonContent>
+
+      <IonModal
+        id="ollama-models-modal"
+        className="popup-modal ollama-models-modal"
+        isOpen={ollamaModelsModal !== null}
+        onDidDismiss={() => setOllamaModelsModal(null)}
+      >
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>
+              {ollamaModelsModal?.kind === "error"
+                ? messages.header.ollamaListErrorTitle
+                : messages.header.ollamaListTitle}
+            </IonTitle>
+            <IonButtons slot="end">
+              <IonButton onClick={() => setOllamaModelsModal(null)}>
+                {messages.common.close}
+              </IonButton>
+            </IonButtons>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          {ollamaModelsModal?.kind === "list" ? (
+            <>
+              <h2 className="ollama-models-modal__heading">
+                {messages.header.ollamaRuntimeHeading}
+              </h2>
+              {ollamaModelsModal.settings ? (
+                <>
+                  {!ollamaModelsModal.settings.ollama_routing_active ? (
+                    <IonNote color="medium" className="ollama-models-modal__note">
+                      {messages.header.ollamaRoutingInactive}
+                    </IonNote>
+                  ) : null}
+                  {ollamaModelsModal.settings.settings_persist_path ? (
+                    <IonNote color="medium" className="ollama-models-modal__note">
+                      {messages.header.ollamaPersistPathPrefix}{" "}
+                      <code>{ollamaModelsModal.settings.settings_persist_path}</code>
+                    </IonNote>
+                  ) : null}
+                  {!runtimeDraft || ollamaModelsModal.models.length === 0 ? (
+                    <IonNote color="warning" className="ollama-models-modal__note">
+                      {messages.header.ollamaListEmpty}
+                    </IonNote>
+                  ) : (
+                    <>
+                      <IonList className="ollama-models-modal__controls" lines="none">
+                        <IonItem lines="full">
+                          <IonLabel>{messages.header.ollamaRuntimeDefaultLabel}</IonLabel>
+                          <IonSelect
+                            interface="popover"
+                            value={runtimeDraft.defaultModel}
+                            disabled={runtimeSaveBusy}
+                            onIonChange={(event) => {
+                              const value = String(event.detail.value ?? "");
+                              setRuntimeDraft((draft) =>
+                                draft ? { ...draft, defaultModel: value } : draft,
+                              );
+                            }}
+                            slot="end"
+                            aria-label={messages.header.ollamaRuntimeDefaultLabel}
+                          >
+                            {ollamaModelsModal.models.map((name) => (
+                              <IonSelectOption key={name} value={name}>
+                                {name}
+                              </IonSelectOption>
+                            ))}
+                          </IonSelect>
+                        </IonItem>
+                        {ollamaModelsModal.settings.pipeline_steps.map((step: string) => (
+                          <IonItem key={step} lines="full">
+                            <IonLabel position="stacked">
+                              {runtimeRoleLabel(step)}
+                              <IonNote>
+                                <code>{step}</code>
+                              </IonNote>
+                            </IonLabel>
+                            <IonSelect
+                              interface="popover"
+                              value={runtimeDraft.runners[step]}
+                              disabled={runtimeSaveBusy}
+                              onIonChange={(event) => {
+                                const value = String(event.detail.value ?? "");
+                                setRuntimeDraft((draft) =>
+                                  draft
+                                    ? {
+                                        ...draft,
+                                        runners: {
+                                          ...draft.runners,
+                                          [step]: value,
+                                        },
+                                      }
+                                    : draft,
+                                );
+                              }}
+                              slot="end"
+                              aria-label={`${runtimeRoleLabel(step)} (${step})`}
+                            >
+                              {ollamaModelsModal.models.map((name) => (
+                                <IonSelectOption key={name} value={name}>
+                                  {name}
+                                </IonSelectOption>
+                              ))}
+                            </IonSelect>
+                          </IonItem>
+                        ))}
+                      </IonList>
+                      <IonButton
+                        expand="block"
+                        disabled={
+                          runtimeSaveBusy ||
+                          !ollamaModelsModal.settings.ollama_routing_active
+                        }
+                        onClick={() => void saveRuntimeDraft()}
+                      >
+                        {runtimeSaveBusy ? (
+                          <IonSpinner name="crescent" />
+                        ) : (
+                          messages.header.ollamaSaveRuntime
+                        )}
+                      </IonButton>
+                    </>
+                  )}
+                </>
+              ) : (
+                <IonNote color="medium" className="ollama-models-modal__note">
+                  {messages.header.ollamaRuntimeSettingsFetchError}
+                </IonNote>
+              )}
+              <h3 className="ollama-models-modal__list-title">
+                {messages.header.ollamaModelsInstalledTitle}
+              </h3>
+              <p className="ollama-models-modal__subtitle">
+                <IonNote>{messages.header.ollamaListSubtitle}</IonNote>
+              </p>
+              {ollamaModelsModal.models.length > 0 ? (
+                <IonList className="ollama-models-modal__list" lines="full">
+                  {ollamaModelsModal.models.map((name) => (
+                    <IonItem key={name}>
+                      <IonLabel>
+                        <code className="ollama-models-modal__model-name">{name}</code>
+                      </IonLabel>
+                      <IonButtons slot="end">
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          disabled={
+                            modelActionBusy === `warm:${name}` ||
+                            modelActionBusy === `unload:${name}`
+                          }
+                          onClick={() => void triggerModelWarm(name)}
+                        >
+                          {modelActionBusy === `warm:${name}` ? (
+                            <IonSpinner name="crescent" />
+                          ) : (
+                            messages.header.ollamaWarm
+                          )}
+                        </IonButton>
+                        <IonButton
+                          size="small"
+                          fill="outline"
+                          color="medium"
+                          disabled={
+                            modelActionBusy === `warm:${name}` ||
+                            modelActionBusy === `unload:${name}`
+                          }
+                          onClick={() => void triggerModelUnload(name)}
+                        >
+                          {modelActionBusy === `unload:${name}` ? (
+                            <IonSpinner name="crescent" />
+                          ) : (
+                            messages.header.ollamaUnload
+                          )}
+                        </IonButton>
+                      </IonButtons>
+                    </IonItem>
+                  ))}
+                </IonList>
+              ) : (
+                <IonNote color="medium" className="ollama-models-modal__empty">
+                  {messages.header.ollamaListEmpty}
+                </IonNote>
+              )}
+            </>
+          ) : null}
+          {ollamaModelsModal?.kind === "error" ? (
+            <IonNote color="danger" className="ollama-models-modal__error">
+              {ollamaModelsModal.message}
+            </IonNote>
+          ) : null}
+        </IonContent>
+      </IonModal>
     </IonPage>
   );
 };

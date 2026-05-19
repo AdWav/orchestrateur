@@ -230,12 +230,61 @@
     "previewError": "L'essai live a echoue.",
     "ollamaInactive": "MODEL_BACKEND=ollama requis pour un essai reel. Le profil live reste enregistre.",
     "persistPathPrefix": "Fichier de persistance (live) :",
+    "groupingModeLabel": "Affichage des reglages",
+    "groupingModes": {
+      "flat": "Tout",
+      "role": "Par role",
+      "impact": "Par impact"
+    },
+    "groupingFilterAll": "Tous les groupes",
+    "groupingFilterLabel": "Groupe affiche",
+    "wheelHint": "Molette au survol.",
+    "roleGroups": {
+      "length": {
+        "title": "A. Longueur et fin",
+        "hint": "Reponse courte ou longue, arret sur une sequence."
+      },
+      "creativity": {
+        "title": "B. Creativite globale",
+        "hint": "Froid et precis ou inventif — ne monte pas temperature et Mirostat en meme temps."
+      },
+      "pool": {
+        "title": "C. Vivier de mots",
+        "hint": "Moins de derapages ; 1 a 2 reglages, pas les trois au max."
+      },
+      "antiRepeat": {
+        "title": "D. Anti-repetition",
+        "hint": "Si le texte tourne en rond."
+      },
+      "surgery": {
+        "title": "E. Chirurgie",
+        "hint": "Forcer ou interdire un token precis (rare)."
+      }
+    },
+    "impactGroups": {
+      "veryStrong": {
+        "title": "Tres fort",
+        "hint": "Ton, diversite, boucles ou taille changent vite."
+      },
+      "strong": {
+        "title": "Fort",
+        "hint": "Redefinit fortement le choix du prochain mot."
+      },
+      "medium": {
+        "title": "Moyen",
+        "hint": "Affinage surtout si repetitions genantes."
+      },
+      "targeted": {
+        "title": "Cible / faible",
+        "hint": "Effet local (un mot, une coupure)."
+      }
+    },
     "fields": {
       "temperature": "Temperature",
       "top_k": "Top-k",
       "top_p": "Top-p (nucleus)",
       "min_p": "Min-p",
-      "mirostat": "Mirostat (0, 1 ou 2)",
+      "mirostat": "Mirostat",
       "mirostat_eta": "Mirostat eta",
       "mirostat_tau": "Mirostat tau",
       "presence_penalty": "Presence penalty",
