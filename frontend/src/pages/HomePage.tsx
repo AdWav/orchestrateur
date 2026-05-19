@@ -28,8 +28,14 @@ import { moonOutline, sunnyOutline } from "ionicons/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
+import AppNavBar from "../components/AppNavBar";
 import SamplingSettingsModal from "../components/SamplingSettingsModal";
 import DevTeamsSection from "../components/DevTeamsSection";
+import {
+  APP_TAB_LOCAL_ORCHESTRATOR,
+  APP_TAB_SAMPLING,
+  type AppTabId,
+} from "../navigation/appTabs";
 import { useI18n } from "../i18n/I18nProvider";
 import { getActiveTranslator } from "../i18n/core";
 import {
@@ -56,7 +62,6 @@ import "./HomePage.css";
 
 const backendServiceKey = "po";
 const samplingServiceKey = "sampling";
-const heroServiceKeys = new Set([backendServiceKey, samplingServiceKey]);
 
 type HomePageProps = {
   themeMode: ThemeMode;
@@ -189,8 +194,8 @@ const HomePage = ({
   } = useI18n();
   const queryClient = useQueryClient();
   const [presentToast] = useIonToast();
+  const [activeTab, setActiveTab] = useState<AppTabId>(APP_TAB_LOCAL_ORCHESTRATOR);
   const [isBackendCardVisible, setIsBackendCardVisible] = useState(false);
-  const [isSamplingModalOpen, setIsSamplingModalOpen] = useState(false);
   const [isAgentModalOpen, setIsAgentModalOpen] = useState(false);
   const [isWorkflowModalOpen, setIsWorkflowModalOpen] = useState(false);
   const [agentForm, setAgentForm] = useState<AgentFormState>(defaultAgentFormState);
@@ -281,6 +286,8 @@ const HomePage = ({
   const bootstrapError = healthQuery.error ?? null;
   const isLoading = healthQuery.isLoading;
   const services = serviceStatusQuery.data?.services ?? [];
+  const backendService = services.find((service) => service.key === backendServiceKey);
+  const samplingService = services.find((service) => service.key === samplingServiceKey);
   const agentDefinitions = agentDefinitionsQuery.data ?? [];
   const workflowDefinitions = workflowDefinitionsQuery.data ?? [];
   const agentDefinitionsById = Object.fromEntries(
@@ -463,7 +470,7 @@ const HomePage = ({
     <IonPage>
       <IonHeader translucent>
         <IonToolbar>
-          <IonTitle>{messages.app.title}</IonTitle>
+          <IonTitle>{messages.app.brandTitle}</IonTitle>
           <IonButtons slot="end">
             <div
               className="language-switch"
@@ -523,70 +530,47 @@ const HomePage = ({
             </IonButton>
           </IonButtons>
         </IonToolbar>
+        <IonToolbar className="app-nav-toolbar">
+          <AppNavBar
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            serviceActive={{
+              [APP_TAB_LOCAL_ORCHESTRATOR]: backendService?.active,
+              [APP_TAB_SAMPLING]: samplingService?.active,
+            }}
+          />
+        </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
         <div className="home-shell">
-          <section className="hero-card">
-            <div className="service-lights">
-              {services
-                .filter((service) => heroServiceKeys.has(service.key))
-                .map((service) => {
-                  const isBackendService = service.key === backendServiceKey;
-                  const isSamplingService = service.key === samplingServiceKey;
-                  const isSelected = isBackendService
-                    ? isBackendCardVisible
-                    : isSamplingModalOpen;
-
-                const serviceLightContent = (
-                  <>
+          {activeTab === APP_TAB_LOCAL_ORCHESTRATOR ? (
+            <>
+              {backendService ? (
+                <section className="service-status-bar">
+                  <button
+                    type="button"
+                    className="service-light service-light-button"
+                    onClick={() => setIsBackendCardVisible(true)}
+                    aria-expanded={isBackendCardVisible}
+                    aria-controls="backend-health-modal"
+                    aria-haspopup="dialog"
+                  >
                     <span
                       className={
-                        service.active
+                        backendService.active
                           ? "service-light__dot service-light__dot--up"
                           : "service-light__dot service-light__dot--down"
                       }
                     />
                     <div>
-                      <strong>{meshServiceLabel(service.key)}</strong>
-                      <span>{formatServiceTarget(service)}</span>
+                      <strong>{meshServiceLabel(backendService.key)}</strong>
+                      <span>{formatServiceTarget(backendService)}</span>
                     </div>
-                  </>
-                );
-
-                return (
-                  <button
-                    key={service.key}
-                    type="button"
-                    className={
-                      isSelected
-                        ? "service-light service-light-button service-light--selected"
-                        : "service-light service-light-button"
-                    }
-                    onClick={() => {
-                      if (isBackendService) {
-                        setIsSamplingModalOpen(false);
-                        setIsBackendCardVisible(true);
-                        return;
-                      }
-                      if (isSamplingService) {
-                        setIsBackendCardVisible(false);
-                        setIsSamplingModalOpen(true);
-                      }
-                    }}
-                    aria-expanded={isSelected}
-                    aria-controls={
-                        isBackendService ? "backend-health-modal" : "sampling-settings-modal"
-                    }
-                    aria-haspopup="dialog"
-                  >
-                    {serviceLightContent}
                   </button>
-                );
-              })}
-            </div>
-          </section>
+                </section>
+              ) : null}
 
-          <IonModal
+              <IonModal
             id="backend-health-modal"
             className="popup-modal"
             isOpen={isBackendCardVisible}
@@ -644,11 +628,6 @@ const HomePage = ({
               </div>
             </IonContent>
           </IonModal>
-
-          <SamplingSettingsModal
-            isOpen={isSamplingModalOpen}
-            onDismiss={() => setIsSamplingModalOpen(false)}
-          />
 
           <IonModal
             id="ollama-models-modal"
@@ -835,7 +814,13 @@ const HomePage = ({
               ) : null}
             </IonContent>
           </IonModal>
-          <DevTeamsSection />
+              <DevTeamsSection />
+            </>
+          ) : null}
+
+          {activeTab === APP_TAB_SAMPLING ? (
+            <SamplingSettingsModal embedded isOpen />
+          ) : null}
         </div>
       </IonContent>
     </IonPage>

@@ -169,7 +169,7 @@ export function applyDocumentLanguage(language: Language) {
   if (typeof document !== "undefined") {
     document.documentElement.lang = language;
     document.documentElement.dataset.language = language;
-    document.title = messages.app.title;
+    document.title = messages.app.brandTitle;
 
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {

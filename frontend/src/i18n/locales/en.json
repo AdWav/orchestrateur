@@ -1,7 +1,15 @@
 {
   "app": {
+    "brandTitle": "Orchestrator",
     "title": "Local Orchestrator",
     "description": "Mobile-first web-native interface to drive the local orchestrator."
+  },
+  "nav": {
+    "ariaLabel": "Service navigation",
+    "tabs": {
+      "localOrchestrator": "Local Orchestrator",
+      "sampling": "Sampling"
+    }
   },
   "header": {
     "apiDocs": "API",

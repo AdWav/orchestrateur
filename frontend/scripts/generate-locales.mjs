@@ -7,9 +7,17 @@ const outDir = join(root, "src", "i18n", "locales");
 
 const fr = {
   app: {
+    brandTitle: "Orchestrateur",
     title: "Orchestrateur Local",
     description:
       "Interface web-native mobile-first pour piloter l'orchestrateur local.",
+  },
+  nav: {
+    ariaLabel: "Navigation des services",
+    tabs: {
+      localOrchestrator: "Orchestrateur Local",
+      sampling: "Echantillonnage",
+    },
   },
   header: {
     apiDocs: "API",
@@ -498,8 +506,16 @@ const fr = {
 const en = structuredClone(fr);
 
 en.app = {
+  brandTitle: "Orchestrator",
   title: "Local Orchestrator",
   description: "Mobile-first web-native interface to drive the local orchestrator.",
+};
+en.nav = {
+  ariaLabel: "Service navigation",
+  tabs: {
+    localOrchestrator: "Local Orchestrator",
+    sampling: "Sampling",
+  },
 };
 Object.assign(en.header, {
   languageSwitcher: "Change language",

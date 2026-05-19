@@ -29,7 +29,9 @@ import "./SamplingSettingsModal.css";
 
 type SamplingSettingsModalProps = {
   isOpen: boolean;
-  onDismiss: () => void;
+  onDismiss?: () => void;
+  /** Affiche le contenu en page (onglet nav) plutot qu'en modal. */
+  embedded?: boolean;
 };
 
 type LiveFormState = {
@@ -163,7 +165,11 @@ function profileSummaryLines(
   return lines;
 }
 
-const SamplingSettingsModal = ({ isOpen, onDismiss }: SamplingSettingsModalProps) => {
+const SamplingSettingsModal = ({
+  isOpen,
+  onDismiss,
+  embedded = false,
+}: SamplingSettingsModalProps) => {
   const { messages } = useI18n();
   const [presentToast] = useIonToast();
   const [loading, setLoading] = useState(false);
@@ -179,8 +185,10 @@ const SamplingSettingsModal = ({ isOpen, onDismiss }: SamplingSettingsModalProps
     ollama_active: boolean;
   } | null>(null);
 
+  const shouldLoad = embedded || isOpen;
+
   useEffect(() => {
-    if (!isOpen) {
+    if (!shouldLoad) {
       return;
     }
     let cancelled = false;
@@ -215,7 +223,7 @@ const SamplingSettingsModal = ({ isOpen, onDismiss }: SamplingSettingsModalProps
     return () => {
       cancelled = true;
     };
-  }, [isOpen]);
+  }, [shouldLoad]);
 
   const updateField = (field: keyof LiveFormState, value: string) => {
     setLiveForm((current) => (current ? { ...current, [field]: value } : current));
@@ -281,22 +289,14 @@ const SamplingSettingsModal = ({ isOpen, onDismiss }: SamplingSettingsModalProps
       ? profileSummaryLines(orchestration, messages.sampling.fields)
       : [];
 
-  return (
-    <IonModal
-      id="sampling-settings-modal"
-      className="popup-modal sampling-settings-modal"
-      isOpen={isOpen}
-      onDidDismiss={onDismiss}
+  const body = (
+    <div
+      className={
+        embedded
+          ? "sampling-settings-panel ion-padding"
+          : "sampling-settings-modal__body ion-padding"
+      }
     >
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>{messages.sampling.title}</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={onDismiss}>{messages.common.close}</IonButton>
-          </IonButtons>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">
         {loading ? (
           <div className="sampling-settings-modal__loading">
             <IonSpinner name="crescent" />
@@ -470,7 +470,29 @@ const SamplingSettingsModal = ({ isOpen, onDismiss }: SamplingSettingsModalProps
             ) : null}
           </>
         ) : null}
-      </IonContent>
+    </div>
+  );
+
+  if (embedded) {
+    return body;
+  }
+
+  return (
+    <IonModal
+      id="sampling-settings-modal"
+      className="popup-modal sampling-settings-modal"
+      isOpen={isOpen}
+      onDidDismiss={onDismiss}
+    >
+      <IonHeader>
+        <IonToolbar>
+          <IonTitle>{messages.sampling.title}</IonTitle>
+          <IonButtons slot="end">
+            <IonButton onClick={onDismiss}>{messages.common.close}</IonButton>
+          </IonButtons>
+        </IonToolbar>
+      </IonHeader>
+      <IonContent>{body}</IonContent>
     </IonModal>
   );
 };

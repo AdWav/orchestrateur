@@ -1,3 +1,8 @@
+.sampling-settings-panel {
+  display: grid;
+  gap: 12px;
+}
+
 ion-modal.sampling-settings-modal {
   --width: min(560px, 94vw);
 }

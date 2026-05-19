@@ -1,11 +1,23 @@
 .home-shell {
   display: grid;
   gap: 16px;
-  padding: calc(72px + env(safe-area-inset-top)) 16px
+  padding: calc(120px + env(safe-area-inset-top)) 16px
     calc(24px + env(safe-area-inset-bottom));
   margin: 0 auto;
   max-width: 960px;
   color: var(--ion-text-color, #0f172a);
+}
+
+.app-nav-toolbar {
+  --padding-start: 0;
+  --padding-end: 0;
+  --min-height: auto;
+}
+
+.service-status-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .hero-card {
