@@ -1,0 +1,23 @@
+{
+  "id": "database",
+  "name": "Base de donnees",
+  "business_role": "Database",
+  "mission": "Definir schema, migrations SQL et contraintes d'integrite.",
+  "runner_role": "database",
+  "capabilities": [
+    "SQL",
+    "migrations",
+    "index"
+  ],
+  "inputs": [
+    "schematic",
+    "api_contract"
+  ],
+  "outputs": [
+    "schema_ddl",
+    "migration_files"
+  ],
+  "guardrails": [
+    "Aligner le schema avec le contrat d'API."
+  ]
+}

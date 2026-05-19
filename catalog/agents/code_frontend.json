@@ -1,0 +1,25 @@
+{
+  "id": "code_frontend",
+  "name": "Code frontend",
+  "business_role": "Frontend developer",
+  "mission": "Implementer l'interface, l'etat client et les appels vers l'API backend.",
+  "runner_role": "code_frontend",
+  "capabilities": [
+    "React",
+    "composants",
+    "etat",
+    "fetch API"
+  ],
+  "inputs": [
+    "api_contract",
+    "code_backend",
+    "maquettes"
+  ],
+  "outputs": [
+    "frontend_source_files",
+    "ui_components"
+  ],
+  "guardrails": [
+    "Consommer les routes definies dans le contrat d'API."
+  ]
+}

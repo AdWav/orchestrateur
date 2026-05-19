@@ -1,0 +1,11 @@
+{
+  "id": "delivery",
+  "name": "Delivery",
+  "business_role": "Delivery",
+  "mission": "Mission for delivery.",
+  "runner_role": "execute",
+  "capabilities": [],
+  "inputs": [],
+  "outputs": [],
+  "guardrails": []
+}

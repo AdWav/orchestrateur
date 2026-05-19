@@ -12,4 +12,6 @@ dist/
 .vite/
 *.tsbuildinfo
 .env
-    
+workspaces/*
+!workspaces/.gitkeep
+db/workspaces/*

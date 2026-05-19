@@ -1,0 +1,25 @@
+{
+  "id": "api_contract",
+  "name": "Contrat d'API",
+  "business_role": "Contrat d'API",
+  "mission": "Produire le contrat d'API partage : routes, schemas JSON et erreurs. C'est le plan de cablage entre backend et frontend pour qu'ils codent la meme chose.",
+  "runner_role": "api_contract",
+  "capabilities": [
+    "OpenAPI",
+    "schemas",
+    "versioning",
+    "codes erreur"
+  ],
+  "inputs": [
+    "schematic",
+    "objectif"
+  ],
+  "outputs": [
+    "openapi_paths",
+    "schemas",
+    "error_model"
+  ],
+  "guardrails": [
+    "Pas d'implementation : uniquement le contrat."
+  ]
+}

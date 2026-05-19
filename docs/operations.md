@@ -17,16 +17,20 @@ Quand la stack tourne, verifier:
 3. `GET /team`
 4. `GET /use-cases`
 5. `POST /runtime/recommendation`
-6. `POST /workflows/specification`
-7. `POST /workflows/repo-audit`
+6. `GET /teams` puis `GET /team?team_id=team-tdd`
+7. `POST /workflows/dev-team-benchmark`
+8. `POST /workflows/specification`
+9. `POST /workflows/repo-audit`
 
-## Profil de validation ultra-legere
+## Profil laptop 16 Go (actuel)
 
-Le compose courant est calibre pour un laptop de `16 Go` de RAM avec le modele:
+Le compose est calibre pour un laptop de `16 Go` de RAM avec le modele par defaut:
 
-- `qwen2.5:0.5b`
+- **`qwen2.5-coder:1.5b`**
 
-Le but est de valider le comportement global, pas la qualite finale.
+Objectif : usage reel oriente code et audit repo, avec un seul modele charge (`OLLAMA_MAX_LOADED_MODELS=1`).
+
+Pour une validation plumbing uniquement (sans juger la qualite), repasser temporairement a `qwen2.5:0.5b` — voir [`models.md`](models.md).
 
 ## Exemple de payload pour le workflow
 

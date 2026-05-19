@@ -33,8 +33,9 @@ Bon choix de depart pour:
 Profil actuellement implemente:
 
 - service `ollama` partage dans `compose`
-- modele par defaut `qwen2.5:0.5b`
-- cible: validation fonctionnelle sur machine legere
+- modele par defaut **`qwen2.5-coder:1.5b`**
+- cible: laptop **16 Go RAM**, workflows orientes code / audit repo
+- catalogue detaille : [`models.md`](models.md)
 
 ### `vLLM`
 
@@ -77,18 +78,29 @@ La stack recommandee reste:
 
 ## Recommandation pour ta machine
 
-Deux profils sont a distinguer:
+Deux profils sont a distinguer sur **16 Go RAM** :
 
-### Profil validation
-
-Si tu veux juste valider le fonctionnement sur un laptop de `16 Go` de RAM:
+### Profil usage quotidien (actuel)
 
 - garder `Ollama`
-- utiliser `qwen2.5:0.5b`
-- rester en `num_parallel=1`
-- ne pas juger la qualite metier sur ce modele
+- utiliser **`qwen2.5-coder:1.5b`** comme `OLLAMA_DEFAULT_MODEL`
+- rester en `num_parallel=1` et `max_loaded_models=1`
+- optionnel : `OLLAMA_MODEL_PLAN` / `OLLAMA_MODEL_VERIFY` en `qwen2.5:1.5b` pour des handoffs plus generiques
 
-Ce profil sert uniquement a verifier:
+Ce profil convient pour:
+
+- specifications et checklists
+- audit de repo en lecture seule
+- livrables avec extraits de code ou commandes
+
+### Profil validation plumbing
+
+Si tu veux uniquement valider la stack sans juger la qualite metier:
+
+- utiliser `qwen2.5:0.5b`
+- ne pas conclure sur la pertinence des sorties agents
+
+Ce profil sert a verifier:
 
 - le demarrage de la stack
 - les appels reels au modele
@@ -117,16 +129,15 @@ Les vraies questions sont:
 
 Le changement de modele se fait sans modifier le code metier.
 
-Par defaut, `compose.yaml` utilise:
+Par defaut, `compose.yaml` et `.env.example` utilisent:
 
-- `OLLAMA_DEFAULT_MODEL=qwen2.5:0.5b`
+- `OLLAMA_DEFAULT_MODEL=qwen2.5-coder:1.5b`
 
 Tu pourras ensuite remplacer cette valeur par exemple par:
 
-- un modele global plus grand
-- un modele different par role via `OLLAMA_MODEL_PLANNER`, `OLLAMA_MODEL_RESEARCHER`, `OLLAMA_MODEL_EXECUTOR`, `OLLAMA_MODEL_VERIFIER`
-
-Une valeur de reference est egalement fournie dans `.env.example`.
+- un modele global plus grand (voir [`models.md`](models.md))
+- un modele different par etape via `OLLAMA_MODEL_PLAN`, `OLLAMA_MODEL_RESEARCH`, `OLLAMA_MODEL_EXECUTE`, `OLLAMA_MODEL_VERIFY`
+- ou via `PUT /v1/runtime/ollama/settings`
 
 ## Ce que fait deja le code
 
@@ -139,4 +150,4 @@ L'endpoint `POST /runtime/recommendation` produit une recommandation selon:
 - besoin de fine-tuning
 - niveau de concurrence attendu
 
-Les agents utilisent maintenant un vrai client `Ollama` quand `MODEL_BACKEND=ollama`.
+Les agents utilisent un client `Ollama` quand `MODEL_BACKEND=ollama`.

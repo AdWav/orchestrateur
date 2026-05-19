@@ -1,0 +1,158 @@
+.dev-teams-intro ion-card-header {
+  padding-bottom: 0;
+}
+
+.dev-teams-pair {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .dev-teams-pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.dev-team-card ion-card-content {
+  display: grid;
+  gap: 14px;
+}
+
+.dev-team-card__block {
+  display: grid;
+  gap: 8px;
+}
+
+.dev-team-card__pipeline-hint {
+  display: block;
+  margin: 0 0 4px;
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.dev-team-card__pipeline-chips {
+  gap: 8px;
+}
+
+.dev-team-chip--interactive {
+  cursor: pointer;
+}
+
+.dev-team-chip--interactive:hover,
+.dev-team-chip--interactive:focus-visible {
+  --background: rgba(var(--ion-color-primary-rgb), 0.12);
+}
+
+.dev-team-role-modal__body {
+  display: grid;
+  gap: 14px;
+  padding-bottom: 24px;
+}
+
+.dev-team-role-modal__block {
+  display: grid;
+  gap: 8px;
+}
+
+.benchmark-simulation-note {
+  display: block;
+  margin-top: 12px;
+  line-height: 1.45;
+}
+
+.benchmark-runs {
+  gap: 24px;
+}
+
+.benchmark-team-run {
+  display: grid;
+  gap: 12px;
+}
+
+.benchmark-team-run__summary {
+  margin: 0;
+}
+
+.benchmark-team-run__steps {
+  display: grid;
+  gap: 10px;
+}
+
+.benchmark-step-trace {
+  margin: 0;
+}
+
+.benchmark-deliverable-section {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0 4px;
+  border-top: 1px dashed var(--app-border-color, var(--ion-color-step-200));
+}
+
+.benchmark-deliverable-section__title {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ion-color-medium);
+}
+
+.benchmark-step-summary {
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.benchmark-step-summary__toggle {
+  margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--ion-color-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.benchmark-workspace-panel {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 16px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  background: var(--app-surface-2, var(--ion-color-step-50));
+}
+
+.benchmark-workspace-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.benchmark-workspace-list__item {
+  display: grid;
+  gap: 6px;
+}
+
+.benchmark-workspace-list__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.benchmark-workspace-output {
+  max-height: 160px;
+  overflow: auto;
+  font-size: 0.75rem;
+}
+
+.inline-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.85em;
+  word-break: break-all;
+}

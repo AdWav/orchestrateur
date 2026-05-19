@@ -1,15 +1,13 @@
 from __future__ import annotations
 
-from importlib import reload
-
 from fastapi.testclient import TestClient
 
-import api.main as api_main
+from tests.conftest import reload_api_app
 
 
 def test_health_endpoint_accepts_vite_origin(monkeypatch) -> None:
     monkeypatch.delenv("UI_ALLOWED_ORIGINS", raising=False)
-    reloaded = reload(api_main)
+    reloaded = reload_api_app()
     client = TestClient(reloaded.app)
 
     response = client.options(

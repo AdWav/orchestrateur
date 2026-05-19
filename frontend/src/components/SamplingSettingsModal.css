@@ -1,0 +1,387 @@
+.sampling-settings-panel {
+  display: grid;
+  gap: 12px;
+}
+
+ion-modal.sampling-settings-modal {
+  --width: min(560px, 94vw);
+}
+
+.sampling-settings-modal__intro {
+  margin: 0 0 12px;
+  line-height: 1.45;
+}
+
+.sampling-settings-modal__note {
+  display: block;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.sampling-settings-modal__section-title {
+  margin: 20px 0 8px;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.sampling-settings-modal__readonly {
+  margin-bottom: 8px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  border-radius: 12px;
+  overflow: hidden;
+  opacity: 0.92;
+}
+
+.sampling-settings-modal__form {
+  margin-bottom: 16px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.sampling-settings-modal__grouping {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sampling-settings-modal__grouping-label {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ion-color-medium);
+}
+
+.sampling-settings-modal__grouping-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sampling-settings-modal__grouping-chips ion-chip {
+  margin: 0;
+  cursor: pointer;
+}
+
+.sampling-settings-modal__dials {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 14px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  border-radius: 12px;
+  background: var(--app-surface-1, var(--ion-background-color));
+}
+
+.sampling-settings-modal__dials--grouped {
+  gap: 20px;
+}
+
+.sampling-settings-modal__dial-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--app-border-color, var(--ion-color-step-150));
+}
+
+.sampling-settings-modal__dial-group:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.sampling-settings-modal__dial-group-header {
+  text-align: left;
+  width: 100%;
+}
+
+.sampling-settings-modal__dial-group-title {
+  margin: 0 0 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.sampling-settings-modal__dial-group-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: var(--ion-color-medium);
+}
+
+.sampling-settings-modal__form--text-compact {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.sampling-settings-modal__dials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+
+.sampling-settings-modal__dial-field {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  text-align: center;
+}
+
+.sampling-settings-modal__dial-field--wheel .sampling-settings-modal__dial-wrap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 78px;
+}
+
+.sampling-settings-modal__dial-field--mirostat .sampling-settings-modal__dial-wrap {
+  min-height: 78px;
+}
+
+.sampling-settings-modal__dial-field--mirostat .mirostat-rocker {
+  --rocker-size: 68px;
+}
+
+.sampling-settings-modal__dial-field--mirostat .sampling-settings-modal__dial-bounds {
+  margin-top: 2px;
+}
+
+.sampling-settings-modal__dial-field-header {
+  position: relative;
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  height: 31px;
+  min-height: 31px;
+  max-height: 31px;
+  box-sizing: border-box;
+}
+
+.sampling-settings-modal__dial-field-header .sampling-settings-modal__dial-help-panel {
+  left: 50%;
+  top: calc(100% + 6px);
+  transform: translateX(-50%);
+}
+
+.sampling-settings-modal__dial-field-label {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: calc(100% - 24px);
+  height: 31px;
+  min-height: 31px;
+  max-height: 31px;
+  box-sizing: border-box;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 15.5px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  hyphens: auto;
+}
+
+.sampling-settings-modal__dial-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sampling-settings-modal__dial {
+  margin: 0;
+}
+
+.sampling-settings-modal__dial-info {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.65rem;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.55);
+  color: rgba(255, 255, 255, 0.92);
+  font: 700 0.72rem/1 ui-sans-serif, system-ui, sans-serif;
+  font-style: italic;
+  cursor: pointer;
+  pointer-events: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.sampling-settings-modal__dial-info:hover {
+  background: rgba(36, 107, 255, 0.75);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.sampling-settings-modal__dial-unset {
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  z-index: 4;
+  margin: 0;
+  --padding-start: 4px;
+  --padding-end: 4px;
+  min-height: 24px;
+  font-size: 0.7rem;
+}
+
+.sampling-settings-modal__dial-help-panel {
+  position: absolute;
+  left: 50%;
+  top: calc(100% + 6px);
+  z-index: 6;
+  width: max(220px, 140%);
+  max-width: min(320px, 92vw);
+  padding: 10px 36px 10px 12px;
+  transform: translateX(-50%);
+  border-radius: 10px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  background: var(--app-surface-2, var(--ion-card-background));
+  box-shadow: var(--app-surface-shadow, 0 12px 32px rgba(15, 23, 42, 0.12));
+}
+
+.sampling-settings-modal__dial-help-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  margin: 0;
+  --padding-start: 4px;
+  --padding-end: 4px;
+  min-height: 24px;
+  font-size: 0.7rem;
+}
+
+.sampling-settings-modal__dial .dial-regulator__value {
+  font-size: calc(var(--dial-size) * 0.2);
+}
+
+.sampling-settings-modal__dial--inactive {
+  opacity: 0.55;
+}
+
+.sampling-settings-modal__dial-value {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--ion-color-primary);
+}
+
+.sampling-settings-modal__dial-bounds,
+.sampling-settings-modal__dial-help {
+  margin: 0;
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--ion-color-medium);
+}
+
+.sampling-settings-modal__dial-help-panel .sampling-settings-modal__dial-help {
+  margin: 0;
+  text-align: left;
+}
+
+.sampling-settings-modal__form--numeric {
+  margin-bottom: 12px;
+}
+
+.sampling-settings-modal__form--text {
+  margin-bottom: 16px;
+}
+
+.sampling-settings-modal__numeric-field {
+  --padding-start: 16px;
+  --inner-padding-end: 16px;
+  --min-height: auto;
+  align-items: stretch;
+}
+
+.sampling-settings-modal__numeric-field::part(native) {
+  align-items: stretch;
+}
+
+.sampling-settings-modal__numeric-field-inner {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 12px 0;
+}
+
+.sampling-settings-modal__numeric-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sampling-settings-modal__numeric-header ion-label {
+  flex: 1 1 auto;
+  margin: 0;
+  font-weight: 600;
+}
+
+.sampling-settings-modal__numeric-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--ion-color-primary);
+}
+
+.sampling-settings-modal__numeric-unset {
+  margin: 0;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  min-height: 28px;
+  font-size: 0.75rem;
+  text-transform: none;
+}
+
+.sampling-settings-modal__range {
+  padding: 4px 0 0;
+}
+
+.sampling-settings-modal__numeric-bounds {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.sampling-settings-modal__numeric-help {
+  display: block;
+  line-height: 1.4;
+  font-size: 0.8rem;
+}
+
+.sampling-settings-modal__loading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+}
+
+.sampling-settings-modal__preview-output {
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: 12px;
+  background: var(--app-surface-2);
+  border: 1px solid var(--app-border-color, var(--ion-color-step-150));
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}

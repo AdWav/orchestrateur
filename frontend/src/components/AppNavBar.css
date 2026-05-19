@@ -1,0 +1,59 @@
+.app-nav-bar {
+  padding: 0 12px 10px;
+}
+
+.app-nav-bar__list {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.app-nav-bar__tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 1px solid var(--app-border-color, var(--ion-color-step-200));
+  border-radius: 999px;
+  background: var(--app-surface-1, var(--ion-background-color));
+  color: var(--ion-text-color);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease;
+}
+
+.app-nav-bar__tab--active {
+  border-color: var(--ion-color-primary);
+  background: color-mix(in srgb, var(--ion-color-primary) 14%, transparent);
+  color: var(--ion-color-primary);
+}
+
+.app-nav-bar__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.app-nav-bar__dot--up {
+  background: #22c55e;
+}
+
+.app-nav-bar__dot--down {
+  background: #ef4444;
+}
+
+.app-nav-bar__dot--neutral {
+  background: var(--ion-color-medium);
+}
+
+.app-nav-bar__label {
+  white-space: nowrap;
+}

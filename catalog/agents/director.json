@@ -1,0 +1,11 @@
+{
+  "id": "director",
+  "name": "Director",
+  "business_role": "Director",
+  "mission": "Mission for director.",
+  "runner_role": "plan",
+  "capabilities": [],
+  "inputs": [],
+  "outputs": [],
+  "guardrails": []
+}

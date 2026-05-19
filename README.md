@@ -1,132 +1,220 @@
 # Orchestrateur local multi-agents
 
-Ce depot implemente un socle `Python-first` pour construire un orchestrateur multi-agents local avec une topologie volontairement simple.
+Socle Python-first pour un orchestrateur multi-agents local, organise en **MVC** avec services Docker separes.
 
-L'architecture de demarrage suit maintenant cette approche:
+Le catalogue (`catalog/agents/`, `catalog/workflows/`) definit des **agents reutilisables** et des **workflows** (sequences d'etapes). L'UI permet de comparer deux equipes de developpement sur la meme fonctionnalite et de materialiser le resultat dans un **workspace disque executable**.
 
-- un orchestrateur central expose en `FastAPI`
-- des roles `Planner`, `Researcher`, `Executor`, `Verifier` executes en interne a la demande
-- un service `Ollama` separe pour l'inference locale
-- une memoire partagee au niveau du workflow
-- un coeur Python simple a faire evoluer
-- des points d'extension futurs pour `TypeScript`, `Rust` et `C++`
+## Stack actuelle
 
-## Architecture actuelle
+| Service | Image / build | Role | Port hote |
+|---------|---------------|------|-----------|
+| `frontend` | `frontend/Dockerfile` (Ionic/React + nginx) | UI, benchmark, trace des livrables | 3000 |
+| `backend` | `backend/Dockerfile` (FastAPI) | API, orchestration, agents in-process | 8000 |
+| `workspace-runner` | `workspace-runner/Dockerfile` (Python + pytest) | Rejouer tests / demos dans un environnement isole | — |
+| `db` | `mariadb:11` | Catalogue agents / workflows (JSON en base) | 3306 |
+| `ollama` | `ollama/ollama:latest` | Inference locale partagee | 11434 |
+| `ollama-init` | `ollama/ollama:latest` | `ollama pull` du modele par defaut au demarrage | — |
+
+Reseau Docker : `orchestrateur-agent-mesh` (`agent_mesh` dans `compose.yaml`).
+
+Volume partage : `./workspaces` monte sur `backend` et `workspace-runner` (`WORKSPACE_ROOT=/workspaces`).
+
+### Pipelines (catalogue)
+
+Agents fonctionnels (pas de personas) ; execution via `POST /workflows/catalog/{workflow_id}` ou benchmark.
+
+| Workflow | Etapes (resume) |
+|----------|-----------------|
+| **Legacy** `specification-team` | `plan` → `research` → `execute` → `verify` |
+| **TDD** `team-tdd` | `write_tests` → `code_backend` → `code_frontend` → `integration` → `run_fix` → `document` |
+| **Classique** `team-classic` | `schematic` → `api_contract` → `database` → `code_backend` → `code_frontend` → `test_and_verify` → `integration` → `run_fix` → `review` → `security` → `document` |
+
+**Benchmark** : `POST /workflows/dev-team-benchmark` execute `team-tdd` puis `team-classic` **sequentiellement** sur la meme demande (durees, succes, artefacts, workspace).
+
+Runtime inference : **Ollama** (`MODEL_BACKEND=ollama`), un seul modele charge a la fois (`OLLAMA_MAX_LOADED_MODELS=1`, `OLLAMA_NUM_PARALLEL=1`).
+
+Modele par defaut : **`qwen2.5-coder:1.5b`** (cible laptop **16 Go RAM**, workflows code / audit repo).
+
+Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md`](docs/models.md), [`docs/agents.md`](docs/agents.md).
+
+## Architecture
 
 ```mermaid
-flowchart TD
-    userClient[ClientOrOperateur] --> api[orchestrator-api]
-    api --> planner[PlannerInProcess]
-    api --> researcher[ResearcherInProcess]
-    api --> executor[ExecutorInProcess]
-    api --> verifier[VerifierInProcess]
-    api --> runtime[RuntimeRecommendationLayer]
-    runtime --> ollama[Ollama]
-    runtime --> vllm[vLLM]
-    runtime --> llamaCpp[llama.cpp]
+flowchart LR
+    browser[Navigateur] --> frontend[frontend:3000]
+    frontend --> backend[backend:8000]
+    backend --> db[(MariaDB)]
+    backend --> ollama[Ollama:11434]
+    backend --> ws[(./workspaces)]
+    runner[workspace-runner] --> ws
 ```
 
-## Recommandation de stack
+- Le **backend** ecrit les livrables du benchmark et lance `pytest` pour le verdict automatique.
+- Le **workspace-runner** partage le meme dossier : utile pour rejouer les tests dans un conteneur dedie sans melanger avec l'API.
 
-- langage principal: `Python`
-- orchestration et API: `FastAPI`
-- execution locale simple: `Docker Compose`
-- inference generaliste: `Ollama`
-- inference haute cadence: `vLLM`
-- compatibilite et quantisation: `llama.cpp`
-- composants natifs plus tard: `Rust` ou `C++` apres profilage
-
-## Equipe actuelle
-
-La premiere equipe specialisee contient quatre roles:
-
-1. `Planner`
-2. `Researcher`
-3. `Executor`
-4. `Verifier`
-
-Ces roles cooperent maintenant sur cinq cas d'usage:
-
-1. transformer une demande floue en specification exploitable
-2. benchmarker des modeles locaux
-3. preparer un corpus pour fine-tuning ou RAG
-4. produire un runbook operateur local et auditable
-5. auditer un depot local en lecture seule avec preuves traceables
-
-## V2 Repo Audit
-
-La V2 ajoute un workflow `local-repo-audit` centre sur l'analyse d'un depot local.
-
-Ce workflow:
-
-- garde les quatre roles existants
-- collecte des preuves deterministes via une couche `RepoCapabilities`
-- produit un inventaire, des constats structures et un verdict de verification
-- reste strictement en lecture seule
-
-En mode local, l'API principale peut maintenant utiliser un vrai backend modele si `MODEL_BACKEND=ollama`.
-
-## Demarrage recommande
-
-Le chemin recommande passe par une stack Docker simplifiee:
-
-- `orchestrator-api`
-- `ollama`
-- `ollama-init`
+## Demarrage Docker
 
 ```bash
 docker compose up --build
 ```
 
-L'API principale est alors disponible sur `http://localhost:8000`.
-L'API `Ollama` locale est exposee sur `http://localhost:11434`.
+- UI : http://localhost:3000
+- API : http://localhost:8000
+- Ollama : http://localhost:11434
 
-## Profil de validation leger
-
-Pour valider le fonctionnement sur un laptop de `16 Go` de RAM, la stack utilise par defaut:
-
-- `Ollama`
-- le modele `qwen2.5:0.5b`
-
-Ce modele est volontairement minuscule. Il ne sert pas a juger la qualite finale des agents, seulement a valider:
-
-- le demarrage des services
-- l'execution interne des roles
-- les appels reels au runtime de modele
-- les handoffs de bout en bout
-
-Quand tu voudras monter en qualite, il suffira de changer la variable `OLLAMA_DEFAULT_MODEL`.
-Une valeur d'exemple est fournie dans `.env.example`, avec:
-
-- `MODEL_BACKEND=ollama`
-- `OLLAMA_BASE_URL=http://localhost:11434`
-- `OLLAMA_DEFAULT_MODEL=qwen2.5:0.5b`
-
-## Endpoints utiles
-
-- `GET /health`
-- `GET /use-cases`
-- `GET /team`
-- `POST /runtime/recommendation`
-- `POST /workflows/specification`
-- `POST /workflows/repo-audit`
-
-Exemple minimal pour le repo audit:
+Copier `.env.example` vers `.env` pour surcharger le modele au demarrage :
 
 ```bash
-curl -X POST http://localhost:8000/workflows/repo-audit \
-  -H "Content-Type: application/json" \
-  -d '{
-    "objective": "Auditer ce depot en lecture seule",
-    "repo_path": ".",
-    "analysis_axes": ["architecture", "docs", "dependencies"]
-  }'
+cp .env.example .env
 ```
 
-## Documentation
+Variables utiles :
 
-- [Vue d'architecture](docs/architecture.md)
-- [Guide Docker](docs/docker-stack.md)
-- [Equipe d'agents](docs/agents.md)
-- [Runtime local et GPU](docs/runtime.md)
-- [Operations et prochaines etapes](docs/operations.md)
+| Variable | Valeur par defaut | Description |
+|----------|-------------------|-------------|
+| `OLLAMA_DEFAULT_MODEL` | `qwen2.5-coder:1.5b` | Modele global et repli par etape pipeline |
+| `OLLAMA_MODEL_*` | *(vide)* | Surcharge par runner (`write_tests`, `code_backend`, `plan`, …) |
+| `WORKSPACE_ROOT` | `./workspaces` (local) / `/workspaces` (compose) | Racine des livrables benchmark |
+| `CATALOG_BACKEND` | `mariadb` en compose | `file` pour dev local sans DB |
+| `ORCHESTRATOR_CATALOG_ROOT` | `./catalog` | Catalogue fichier si `CATALOG_BACKEND=file` |
+| `VITE_API_BASE_URL` | `http://localhost:8000` | URL API au build frontend |
+
+Reglages runtime persistants : `GET` / `PUT` `/v1/runtime/ollama/settings` (ou UI).
+
+## Workspaces executables
+
+Lors d'un benchmark (`materialize_workspace: true` par defaut), chaque equipe obtient un sous-dossier :
+
+```text
+workspaces/
+  20260518-120000-fizzbuzz/    # workspace_run_id
+    team-tdd/
+      src/ …
+      tests/ …
+      README.md
+      docs/PIPELINE.md         # resumes des agents
+    team-classic/
+      …
+```
+
+- Objectif contenant **FizzBuzz** → projet Python runnable (implementation + tests pytest).
+- Autre objectif → gabarit Python generique + trace pipeline.
+
+### Executer localement (hors Docker)
+
+```bash
+cd workspaces/<run_id>/team-tdd
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate   # Linux/macOS
+pip install -r requirements.txt
+pytest -q
+python -m src.fizzbuzz        # si gabarit FizzBuzz
+```
+
+### Executer via workspace-runner (Docker)
+
+Apres un benchmark, recuperer le `workspace_run_id` dans l'UI ou la reponse API.
+
+**PowerShell :**
+
+```powershell
+.\scripts\workspace-test.ps1 -RunId 20260518-120000-fizzbuzz -Team team-tdd
+.\scripts\workspace-test.ps1 -RunId 20260518-120000-fizzbuzz -Team team-tdd -RunDemo
+```
+
+**Bash :**
+
+```bash
+chmod +x scripts/workspace-test.sh
+./scripts/workspace-test.sh --run-id 20260518-120000-fizzbuzz --team team-tdd
+```
+
+**Manuel :**
+
+```bash
+docker compose exec workspace-runner bash -lc "cd /workspaces/<run_id>/team-tdd && pytest -q"
+```
+
+Le dossier `workspaces/` est ignore par git (sauf `.gitkeep`) : les runs restent sur ta machine.
+
+## Modeles Ollama (≤ 4B, 16 Go RAM)
+
+Liste complete et profils : [`docs/models.md`](docs/models.md).
+
+| Tag Ollama | Params | Usage recommande |
+|------------|--------|------------------|
+| **`qwen2.5-coder:1.5b`** | 1,5B | **Defaut actuel** — code, audit repo, execution |
+| `qwen2.5:1.5b` | 1,5B | Plan / verify generiques, handoffs structures |
+| `qwen2.5:3b` | 3B | Qualite generale si la RAM le permet |
+| `qwen2.5-coder:3b` | 3B | Code / refactor plus exigeant |
+| `qwen2.5:0.5b` | 0,5B | Validation plumbing uniquement (pas la qualite metier) |
+| `llama3.2:3b` | 3B | Alternative generale |
+| `gemma3:4b` | 4B | Meilleure qualite dans la limite 4B |
+| `phi4-mini` | ~3,8B | Raisonnement, planification |
+| `nemotron-mini:4b` | 4B | Function calling, RAG |
+| `smollm2:1.7b` | 1,7B | Taches tres legeres, reponses rapides |
+
+Exemple de montee en qualite par etape (toujours un modele charge a la fois) :
+
+```env
+OLLAMA_DEFAULT_MODEL=qwen2.5-coder:1.5b
+OLLAMA_MODEL_PLAN=qwen2.5:1.5b
+OLLAMA_MODEL_VERIFY=qwen2.5:1.5b
+```
+
+Telechargement manuel :
+
+```bash
+ollama pull qwen2.5-coder:1.5b
+```
+
+## Dev local (sans Docker)
+
+```bash
+pip install -e ".[dev]"
+uvicorn app.main:app --reload --app-dir backend
+```
+
+Frontend :
+
+```bash
+cd frontend && npm install && npm run dev
+```
+
+Workspaces locaux : `WORKSPACE_ROOT=./workspaces` (defaut).
+
+## Endpoints
+
+- `GET /health`
+- `GET /services/status`
+- `GET /use-cases`
+- `GET /teams` — equipes catalogue (`team-tdd`, `team-classic`)
+- `GET /team?team_id=team-tdd`
+- `GET/POST /v1/agents`, `GET/POST /v1/workflows` — definitions catalogue
+- `POST /workflows/specification` — pipeline legacy
+- `POST /workflows/catalog/{workflow_id}` — executer un workflow catalogue
+- `POST /workflows/dev-team-benchmark` — compare TDD vs classique + workspace
+- `POST /workflows/repo-audit`
+- `GET/PUT /v1/runtime/ollama/settings`
+
+Exemple benchmark :
+
+```bash
+curl -s -X POST http://localhost:8000/workflows/dev-team-benchmark \
+  -H "Content-Type: application/json" \
+  -d '{"objective":"Implementer FizzBuzz de 1 a 100","team_order":["team-tdd","team-classic"]}'
+```
+
+## Tests
+
+```bash
+pytest
+```
+
+## Backend MVC (`backend/app/`)
+
+- **models** : schemas HTTP (`api_schemas.py`) et persistance
+- **views** : routeurs FastAPI (`views/`)
+- **controllers** : orchestration des cas d'usage (`controllers/`)
+- **domain** : logique metier (`backend/core/`)

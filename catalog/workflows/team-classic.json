@@ -1,0 +1,148 @@
+{
+  "id": "team-classic",
+  "name": "Equipe Plan-Code-Test",
+  "goal": "Livrer en approche plan, contrat API, code, tests, E2E, securite, documentation.",
+  "context": {
+    "methodology": "plan-code-test-document"
+  },
+  "constraints": [
+    "Le schema et le contrat API guident l'implementation.",
+    "La documentation respecte le verdict des tests."
+  ],
+  "success_criteria": [
+    "Chaque etape produit un livrable trace.",
+    "Le workflow est auditable de bout en bout."
+  ],
+  "steps": [
+    {
+      "id": "schematic",
+      "name": "Schema et plan",
+      "agent_definition_id": "schematic",
+      "objective": "Produire le schema et le plan d'implementation.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": []
+    },
+    {
+      "id": "contract",
+      "name": "Contrat d'API",
+      "agent_definition_id": "api_contract",
+      "objective": "Definir routes et schemas partages avant de coder.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "schematic"
+      ]
+    },
+    {
+      "id": "database",
+      "name": "Schema base de donnees",
+      "agent_definition_id": "database",
+      "objective": "Preparer migrations et contraintes.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "contract"
+      ]
+    },
+    {
+      "id": "backend",
+      "name": "Backend",
+      "agent_definition_id": "code_backend",
+      "objective": "Implementer le serveur selon le contrat.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "database"
+      ]
+    },
+    {
+      "id": "frontend",
+      "name": "Frontend",
+      "agent_definition_id": "code_frontend",
+      "objective": "Implementer l'UI selon le contrat.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "backend"
+      ]
+    },
+    {
+      "id": "test",
+      "name": "Tests par couche",
+      "agent_definition_id": "test_and_verify",
+      "objective": "Tests automatises sur backend/frontend.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "frontend"
+      ]
+    },
+    {
+      "id": "e2e",
+      "name": "Tests bout-en-bout",
+      "agent_definition_id": "integration",
+      "objective": "Parcours utilisateur complet (UI + API reelle).",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "test"
+      ]
+    },
+    {
+      "id": "run-fix",
+      "name": "Execution et correctifs",
+      "agent_definition_id": "run_fix",
+      "objective": "Corriger jusqu'a passage des suites.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "e2e"
+      ]
+    },
+    {
+      "id": "review",
+      "name": "Revue de code",
+      "agent_definition_id": "review",
+      "objective": "Revue de coherence et maintenabilite.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "run-fix"
+      ]
+    },
+    {
+      "id": "security",
+      "name": "Revue securite",
+      "agent_definition_id": "security",
+      "objective": "Verifier risques securite evidentes.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "review"
+      ]
+    },
+    {
+      "id": "document",
+      "name": "Documentation",
+      "agent_definition_id": "document",
+      "objective": "Documenter le livrable final.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "security"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "analyst",
+  "name": "Analyst",
+  "business_role": "Analyst",
+  "mission": "Mission for analyst.",
+  "runner_role": "research",
+  "capabilities": [],
+  "inputs": [],
+  "outputs": [],
+  "guardrails": []
+}

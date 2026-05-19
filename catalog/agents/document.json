@@ -1,0 +1,24 @@
+{
+  "id": "document",
+  "name": "Documentation",
+  "business_role": "Documentation",
+  "mission": "Documenter le livrable, l'usage et les preuves d'execution.",
+  "runner_role": "document",
+  "capabilities": [
+    "README",
+    "doc API",
+    "changelog"
+  ],
+  "inputs": [
+    "implementation",
+    "test_run_report",
+    "criteres de succes"
+  ],
+  "outputs": [
+    "documentation",
+    "delivery_summary"
+  ],
+  "guardrails": [
+    "Ne pas contredire le verdict des tests."
+  ]
+}

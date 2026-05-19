@@ -1,0 +1,58 @@
+{
+  "id": "deal-review",
+  "name": "Deal review",
+  "goal": "Produire un dossier de decision.",
+  "context": {
+    "company": "Northbridge Capital"
+  },
+  "constraints": [
+    "Rester lisible pour un comite."
+  ],
+  "success_criteria": [
+    "Le dossier doit etre verifiable."
+  ],
+  "steps": [
+    {
+      "id": "scope",
+      "name": "Scope",
+      "agent_definition_id": "director",
+      "objective": "Cadrer la revue.",
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": []
+    },
+    {
+      "id": "analysis",
+      "name": "Analysis",
+      "agent_definition_id": "analyst",
+      "objective": "Evaluer les risques.",
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "scope"
+      ]
+    },
+    {
+      "id": "integration",
+      "name": "Integration",
+      "agent_definition_id": "delivery",
+      "objective": "Preparer le plan d'integration.",
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "analysis"
+      ]
+    },
+    {
+      "id": "decision",
+      "name": "Decision",
+      "agent_definition_id": "quality",
+      "objective": "Valider la recommandation.",
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "integration"
+      ]
+    }
+  ]
+}

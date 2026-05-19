@@ -18,7 +18,7 @@ def test_small_laptop_validation_profile_still_prefers_ollama() -> None:
     )
 
     assert recommendation.inference_runtime == "ollama"
-    assert any("qwen2.5:0.5b" in note for note in recommendation.setup_notes)
+    assert any("qwen2.5-coder:1.5b" in note or "qwen2.5:0.5b" in note for note in recommendation.setup_notes)
 
 
 def test_large_linux_gpu_prefers_vllm_for_parallel_throughput() -> None:

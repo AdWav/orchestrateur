@@ -1,0 +1,25 @@
+{
+  "id": "run_fix",
+  "name": "Execution et correctifs",
+  "business_role": "Run / fix",
+  "mission": "Executer les suites de tests et corriger jusqu'a passage ou echec explicite.",
+  "runner_role": "run_fix",
+  "capabilities": [
+    "execution tests",
+    "diagnostic",
+    "correctifs"
+  ],
+  "inputs": [
+    "source_files",
+    "test_files",
+    "e2e_report"
+  ],
+  "outputs": [
+    "test_run_report",
+    "fixes_applied",
+    "tests_passed"
+  ],
+  "guardrails": [
+    "Ne pas elargir le scope au-dela des tests existants."
+  ]
+}

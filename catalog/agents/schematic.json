@@ -1,0 +1,25 @@
+{
+  "id": "schematic",
+  "name": "Schema et plan",
+  "business_role": "Schematic / plan",
+  "mission": "Planifier et schematiser la solution (modules, flux, interfaces) avant implementation.",
+  "runner_role": "schematic",
+  "capabilities": [
+    "architecture legere",
+    "diagrammes textuels",
+    "decoupage modules"
+  ],
+  "inputs": [
+    "objectif",
+    "contraintes",
+    "contexte technique"
+  ],
+  "outputs": [
+    "schematic",
+    "module_plan",
+    "implementation_order"
+  ],
+  "guardrails": [
+    "Rester synthetique et actionnable pour le developpeur."
+  ]
+}

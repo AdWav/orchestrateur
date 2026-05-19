@@ -1,0 +1,11 @@
+{
+  "id": "quality",
+  "name": "Quality",
+  "business_role": "Quality",
+  "mission": "Mission for quality.",
+  "runner_role": "verify",
+  "capabilities": [],
+  "inputs": [],
+  "outputs": [],
+  "guardrails": []
+}
