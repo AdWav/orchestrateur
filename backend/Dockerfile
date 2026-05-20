@@ -7,6 +7,7 @@ WORKDIR /app
 
 COPY pyproject.toml README.md ./
 COPY backend ./backend
+COPY catalog ./catalog
 
 # llama-cpp-python : tokenisation BPE alignee sur le GGUF Ollama (vocab_only).
 RUN apt-get update \

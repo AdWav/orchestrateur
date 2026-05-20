@@ -20,4 +20,21 @@ USE_CASES: list[UseCaseDefinition] = [
             "comparison (fastest, winners)",
         ],
     ),
+    UseCaseDefinition(
+        id="code-visualization",
+        title="Code Visualization",
+        description=(
+            "Analyser un depot de code (multi-langages) et produire diagramme UML PlantUML, "
+            "schema draw.io (XML) et flux Mermaid."
+        ),
+        primary_outcome="Bundle diagrammes coherent avec modele structurel et verdict QA.",
+        inputs=["objectif", "code_visualization.repo_target.root_path", "criteres de succes"],
+        deliverables=[
+            "code_structure_model",
+            "plantuml",
+            "drawio_xml",
+            "mermaid_flow",
+            "diagram_qa_report",
+        ],
+    ),
 ]

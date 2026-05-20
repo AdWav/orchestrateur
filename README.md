@@ -10,7 +10,7 @@ Le catalogue (`catalog/agents/`, `catalog/workflows/`) definit des **agents reut
 |---------|---------------|------|-----------|
 | `frontend` | `frontend/Dockerfile` (Ionic/React + nginx) | UI, benchmark, trace des livrables | 3000 |
 | `backend` | `backend/Dockerfile` (FastAPI) | API, orchestration, agents in-process | 8000 |
-| `trace-service` | `trace-service/Dockerfile` (FastAPI) | Traces conversationnelles (spans par phase) — *MVP mémoire* ; aussi lançable en local (`pip install -e .`) | 8090 |
+| `trace-service` | `trace-service/Dockerfile` (FastAPI) | Traces conversationnelles (spans par phase) — SQLite persisté sous Docker (`trace_sqlite_data`) ; hors Compose, mémoire sauf `TRACE_SQLITE_PATH` ; aussi lançable en local (`pip install -e .`) | 8090 |
 | `mcp-server` | `mcp-server/Dockerfile` (FastMCP + Streamable HTTP) | Pont MCP vers l'API (`/mcp`) | 8010 |
 | `workspace-runner` | `workspace-runner/Dockerfile` (Python + pytest) | Rejouer tests / demos dans un environnement isole | — |
 | `db` | `mariadb:11` | Catalogue agents / workflows (JSON en base) | 3306 |
@@ -31,6 +31,7 @@ Agents fonctionnels (pas de personas) ; execution via `POST /workflows/catalog/{
 | **TDD** `team-tdd` | `write_tests` → `code_backend` → `code_frontend` → `integration` → `run_fix` → `document` |
 | **Classique** `team-classic` | `schematic` → `api_contract` → `database` → `code_backend` → `code_frontend` → `test_and_verify` → `integration` → `run_fix` → `review` → `security` → `document` |
 | **Documentation steward** `documentation-steward` | `doc_inventory` → `doc_sync` → `doc_qa` (alignement docs / code) |
+| **Visualisation code** `team-code-viz` | `viz_code_scan` → `viz_structure` → `viz_uml` → `viz_drawio` → `viz_mermaid` → `viz_qa` |
 
 **Benchmark** : `POST /workflows/dev-team-benchmark` execute `team-tdd` puis `team-classic` **sequentiellement** sur la meme demande (durees, succes, artefacts, workspace).
 

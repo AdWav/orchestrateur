@@ -5,12 +5,13 @@ from typing import Any
 from core.contracts import AgentDefinition, WorkflowDefinition, WorkflowStepDefinition
 from core.memory import SharedMemory
 from core.pipeline import LEGACY_PIPELINE_STEP_IDS
-from core.dev_teams import DEV_PIPELINE_STEP_IDS
+from core.dev_teams import DEV_PIPELINE_STEP_IDS, DIAGRAM_RUNNER_STEP_IDS
 
 KNOWN_RUNNER_ROLES = frozenset(
     {
         *LEGACY_PIPELINE_STEP_IDS,
         *DEV_PIPELINE_STEP_IDS,
+        *DIAGRAM_RUNNER_STEP_IDS,
         "generic",
     }
 )

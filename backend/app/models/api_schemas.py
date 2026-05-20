@@ -93,9 +93,16 @@ class SamplingSettingsResponse(BaseModel):
     ollama_active: bool = False
 
 
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant", "system"]
+    content: str = Field(min_length=1, max_length=16_384)
+
+
 class SamplingPreviewRequest(BaseModel):
     prompt: str = Field(min_length=1, max_length=32_768)
     model: str | None = Field(default=None, max_length=256)
+    """Historique multi-tours (user/assistant) envoye a Ollama /api/chat avant le prompt courant."""
+    history: list[ChatTurn] = Field(default_factory=list, max_length=64)
 
 
 class SamplingPreviewResponse(BaseModel):
@@ -211,3 +218,262 @@ class RepoAuditWorkflowRequest(BaseModel):
             "Le verdict final doit rester verifiable.",
         ]
     )
+
+
+class BuilderBrickSummaryResponse(BaseModel):
+    id: int
+    slug: str
+    label: str
+    description: str | None = None
+    status: str
+    source: str
+    type_code: str
+    domain_code: str | None = None
+
+
+class BuilderBrickDetailResponse(BuilderBrickSummaryResponse):
+    metadata: dict[str, object] = Field(default_factory=dict)
+
+
+class BuilderCatalogAgentResponse(BaseModel):
+    id: str
+    domain_id: int | None = None
+    published_version: str | None = None
+
+
+class BuilderCatalogAgentVersionResponse(BaseModel):
+    id: int
+    agent_id: str
+    version: str
+    status: str
+    runner_role: str | None = None
+    published_at: str | None = None
+    created_at: str | None = None
+
+
+class BuilderPendingBrickResponse(BaseModel):
+    id: int
+    target_brick_id: int | None = None
+    field_path: str
+    proposed_value: object
+    status: str
+    proposed_by: str
+    session_id: str | None = None
+    created_at: str | None = None
+
+
+class BuilderAuditEventResponse(BaseModel):
+    id: int
+    session_id: str | None = None
+    entity_type: str
+    entity_id: str
+    entity_version: str | None = None
+    action: str
+    actor_type: str
+    actor_id: str
+    created_at: str | None = None
+
+
+class BuilderCreateBrickRequest(BaseModel):
+    type_code: str
+    label: str
+    domain_code: str | None = None
+    description: str | None = None
+    slug: str | None = None
+
+
+class BuilderPendingBrickCreateRequest(BaseModel):
+    field_path: str
+    proposed_value: object
+    target_brick_id: int | None = None
+    type_code: str | None = None
+    session_id: str | None = None
+    proposed_by: str = "llm"
+
+
+class BuilderCompositionItemRequest(BaseModel):
+    slot: str
+    brick_id: int
+    sort_order: int = 0
+
+
+class BuilderAgentDraftRequest(BaseModel):
+    agent_id: str
+    name: str
+    mission: str
+    composition: list[BuilderCompositionItemRequest]
+    domain_code: str | None = "dev"
+    runner_role: str | None = None
+    business_role: str | None = None
+
+
+class BuilderWorkflowStepDraftRequest(BaseModel):
+    id: str
+    name: str
+    agent_definition_id: str
+    objective: str
+    depends_on: list[str] = Field(default_factory=list)
+    runner_role: str | None = None
+
+
+class BuilderWorkflowDraftRequest(BaseModel):
+    workflow_id: str
+    name: str
+    goal: str
+    steps: list[BuilderWorkflowStepDraftRequest]
+    context: dict[str, str] = Field(default_factory=dict)
+    constraints: list[str] = Field(default_factory=list)
+    success_criteria: list[str] = Field(default_factory=list)
+    domain_code: str | None = "dev"
+
+
+class BuilderCustomAgentDraftRequest(BaseModel):
+    slug: str
+    name: str
+    mission: str
+    composition: list[BuilderCompositionItemRequest]
+    owner_user_id: str
+    workspace_id: str | None = None
+    runner_role: str | None = None
+    business_role: str | None = None
+
+
+class BuilderDraftResponse(BaseModel):
+    agent_id: str | None = None
+    workflow_id: str | None = None
+    custom_agent_id: str | None = None
+    version_id: int
+    version: str
+    status: str
+
+
+class BuilderPublishResponse(BaseModel):
+    agent_id: str | None = None
+    workflow_id: str | None = None
+    custom_agent_id: str | None = None
+    custom_workflow_id: str | None = None
+    version_id: int
+    version: str
+    status: str
+    runtime_agent_id: str | None = None
+    runtime_workflow_id: str | None = None
+
+
+class BuilderCatalogWorkflowResponse(BaseModel):
+    id: str
+    domain_id: int | None = None
+    published_version: str | None = None
+
+
+class BuilderCustomAgentSummaryResponse(BaseModel):
+    id: str
+    slug: str
+    workspace_id: str | None = None
+    owner_user_id: str
+    version_id: int | None = None
+    version: str | None = None
+    status: str | None = None
+    created_at: str | None = None
+
+
+class BuilderPendingDecisionResponse(BaseModel):
+    id: int
+    status: str
+    merged_brick_id: int | None = None
+    draft_version_id: int | None = None
+
+
+class BuilderPendingAgentResponse(BaseModel):
+    id: int
+    draft_version_id: int
+    field_path: str
+    proposed_value: object
+    status: str
+    proposed_by: str
+    session_id: str | None = None
+    created_at: str | None = None
+
+
+class BuilderPendingAgentCreateRequest(BaseModel):
+    draft_version_id: int
+    field_path: str
+    proposed_value: object
+    session_id: str | None = None
+    proposed_by: str = "llm"
+
+
+class BuilderCustomWorkflowDraftRequest(BaseModel):
+    slug: str
+    name: str
+    goal: str
+    steps: list[BuilderWorkflowStepDraftRequest]
+    owner_user_id: str
+    workspace_id: str | None = None
+    context: dict[str, str] = Field(default_factory=dict)
+    constraints: list[str] = Field(default_factory=list)
+    success_criteria: list[str] = Field(default_factory=list)
+
+
+class BuilderCustomWorkflowSummaryResponse(BaseModel):
+    id: str
+    slug: str
+    workspace_id: str | None = None
+    owner_user_id: str
+    version_id: int | None = None
+    version: str | None = None
+    status: str | None = None
+    created_at: str | None = None
+
+
+class BuilderPromotionSubmitRequest(BaseModel):
+    requester_id: str
+    source_kind: str
+    source_id: str
+    target_kind: str
+    proposed_payload: dict[str, object] = Field(default_factory=dict)
+    target_id: str | None = None
+
+
+class BuilderPromotionResponse(BaseModel):
+    id: int
+    requester_id: str | None = None
+    source_kind: str | None = None
+    source_id: str | None = None
+    target_kind: str | None = None
+    target_id: str | None = None
+    proposed_payload: dict[str, object] | None = None
+    status: str
+    catalog_agent_id: str | None = None
+    catalog_version_id: int | None = None
+    reviewer_id: str | None = None
+    created_at: str | None = None
+    resolved_at: str | None = None
+
+
+class BuilderPromotionReviewRequest(BaseModel):
+    review_notes: str | None = None
+
+
+class BuilderSessionCreateRequest(BaseModel):
+    kind: str
+    actor_type: str
+    actor_id: str
+    goal_prompt: str | None = None
+    session_id: str | None = None
+
+
+class BuilderSessionResponse(BaseModel):
+    id: str
+    kind: str
+    actor_type: str
+    actor_id: str
+    goal_prompt: str | None = None
+    started_at: str | None = None
+    ended_at: str | None = None
+
+
+class BuilderSessionDetailResponse(BaseModel):
+    session: BuilderSessionResponse
+    inputs: list[dict[str, object]] = Field(default_factory=list)
+    outputs: list[dict[str, object]] = Field(default_factory=list)
+    audit_events: list[BuilderAuditEventResponse] = Field(default_factory=list)

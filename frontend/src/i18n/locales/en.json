@@ -10,7 +10,61 @@
       "localOrchestrator": "Local Orchestrator",
       "sampling": "Sampling",
       "samplingCourse": "Course",
-      "traceJourney": "Journey"
+      "traceJourney": "Journey",
+      "builderCatalog": "Builder catalog"
+    }
+  },
+  "builder": {
+    "panelTitle": "Builder catalog — compose an agent",
+    "intro": "Separate from the Journey tab (conversation traces). Flow: brick palette → custom draft → runtime publish → promotion request to the official catalog.",
+    "steps": {
+      "palette": "Palette",
+      "compose": "Compose",
+      "publish": "Publish",
+      "promote": "Promote",
+      "review": "Review"
+    },
+    "catalogAgentsCount": "{{count}} agent(s) in the official builder catalog.",
+    "paletteTitle": "Browse bricks",
+    "filterType": "Brick type",
+    "composeTitle": "Agent identity",
+    "pickBricks": "Composition (bricks)",
+    "fieldSlug": "Slug (unique)",
+    "fieldName": "Display name",
+    "fieldMission": "Mission",
+    "fieldOwner": "Owner (owner_user_id)",
+    "fieldCatalogId": "Target catalog agent id",
+    "selectBricks": "Choose…",
+    "createDraft": "Create draft",
+    "publishTitle": "Publish to runtime",
+    "noDrafts": "No custom drafts for this user. Go back to Compose.",
+    "publish": "Publish",
+    "publishDone": "Agent available for workflows:",
+    "goToCompose": "Compose an agent",
+    "goToPromote": "Request promotion",
+    "promoteTitle": "Official catalog promotion",
+    "promoteHint": "Submits a request; human approval via API (POST /builder/promotions/{id}/approve).",
+    "submitPromotion": "Submit promotion",
+    "promoteSubmitted": "Request recorded (status submitted).",
+    "goToReview": "Review requests",
+    "reviewTitle": "Human promotion review",
+    "reviewHint": "Approve copies the published custom agent to the official catalog and updates runtime.",
+    "reviewNotes": "Review notes (optional)",
+    "promotionFilter": "Filter by status",
+    "filterSubmitted": "Pending (submitted)",
+    "filterApproved": "Approved",
+    "filterRejected": "Rejected",
+    "filterAll": "All",
+    "noPromotions": "No requests for this filter.",
+    "requester": "Requester",
+    "approvePromotion": "Approve",
+    "rejectPromotion": "Reject",
+    "approvedCatalogAgent": "Catalog: agent « {{agentId}} » (version id {{versionId}}).",
+    "pendingCount": "{{count}} request(s) awaiting review.",
+    "apiUnavailable": "Builder API unreachable. Rebuild backend and apply 002_builder.sql.",
+    "errors": {
+      "roleRequired": "Select at least one role brick.",
+      "formRequired": "Fill slug, name, and mission."
     }
   },
   "journey": {
@@ -22,6 +76,10 @@
     "emptyChat": "Ask something. The answer uses the backend streaming sampling preview (live profile, same pipeline as the Sampling tab).",
     "emptyTrace": "Spans appear here: input, intent, context, reasoning, generation, response.",
     "traceUrlHint": "Trace API: {{url}}",
+    "conversationIdHint": "Persistent session (id {{id}}…). History reloads from the trace service.",
+    "newConversation": "New conversation",
+    "loadingHistory": "Loading history…",
+    "selectTraceHint": "Click a message to show that turn's trace.",
     "traceUnreachable": "Trace service unreachable ({{url}}). From trace-service: pip install -e . then orchestrateur-trace (port 8090).",
     "previewFailed": "Generation failed. Check backend :8000 and Ollama.",
     "assistantFallback": "(no text)",
@@ -34,15 +92,20 @@
       "response": "User response"
     },
     "spanIn": {
-      "context": "Local window: no persisted history in this demo.",
+      "context": "First turn: no prior history in storage.",
+      "contextWithHistory": "Persisted history: {{count}} previous assistant reply(ies) in this conversation.",
+      "generationWithHistory": "Ollama /api/chat: {{messages}} history message(s) + “{{snippet}}”",
       "reasoning": "Choice: direct answer via streaming preview.",
       "response": "Assistant bubble formatting."
     },
     "spanOut": {
       "userInput": "Message recorded.",
       "intent": "Request identified — {{snippet}}",
-      "context": "Minimal context (UI session only).",
-      "reasoning": "Single generation via POST /v1/runtime/sampling/preview/stream.",
+      "context": "Minimal context (SQLite session via trace-service).",
+      "contextSentToModel": "Sent to model: {{messages}} history message(s) (~{{chars}} chars) via Ollama /api/chat.",
+      "contextWithHistory": "Enriched context: {{count}} turn(s) already stored for this conversation.",
+      "reasoning": "Generation via POST /v1/runtime/sampling/preview/stream (prompt only, /api/generate).",
+      "reasoningWithHistory": "Generation via the same endpoint with history ({{messages}} messages, Ollama /api/chat).",
       "generation": "Model {{model}}; ~{{tokens}} output tokens.",
       "response": "Response shown ({{chars}} chars)."
     }

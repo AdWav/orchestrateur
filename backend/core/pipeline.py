@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.dev_teams import ALL_DEV_RUNNER_STEP_IDS, DEV_PIPELINE_STEP_IDS
+from core.dev_teams import ALL_DEV_RUNNER_STEP_IDS, DEV_PIPELINE_STEP_IDS, DIAGRAM_RUNNER_STEP_IDS
 
 LEGACY_PIPELINE_STEP_IDS: tuple[str, ...] = ("plan", "research", "execute", "verify")
 
@@ -8,7 +8,7 @@ LEGACY_PIPELINE_STEP_IDS: tuple[str, ...] = ("plan", "research", "execute", "ver
 PIPELINE_STEP_IDS: tuple[str, ...] = LEGACY_PIPELINE_STEP_IDS
 
 RUNNER_STEP_IDS: tuple[str, ...] = tuple(
-    dict.fromkeys([*LEGACY_PIPELINE_STEP_IDS, *ALL_DEV_RUNNER_STEP_IDS])
+    dict.fromkeys([*LEGACY_PIPELINE_STEP_IDS, *ALL_DEV_RUNNER_STEP_IDS, *DIAGRAM_RUNNER_STEP_IDS])
 )
 
 LEGACY_ENGINE_ROLE_BY_STEP_ID: dict[str, str] = {
@@ -33,6 +33,12 @@ DEV_ENGINE_ROLE_LABEL_BY_STEP_ID: dict[str, str] = {
     "document": "TechWriter",
     "schematic": "Planner",
     "test_and_verify": "QA",
+    "diagram_code_scan": "CodeScanner",
+    "diagram_structure": "StructureModeler",
+    "diagram_uml": "UmlEmitter",
+    "diagram_drawio": "DrawioEmitter",
+    "diagram_mermaid": "MermaidEmitter",
+    "diagram_qa": "DiagramQA",
 }
 
 STEP_ID_BY_LEGACY_ENGINE_ROLE: dict[str, str] = {

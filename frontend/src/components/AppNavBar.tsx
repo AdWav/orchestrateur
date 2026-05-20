@@ -4,6 +4,7 @@ import {
   APP_TAB_SAMPLING,
   APP_TAB_SAMPLING_COURSE,
   APP_TAB_TRACE_JOURNEY,
+  APP_TAB_BUILDER_CATALOG,
   type AppTabId,
 } from "../navigation/appTabs";
 
@@ -38,6 +39,10 @@ const AppNavBar = ({
     {
       id: APP_TAB_TRACE_JOURNEY,
       label: messages.nav.tabs.traceJourney,
+    },
+    {
+      id: APP_TAB_BUILDER_CATALOG,
+      label: messages.nav.tabs.builderCatalog,
     },
   ];
 

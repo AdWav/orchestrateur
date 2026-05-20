@@ -35,6 +35,6 @@
 → je veux mettre en place un service où on peut (extemporannement) modifier les parametre de décodage d'un modèle
 → **fait** : profil live + `PUT /v1/runtime/sampling/settings/live` + UI (voir [`sampling-runtime.md`](./sampling-runtime.md))
 → Je veux suivre le cheminement complet d'une question utilisateur jusqu'a la reponse (trace par phases : intention, contexte, raisonnement, generation, etc.)
-→ **amorce** : service HTTP dedie + doc [`conversation-trace-service.md`](./conversation-trace-service.md) (`trace-service/`, port local 8090) ; integration backend / UI et persistance a brancher
+→ **amorce** : service HTTP dedie + doc [`conversation-trace-service.md`](./conversation-trace-service.md) (`trace-service/`, port local 8090) ; persistance traces via SQLite (`TRACE_SQLITE_PATH`, volume Docker `trace_sqlite_data`) ; integration backend / UI (hors onglet Parcours demo) encore partielle
 → **partiel** : stats fin de stream (prompt/output, tok/s) + calque tokens Flux/BPE en UI ; doc comptabilisation détaillée : à enrichir
 → 

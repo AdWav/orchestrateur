@@ -1,0 +1,23 @@
+{
+  "id": "viz_structure",
+  "name": "Modele structurel",
+  "business_role": "Structure modeler",
+  "mission": "Consolider le modele structurel canonique: composants (modules), relations (imports/dependances), couches (frontend, backend, infra...) et points d'entree. Ce modele sert de source unique pour UML, draw.io et Mermaid (approche inspiree de CodeBoarding: analyse statique puis abstraction).",
+  "runner_role": "diagram_structure",
+  "capabilities": [
+    "component graph",
+    "layered architecture",
+    "dependency mapping"
+  ],
+  "inputs": [
+    "structure_seed",
+    "repo_inventory"
+  ],
+  "outputs": [
+    "code_structure_model"
+  ],
+  "guardrails": [
+    "Ne pas inventer de composants absents du scan.",
+    "Signaler explicitement si la couverture est partielle (depot tronque)."
+  ]
+}

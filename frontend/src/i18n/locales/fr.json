@@ -10,7 +10,61 @@
       "localOrchestrator": "Orchestrateur Local",
       "sampling": "Echantillonnage",
       "samplingCourse": "Cours",
-      "traceJourney": "Parcours"
+      "traceJourney": "Parcours",
+      "builderCatalog": "Catalogue builder"
+    }
+  },
+  "builder": {
+    "panelTitle": "Catalogue builder — composer un agent",
+    "intro": "Parcours distinct de l'onglet « Parcours » (traces conversation). Ici : palette de briques → brouillon custom → publication runtime → demande de promotion vers le catalogue officiel.",
+    "steps": {
+      "palette": "Palette",
+      "compose": "Composer",
+      "publish": "Publier",
+      "promote": "Promouvoir",
+      "review": "Validation"
+    },
+    "catalogAgentsCount": "{{count}} agent(s) dans le catalogue officiel (builder).",
+    "paletteTitle": "Explorer les briques",
+    "filterType": "Type de brique",
+    "composeTitle": "Identite de l'agent",
+    "pickBricks": "Composition (briques)",
+    "fieldSlug": "Slug (unique)",
+    "fieldName": "Nom affiche",
+    "fieldMission": "Mission",
+    "fieldOwner": "Proprietaire (owner_user_id)",
+    "fieldCatalogId": "ID agent catalogue cible",
+    "selectBricks": "Choisir…",
+    "createDraft": "Creer le brouillon",
+    "publishTitle": "Publier en runtime",
+    "noDrafts": "Aucun brouillon custom pour cet utilisateur. Revenez a l'etape Composer.",
+    "publish": "Publier",
+    "publishDone": "Agent disponible pour les workflows :",
+    "goToCompose": "Composer un agent",
+    "goToPromote": "Demander une promotion",
+    "promoteTitle": "Promotion catalogue officiel",
+    "promoteHint": "Soumet une demande ; validation humaine cote API (POST /builder/promotions/{id}/approve).",
+    "submitPromotion": "Soumettre la promotion",
+    "promoteSubmitted": "Demande enregistree (statut submitted).",
+    "goToReview": "Valider les demandes",
+    "reviewTitle": "Validation humaine des promotions",
+    "reviewHint": "Approuver copie l'agent custom publie vers le catalogue officiel et met a jour le runtime.",
+    "reviewNotes": "Notes de relecture (optionnel)",
+    "promotionFilter": "Filtrer par statut",
+    "filterSubmitted": "En attente (submitted)",
+    "filterApproved": "Approuvees",
+    "filterRejected": "Rejetees",
+    "filterAll": "Toutes",
+    "noPromotions": "Aucune demande pour ce filtre.",
+    "requester": "Demandeur",
+    "approvePromotion": "Approuver",
+    "rejectPromotion": "Rejeter",
+    "approvedCatalogAgent": "Catalogue : agent « {{agentId}} » (version id {{versionId}}).",
+    "pendingCount": "{{count}} demande(s) en attente de validation.",
+    "apiUnavailable": "API /builder injoignable. Rebuild backend et migration 002_builder.sql.",
+    "errors": {
+      "roleRequired": "Selectionnez au moins une brique « role ».",
+      "formRequired": "Remplissez slug, nom et mission."
     }
   },
   "journey": {
@@ -22,6 +76,10 @@
     "emptyChat": "Posez une question. La reponse utilise l'apercu echantillonnage stream du backend (profil live, comme l'onglet Echantillonnage).",
     "emptyTrace": "Les spans apparaitront ici : entree, intention, contexte, raisonnement, generation, retour.",
     "traceUrlHint": "API traces : {{url}}",
+    "conversationIdHint": "Session persistante (id {{id}}…). Historique recharge depuis le service de traces.",
+    "newConversation": "Nouvelle conversation",
+    "loadingHistory": "Chargement de l'historique…",
+    "selectTraceHint": "Cliquez un message pour afficher la trace de ce tour.",
     "traceUnreachable": "Service de traces injoignable ({{url}}). Depuis trace-service : pip install -e . puis orchestrateur-trace (port 8090).",
     "previewFailed": "Erreur generation. Verifiez backend :8000 et Ollama.",
     "assistantFallback": "(pas de texte)",
@@ -34,15 +92,20 @@
       "response": "Retour utilisateur"
     },
     "spanIn": {
-      "context": "Fenetre locale : pas d'historique persistant dans cette demo.",
+      "context": "Premier tour : pas d'historique anterieur en base.",
+      "contextWithHistory": "Historique persistant : {{count}} reponse(s) precedente(s) dans cette conversation.",
+      "generationWithHistory": "Ollama /api/chat : {{messages}} message(s) d'historique + « {{snippet}} »",
       "reasoning": "Choix : reponse directe par apercu stream.",
       "response": "Formatage bulle assistant."
     },
     "spanOut": {
       "userInput": "Message enregistre.",
       "intent": "Demande identifiee — {{snippet}}",
-      "context": "Contexte minimal (session UI seule).",
-      "reasoning": "Generation unique via POST /v1/runtime/sampling/preview/stream.",
+      "context": "Contexte minimal (session SQLite / trace-service).",
+      "contextSentToModel": "Envoye au modele : {{messages}} message(s) d'historique (~{{chars}} caracteres) via Ollama /api/chat.",
+      "contextWithHistory": "Contexte enrichi : {{count}} tour(s) deja enregistres pour cette conversation.",
+      "reasoning": "Generation via POST /v1/runtime/sampling/preview/stream (prompt seul, /api/generate).",
+      "reasoningWithHistory": "Generation via le meme endpoint avec historique ({{messages}} messages, Ollama /api/chat).",
       "generation": "Modele {{model}} ; sortie ~{{tokens}} tokens.",
       "response": "Reponse affichee ({{chars}} caracteres)."
     }

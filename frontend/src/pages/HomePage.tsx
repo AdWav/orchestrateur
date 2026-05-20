@@ -32,12 +32,14 @@ import AppNavBar from "../components/AppNavBar";
 import SamplingCoursePanel from "../components/SamplingCoursePanel";
 import SamplingSettingsModal from "../components/SamplingSettingsModal";
 import ConversationJourneyPanel from "../components/ConversationJourneyPanel";
+import BuilderCatalogPanel from "../components/BuilderCatalogPanel";
 import DevTeamsSection from "../components/DevTeamsSection";
 import {
   APP_TAB_LOCAL_ORCHESTRATOR,
   APP_TAB_SAMPLING,
   APP_TAB_SAMPLING_COURSE,
   APP_TAB_TRACE_JOURNEY,
+  APP_TAB_BUILDER_CATALOG,
   type AppTabId,
 } from "../navigation/appTabs";
 import { useI18n } from "../i18n/I18nProvider";
@@ -557,6 +559,7 @@ const HomePage = ({
               [APP_TAB_SAMPLING]: samplingService?.active,
               [APP_TAB_SAMPLING_COURSE]: samplingService?.active,
               [APP_TAB_TRACE_JOURNEY]: traceTabServiceActive,
+              [APP_TAB_BUILDER_CATALOG]: backendService?.active,
             }}
           />
         </IonToolbar>
@@ -663,6 +666,8 @@ const HomePage = ({
           ) : null}
 
           {activeTab === APP_TAB_TRACE_JOURNEY ? <ConversationJourneyPanel /> : null}
+
+          {activeTab === APP_TAB_BUILDER_CATALOG ? <BuilderCatalogPanel /> : null}
         </div>
       </IonContent>
 

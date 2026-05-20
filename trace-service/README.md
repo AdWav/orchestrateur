@@ -5,6 +5,7 @@ Service FastAPI minimal pour enregistrer une **trace** (parcours utilisateur →
 Variables utiles :
 
 - **`TRACE_CORS_ORIGINS`** : liste separee par des virgules (defaut : `localhost` / `127.0.0.1` ports **3000** et **5173**) pour les requetes du navigateur vers ce service.
+- **`TRACE_SQLITE_PATH`** : si défini (ex. `./data/traces.sqlite` en local ou `/data/traces.sqlite` dans Docker), les traces sont persistées dans un fichier **SQLite** (mode WAL). Sans cette variable, stockage **en mémoire** (redémarrage = perte).
 
 ## Démarrage local
 
@@ -50,8 +51,16 @@ curl -s -X PATCH http://127.0.0.1:8090/v1/traces/TRACE_ID/spans/SPAN_ID -H "Cont
   -d '{"status":"ok","summary_out":"intention: question_technique"}'
 
 curl -s http://127.0.0.1:8090/v1/traces/TRACE_ID
+
+# Historique par conversation
+curl -s "http://127.0.0.1:8090/v1/conversations/CONV_ID/traces?limit=50"
+
+# Enregistrer les textes du tour (fusion metadata)
+curl -s -X PATCH http://127.0.0.1:8090/v1/traces/TRACE_ID -H "Content-Type: application/json" \
+  -d '{"metadata":{"user_text":"Bonjour","assistant_text":"Salut"}}'
 ```
 
-## MVP
+## Stockage
 
-Stockage **en mémoire** : les traces disparaissent au redémarrage du processus. Remplacer par une base pour la persistance.
+- **Par défaut** : mémoire (redémarrage du processus = perte des traces).
+- **Persistant** : définir `TRACE_SQLITE_PATH` vers un chemin de fichier accessible en écriture. Sous `docker compose`, le service monte le volume nommé `trace_sqlite_data` sur `/data` et utilise `/data/traces.sqlite` (voir `compose.yaml`).

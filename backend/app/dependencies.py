@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from app.controllers.builder_controller import BuilderController
 from app.controllers.definition_controller import DefinitionController
 from app.controllers.ollama_runtime_controller import OllamaRuntimeController
 from app.controllers.sampling_controller import SamplingController
@@ -29,6 +30,7 @@ class AppContainer:
     team_controller: TeamController
     ollama_runtime_controller: OllamaRuntimeController
     sampling_controller: SamplingController
+    builder_controller: BuilderController
 
 
 _container: AppContainer | None = None
@@ -65,6 +67,7 @@ def init_container() -> AppContainer:
         team_controller=TeamController(orchestrator),
         ollama_runtime_controller=OllamaRuntimeController(),
         sampling_controller=SamplingController(),
+        builder_controller=BuilderController(),
     )
     return _container
 

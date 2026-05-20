@@ -84,6 +84,24 @@ class TraceCreateResponse(BaseModel):
     created_at: datetime
 
 
+class TraceMetadataPatch(BaseModel):
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class TraceSummary(BaseModel):
+    """Trace sans spans (liste par conversation)."""
+
+    trace_id: UUID
+    created_at: datetime
+    conversation_id: str | None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ConversationTracesResponse(BaseModel):
+    conversation_id: str
+    traces: list[TraceSummary] = Field(default_factory=list)
+
+
 def new_trace_id() -> UUID:
     return uuid4()
 

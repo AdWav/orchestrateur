@@ -1,0 +1,91 @@
+{
+  "id": "team-code-viz",
+  "name": "Equipe visualisation code",
+  "goal": "Lire le code d'un projet quelconque et produire diagramme UML (PlantUML), schema draw.io (XML) et flux Mermaid.",
+  "context": {
+    "methodology": "scan-structure-emit-qa",
+    "inspirations": "CodeBoarding, Swark, RepoArchitectAgent, diagram-architect"
+  },
+  "constraints": [
+    "Analyse en lecture seule du depot cible.",
+    "Un modele structurel unique alimente les trois formats de sortie.",
+    "Contexte depot via work item: code_visualization.repo_target.root_path ou workspace_path."
+  ],
+  "success_criteria": [
+    "Inventaire et modele structurel produits avec chemins sources.",
+    "PlantUML, draw.io XML et Mermaid flowchart generes.",
+    "Verdict QA explicite sur la coherence du bundle."
+  ],
+  "steps": [
+    {
+      "id": "code_scan",
+      "name": "Scan du code",
+      "agent_definition_id": "viz_code_scan",
+      "objective": "Scanner le depot, detecter langages et extraire signaux structurels (classes, imports, entrees).",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": []
+    },
+    {
+      "id": "structure",
+      "name": "Modele structurel",
+      "agent_definition_id": "viz_structure",
+      "objective": "Consolider le graphe composants/relations/couches pour les emitters.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "code_scan"
+      ]
+    },
+    {
+      "id": "uml",
+      "name": "Diagramme UML",
+      "agent_definition_id": "viz_uml",
+      "objective": "Emettre le diagramme UML PlantUML.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "structure"
+      ]
+    },
+    {
+      "id": "drawio",
+      "name": "Schema draw.io",
+      "agent_definition_id": "viz_drawio",
+      "objective": "Emettre le schema technique draw.io (mxGraphModel XML).",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "uml"
+      ]
+    },
+    {
+      "id": "mermaid",
+      "name": "Flux Mermaid",
+      "agent_definition_id": "viz_mermaid",
+      "objective": "Emettre le flowchart Mermaid pour documentation Markdown.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "drawio"
+      ]
+    },
+    {
+      "id": "qa",
+      "name": "Controle diagrammes",
+      "agent_definition_id": "viz_qa",
+      "objective": "Valider la coherence cross-format et produire le bundle final.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "mermaid"
+      ]
+    }
+  ]
+}

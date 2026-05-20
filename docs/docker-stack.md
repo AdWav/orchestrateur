@@ -42,7 +42,7 @@ Le depot demarre via `Docker Compose` avec un reseau interne `orchestrateur-agen
 
 - API FastAPI minimale : traces + spans (voir [`conversation-trace-service.md`](conversation-trace-service.md))
 - Port hote : **8090**
-- Variables : `TRACE_CORS_ORIGINS` (origines navigateur, ex. `http://localhost:3000`), `TRACE_BIND_HOST` (defaut `0.0.0.0` dans l'image), `TRACE_PORT`
+- Variables : `TRACE_CORS_ORIGINS` (origines navigateur, ex. `http://localhost:3000`), `TRACE_BIND_HOST` (defaut `0.0.0.0` dans l'image), `TRACE_PORT`, `TRACE_SQLITE_PATH` (defaut compose : `/data/traces.sqlite` sur le volume `trace_sqlite_data`)
 - Sante : `GET http://localhost:8090/health`
 - Le **navigateur** appelle ce service directement (URL figee au build du frontend : `VITE_TRACE_SERVICE_URL`, defaut `http://127.0.0.1:8090` avec le port publie)
 

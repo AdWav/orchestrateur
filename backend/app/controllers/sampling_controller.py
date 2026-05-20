@@ -22,6 +22,12 @@ from app.services.ollama_tokenize import (
     tokenize_model_text,
 )
 from app.services.runtime_context import get_runtime_ollama, get_runtime_sampling
+from app.services.sampling_preview_context import (
+    PreviewLiveContext,
+    extract_final_content,
+    extract_stream_token,
+    resolve_preview_live_context,
+)
 from core.sampling_settings import SamplingSnapshot
 
 
@@ -35,37 +41,33 @@ class SamplingController:
         store.apply_live(_snapshot_from_payload(payload))
         return self._build_response(store)
 
-    def _preview_live_context(self, payload: SamplingPreviewRequest) -> tuple[str, str, dict, int]:
-        self._require_ollama_backend()
-        model = (payload.model or "").strip() or get_runtime_ollama().default_model()
-        if not model:
-            raise ValueError("Aucun modele par defaut configure.")
-        ollama_ops.validate_models_installed({model})
-        prompt = payload.prompt.strip()
-        if not prompt:
-            raise ValueError("Le prompt ne peut pas etre vide.")
-
-        live_options = get_runtime_sampling().live_snapshot().to_ollama_options()
-        num_predict = live_options.pop("num_predict", None) or 96
-        return model, prompt, live_options, int(num_predict)
-
     def preview_live(self, payload: SamplingPreviewRequest) -> SamplingPreviewResponse:
-        model, prompt, live_options, num_predict = self._preview_live_context(payload)
-        parsed = ollama_ops.ollama_post_generate(
-            model,
-            prompt=prompt,
-            keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
-            num_predict=num_predict,
-            options_override=live_options,
-        )
-        content = parsed.get("response", "").strip()
+        ctx = self._require_preview_context(payload)
+        if ctx.mode == "chat" and ctx.messages:
+            parsed = ollama_ops.ollama_post_chat(
+                ctx.model,
+                messages=ctx.messages,
+                keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
+                num_predict=ctx.num_predict,
+                options_override=ctx.live_options,
+            )
+            content = extract_final_content(parsed, mode="chat")
+        else:
+            parsed = ollama_ops.ollama_post_generate(
+                ctx.model,
+                prompt=ctx.prompt,
+                keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
+                num_predict=ctx.num_predict,
+                options_override=ctx.live_options,
+            )
+            content = extract_final_content(parsed, mode="generate")
         if not content:
-            raise RuntimeError(f"Ollama a renvoye une reponse vide pour '{model}'.")
+            raise RuntimeError(f"Ollama a renvoye une reponse vide pour '{ctx.model}'.")
         return SamplingPreviewResponse(
-            model=model,
+            model=ctx.model,
             profile="live",
             content=content,
-            backend=f"ollama:{model}",
+            backend=f"ollama:{ctx.model}",
         )
 
     def tokenize_capabilities(self) -> SamplingTokenizeCapabilitiesResponse:
@@ -97,19 +99,32 @@ class SamplingController:
         )
 
     def preview_live_stream(self, payload: SamplingPreviewRequest) -> Iterator[str]:
-        model, prompt, live_options, num_predict = self._preview_live_context(payload)
+        ctx = self._require_preview_context(payload)
         content_parts: list[str] = []
         final_payload: dict | None = None
 
-        for chunk in ollama_ops.iter_ollama_post_generate(
-            model,
-            prompt=prompt,
-            keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
-            num_predict=num_predict,
-            options_override=live_options,
-        ):
-            token = chunk.get("response")
-            if isinstance(token, str) and token:
+        if ctx.mode == "chat" and ctx.messages:
+            chunk_iter = ollama_ops.iter_ollama_post_chat(
+                ctx.model,
+                messages=ctx.messages,
+                keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
+                num_predict=ctx.num_predict,
+                options_override=ctx.live_options,
+            )
+            mode = "chat"
+        else:
+            chunk_iter = ollama_ops.iter_ollama_post_generate(
+                ctx.model,
+                prompt=ctx.prompt,
+                keep_alive=os.getenv("OLLAMA_KEEP_ALIVE", "5m"),
+                num_predict=ctx.num_predict,
+                options_override=ctx.live_options,
+            )
+            mode = "generate"
+
+        for chunk in chunk_iter:
+            token = extract_stream_token(chunk, mode=mode)
+            if token:
                 content_parts.append(token)
                 yield self._stream_event("token", content=token)
             if chunk.get("done"):
@@ -117,17 +132,27 @@ class SamplingController:
 
         content = "".join(content_parts).strip()
         if not content:
-            raise RuntimeError(f"Ollama a renvoye une reponse vide pour '{model}'.")
+            final_text = extract_final_content(final_payload or {}, mode=mode)
+            content = final_text.strip()
+        if not content:
+            raise RuntimeError(f"Ollama a renvoye une reponse vide pour '{ctx.model}'.")
 
         stats = self._stream_stats(final_payload or {})
         yield self._stream_event(
             "done",
-            model=model,
+            model=ctx.model,
             profile="live",
-            backend=f"ollama:{model}",
+            backend=f"ollama:{ctx.model}",
             content=content,
             stats=stats,
+            context_mode=ctx.mode,
+            history_messages=ctx.history_message_count,
+            history_chars=ctx.history_char_count,
         )
+
+    def _require_preview_context(self, payload: SamplingPreviewRequest) -> PreviewLiveContext:
+        self._require_ollama_backend()
+        return resolve_preview_live_context(payload)
 
     @staticmethod
     def _stream_event(event: str, **fields) -> str:

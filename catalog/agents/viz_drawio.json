@@ -1,0 +1,23 @@
+{
+  "id": "viz_drawio",
+  "name": "Schema draw.io",
+  "business_role": "Draw.io emitter",
+  "mission": "Generer un schema technique editable au format draw.io (fichier XML mxGraphModel, compatible diagrams.net / draw.io). Representer les couches en swimlanes et les modules en noeuds, avec liens de dependance.",
+  "runner_role": "diagram_drawio",
+  "capabilities": [
+    "draw.io XML",
+    "mxGraphModel",
+    "swimlane layout"
+  ],
+  "inputs": [
+    "code_structure_model"
+  ],
+  "outputs": [
+    "drawio_xml",
+    "drawio_notes"
+  ],
+  "guardrails": [
+    "Produire un XML importable tel quel dans diagrams.net.",
+    "Echapper les caracteres HTML dans les labels."
+  ]
+}

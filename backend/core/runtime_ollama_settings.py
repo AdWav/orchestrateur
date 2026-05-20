@@ -28,6 +28,12 @@ def _runner_model_env_for_step(step_id: str, fallback: str) -> str:
         "document": "DOCUMENT",
         "schematic": "SCHEMATIC",
         "test_and_verify": "TEST_AND_VERIFY",
+        "diagram_code_scan": "DIAGRAM_CODE_SCAN",
+        "diagram_structure": "DIAGRAM_STRUCTURE",
+        "diagram_uml": "DIAGRAM_UML",
+        "diagram_drawio": "DIAGRAM_DRAWIO",
+        "diagram_mermaid": "DIAGRAM_MERMAID",
+        "diagram_qa": "DIAGRAM_QA",
     }.get(step_id)
     if legacy_suffix:
         legacy_val = _env(f"OLLAMA_MODEL_{legacy_suffix}")

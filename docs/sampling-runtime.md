@@ -112,14 +112,22 @@ Réponse typique (`source: llama_cpp`) : liste de morceaux avec `id` entier et `
 | `POST /v1/runtime/sampling/preview` | JSON | Réponse complète (bloquant) |
 | `POST /v1/runtime/sampling/preview/stream` | `application/x-ndjson` | Événements ligne par ligne |
 
+Corps JSON (`SamplingPreviewRequest`) :
+
+| Champ | Description |
+|-------|-------------|
+| `prompt` | Message utilisateur courant (obligatoire) |
+| `model` | Modèle Ollama (optionnel, défaut runtime) |
+| `history` | Liste `{ role, content }` (`user` / `assistant` / `system`) — si non vide, le backend appelle **Ollama `/api/chat`** avec l’historique + le prompt ; sinon **`/api/generate`** (comportement historique de l’onglet Échantillonnage). Limite serveur : 64 messages ; troncature via `JOURNEY_MAX_HISTORY_MESSAGES` (défaut **40**). |
+
 Événements stream :
 
 ```json
 {"event":"token","content":"…"}
-{"event":"done","model":"…","profile":"live","backend":"ollama:…","content":"…","stats":{…}}
+{"event":"done","model":"…","profile":"live","backend":"ollama:…","content":"…","stats":{…},"context_mode":"chat","history_messages":4,"history_chars":512}
 ```
 
-Le client frontend consomme ce flux via `streamSamplingPreview()` (`frontend/src/lib/api.ts`).
+Le client frontend consomme ce flux via `streamSamplingPreview()` (`frontend/src/lib/api.ts`). L’onglet **Parcours** envoie `history` reconstruit depuis les traces SQLite (`metadata.user_text` / `assistant_text`).
 
 ---
 

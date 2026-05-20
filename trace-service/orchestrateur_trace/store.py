@@ -10,6 +10,7 @@ from orchestrateur_trace.models import (
     SpanStatus,
     TraceCreate,
     TraceRecord,
+    TraceSummary,
     new_span_id,
     new_trace_id,
     utc_now,
@@ -92,3 +93,37 @@ class TraceStore:
                     tr.spans[i] = updated
                     return updated
         return None
+
+    def update_trace_metadata(self, trace_id: UUID, metadata: dict) -> TraceRecord | None:
+        with self._lock:
+            tr = self._traces.get(trace_id)
+            if tr is None:
+                return None
+            merged = dict(tr.metadata)
+            merged.update(metadata)
+            tr.metadata = merged
+            return tr.model_copy(deep=True)
+
+    def list_traces_by_conversation(
+        self,
+        conversation_id: str,
+        *,
+        limit: int = 100,
+    ) -> list[TraceSummary]:
+        with self._lock:
+            items = [
+                t
+                for t in self._traces.values()
+                if t.conversation_id == conversation_id
+            ]
+            items.sort(key=lambda t: t.created_at)
+            items = items[-limit:]
+            return [
+                TraceSummary(
+                    trace_id=t.trace_id,
+                    created_at=t.created_at,
+                    conversation_id=t.conversation_id,
+                    metadata=dict(t.metadata),
+                )
+                for t in items
+            ]

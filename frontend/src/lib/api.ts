@@ -60,9 +60,16 @@ export type SamplingSettingsResponse = {
 
 export type SamplingLiveUpdate = SamplingProfile;
 
+export type ChatTurn = {
+  role: "user" | "assistant" | "system";
+  content: string;
+};
+
 export type SamplingPreviewRequest = {
   prompt: string;
   model?: string | null;
+  /** Historique multi-tours (Ollama /api/chat) avant le message courant. */
+  history?: ChatTurn[];
 };
 
 export type SamplingPreviewResponse = {
@@ -90,6 +97,9 @@ export type SamplingPreviewStreamEvent =
       backend: string;
       content: string;
       stats: SamplingPreviewStreamStats;
+      context_mode?: "generate" | "chat";
+      history_messages?: number;
+      history_chars?: number;
     }
   | { event: "error"; detail: string };
 

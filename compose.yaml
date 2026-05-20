@@ -10,6 +10,7 @@ services:
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./db/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+      - ./db/002_builder.sql:/docker-entrypoint-initdb.d/02-builder.sql:ro
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
       interval: 5s
@@ -63,12 +64,14 @@ services:
       OLLAMA_MODELS_DIR: /ollama-models
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5-coder:1.5b}
       DATABASE_URL: mysql://orchestrateur:orchestrateur@db:3306/orchestrateur
+      JOURNEY_MAX_HISTORY_MESSAGES: "${JOURNEY_MAX_HISTORY_MESSAGES:-40}"
       CATALOG_BACKEND: mariadb
       FRONTEND_URL: http://localhost:3000
       UI_ALLOWED_ORIGINS: http://localhost:3000,http://127.0.0.1:3000
       WORKSPACE_ROOT: /workspaces
     volumes:
       - ./workspaces:/workspaces
+      - ./catalog:/app/catalog:ro
       - ollama_data:/ollama-models:ro
     depends_on:
       db:
@@ -99,6 +102,9 @@ services:
       TRACE_BIND_HOST: "0.0.0.0"
       TRACE_PORT: "8090"
       TRACE_CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+      TRACE_SQLITE_PATH: /data/traces.sqlite
+    volumes:
+      - trace_sqlite_data:/data
     ports:
       - "8090:8090"
     healthcheck:
@@ -171,3 +177,4 @@ networks:
 volumes:
   ollama_data:
   mariadb_data:
+  trace_sqlite_data:

@@ -1,0 +1,23 @@
+{
+  "id": "viz_mermaid",
+  "name": "Flux Mermaid",
+  "business_role": "Mermaid emitter",
+  "mission": "Generer un schema de flux Mermaid (flowchart TB) pour documentation Markdown: projet, couches, modules principaux, dependances et points d'entree. Compatible rendu GitHub/GitLab (approche Swark / RepoArchitectAgent).",
+  "runner_role": "diagram_mermaid",
+  "capabilities": [
+    "Mermaid flowchart",
+    "GitHub Markdown",
+    "architecture flow"
+  ],
+  "inputs": [
+    "code_structure_model"
+  ],
+  "outputs": [
+    "mermaid_flow",
+    "mermaid_notes"
+  ],
+  "guardrails": [
+    "Entourer le diagramme de fences ```mermaid.",
+    "Preferer flowchart TB pour vue architecture."
+  ]
+}

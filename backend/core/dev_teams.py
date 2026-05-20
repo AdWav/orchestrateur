@@ -142,6 +142,15 @@ EXTRA_DEV_RUNNER_STEP_IDS: tuple[str, ...] = (
     "devops",
 )
 
+DIAGRAM_RUNNER_STEP_IDS: tuple[str, ...] = (
+    "diagram_code_scan",
+    "diagram_structure",
+    "diagram_uml",
+    "diagram_drawio",
+    "diagram_mermaid",
+    "diagram_qa",
+)
+
 ALL_DEV_RUNNER_STEP_IDS: tuple[str, ...] = tuple(
     dict.fromkeys([*DEV_PIPELINE_STEP_IDS, *EXTRA_DEV_RUNNER_STEP_IDS])
 )

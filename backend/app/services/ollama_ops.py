@@ -46,6 +46,89 @@ def validate_models_installed(names: set[str]) -> None:
         raise ValueError(f"Modele(s) absent(s) d'Ollama: {joined}. Utiliser les noms depuis /api/tags.")
 
 
+def _chat_request_body(
+    model: str,
+    *,
+    messages: list[dict[str, str]],
+    keep_alive: str | int,
+    num_predict: int,
+    stream: bool,
+    options_override: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    base_options = (
+        dict(options_override) if options_override is not None else orchestration_sampling_options()
+    )
+    options = {**base_options, "num_predict": num_predict}
+    return {
+        "model": model,
+        "messages": messages,
+        "stream": stream,
+        "keep_alive": keep_alive,
+        "options": options,
+    }
+
+
+def iter_ollama_post_chat(
+    model: str,
+    *,
+    messages: list[dict[str, str]],
+    keep_alive: str | int,
+    num_predict: int,
+    timeout_seconds: float | None = None,
+    options_override: dict[str, Any] | None = None,
+) -> Iterator[dict[str, Any]]:
+    base = ollama_base_url().rstrip("/")
+    body = _chat_request_body(
+        model,
+        messages=messages,
+        keep_alive=keep_alive,
+        num_predict=num_predict,
+        stream=True,
+        options_override=options_override,
+    )
+    with httpx.stream(
+        "POST",
+        f"{base}/api/chat",
+        json=body,
+        timeout=_generate_timeout_seconds(timeout_seconds),
+    ) as response:
+        response.raise_for_status()
+        for line in response.iter_lines():
+            if not line:
+                continue
+            parsed = json.loads(line)
+            if isinstance(parsed, dict):
+                yield parsed
+
+
+def ollama_post_chat(
+    model: str,
+    *,
+    messages: list[dict[str, str]],
+    keep_alive: str | int,
+    num_predict: int,
+    timeout_seconds: float | None = None,
+    options_override: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    base = ollama_base_url().rstrip("/")
+    body = _chat_request_body(
+        model,
+        messages=messages,
+        keep_alive=keep_alive,
+        num_predict=num_predict,
+        stream=False,
+        options_override=options_override,
+    )
+    response = httpx.post(
+        f"{base}/api/chat",
+        json=body,
+        timeout=_generate_timeout_seconds(timeout_seconds),
+    )
+    response.raise_for_status()
+    parsed = response.json()
+    return parsed if isinstance(parsed, dict) else {}
+
+
 def _generate_request_body(
     model: str,
     *,

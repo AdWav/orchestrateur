@@ -4,27 +4,40 @@ import {
   IonSpinner,
   IonTextarea,
 } from "@ionic/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useI18n } from "../i18n/I18nProvider";
+import {
+  getJourneyConversationId,
+  resetJourneyConversationId,
+} from "../lib/conversationSession";
+import type { ChatTurn } from "../lib/api";
 import { streamSamplingPreview, type SamplingPreviewStreamEvent } from "../lib/api";
 import {
+  chatHistoryCharCount,
+  countPriorTurns,
+  journeyMessagesToChatHistory,
+  tracesToChatMessages,
+  type JourneyChatMessage,
+} from "../lib/journeyHistory";
+import {
   createTrace,
+  fetchConversationTraces,
   fetchTrace,
+  patchTraceMetadata,
   patchTraceSpan,
   startTraceSpan,
   traceServiceBaseUrl,
+  TRACE_META_ASSISTANT_TEXT,
+  TRACE_META_CONTEXT_MODE,
+  TRACE_META_HISTORY_CHARS,
+  TRACE_META_HISTORY_MESSAGES,
+  TRACE_META_USER_TEXT,
   type TraceRecordDto,
   type TraceSpanDto,
 } from "../lib/traceApi";
 
 import "./ConversationJourneyPanel.css";
-
-type ChatMessage = {
-  role: "user" | "assistant";
-  text: string;
-  at: string;
-};
 
 function clip(s: string, max: number): string {
   if (s.length <= max) {
@@ -42,10 +55,13 @@ function spanDurationMs(span: TraceSpanDto): number | null {
 
 const ConversationJourneyPanel = () => {
   const { t, messages } = useI18n();
+  const [conversationId, setConversationId] = useState(getJourneyConversationId);
   const [draft, setDraft] = useState("");
-  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatMessages, setChatMessages] = useState<JourneyChatMessage[]>([]);
   const [trace, setTrace] = useState<TraceRecordDto | null>(null);
+  const [selectedTraceId, setSelectedTraceId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [runError, setRunError] = useState<string | null>(null);
 
   const stageLabel = useCallback(
@@ -56,18 +72,49 @@ const ConversationJourneyPanel = () => {
     [messages.journey.stageLabels],
   );
 
+  const loadTraceTimeline = useCallback(async (traceId: string) => {
+    setSelectedTraceId(traceId);
+    setTrace(await fetchTrace(traceId));
+  }, []);
+
+  const reloadHistory = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const { traces } = await fetchConversationTraces(conversationId);
+      const msgs = tracesToChatMessages(traces);
+      setChatMessages(msgs);
+      const last = traces[traces.length - 1];
+      if (last) {
+        await loadTraceTimeline(last.trace_id);
+      } else {
+        setSelectedTraceId(null);
+        setTrace(null);
+      }
+    } catch {
+      /* service indisponible : on garde l'état local */
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, [conversationId, loadTraceTimeline]);
+
+  useEffect(() => {
+    void reloadHistory();
+  }, [reloadHistory]);
+
   const runPipeline = useCallback(
-    async (userText: string) => {
+    async (userText: string, priorTurns: number, chatHistory: ChatTurn[]) => {
+      const historyChars = chatHistoryCharCount(chatHistory);
+      const historyMsgCount = chatHistory.length;
       const { trace_id } = await createTrace({
-        conversation_id: `ui-${Date.now()}`,
+        conversation_id: conversationId,
         metadata: { source: "orchestrateur-ui" },
       });
 
       const refresh = async () => {
         setTrace(await fetchTrace(trace_id));
+        setSelectedTraceId(trace_id);
       };
 
-      // 1 — user_input
       let sp = await startTraceSpan(trace_id, {
         stage: "user_input",
         summary_in: clip(userText, 200),
@@ -78,7 +125,6 @@ const ConversationJourneyPanel = () => {
       });
       await refresh();
 
-      // 2 — intent
       sp = await startTraceSpan(trace_id, {
         stage: "intent",
         summary_in: clip(userText, 120),
@@ -90,19 +136,30 @@ const ConversationJourneyPanel = () => {
       });
       await refresh();
 
-      // 3 — context
       sp = await startTraceSpan(trace_id, {
         stage: "context",
-        summary_in: t("journey.spanIn.context"),
+        summary_in:
+          historyMsgCount > 0
+            ? t("journey.spanIn.contextWithHistory", { count: String(priorTurns) })
+            : t("journey.spanIn.context"),
+        attributes: {
+          history_messages: historyMsgCount,
+          history_chars: historyChars,
+        },
       });
       await new Promise((r) => setTimeout(r, 90));
       await patchTraceSpan(trace_id, sp.span_id, {
         status: "ok",
-        summary_out: t("journey.spanOut.context"),
+        summary_out:
+          historyMsgCount > 0
+            ? t("journey.spanOut.contextSentToModel", {
+                messages: String(historyMsgCount),
+                chars: String(historyChars),
+              })
+            : t("journey.spanOut.context"),
       });
       await refresh();
 
-      // 4 — reasoning
       sp = await startTraceSpan(trace_id, {
         stage: "reasoning",
         summary_in: t("journey.spanIn.reasoning"),
@@ -110,14 +167,27 @@ const ConversationJourneyPanel = () => {
       await new Promise((r) => setTimeout(r, 90));
       await patchTraceSpan(trace_id, sp.span_id, {
         status: "ok",
-        summary_out: t("journey.spanOut.reasoning"),
+        summary_out:
+          historyMsgCount > 0
+            ? t("journey.spanOut.reasoningWithHistory", {
+                messages: String(historyMsgCount),
+              })
+            : t("journey.spanOut.reasoning"),
       });
       await refresh();
 
-      // 5 — generation (stream LLM via backend)
       sp = await startTraceSpan(trace_id, {
         stage: "generation",
-        summary_in: clip(userText, 160),
+        summary_in:
+          historyMsgCount > 0
+            ? t("journey.spanIn.generationWithHistory", {
+                messages: String(historyMsgCount),
+                snippet: clip(userText, 80),
+              })
+            : clip(userText, 160),
+        attributes: {
+          history_messages: historyMsgCount,
+        },
       });
       await refresh();
 
@@ -127,7 +197,10 @@ const ConversationJourneyPanel = () => {
       } = { ev: null };
       try {
         await streamSamplingPreview(
-          { prompt: userText },
+          {
+            prompt: userText,
+            history: chatHistory.length > 0 ? chatHistory : undefined,
+          },
           {
             onToken: (tok) => {
               assistant += tok;
@@ -168,16 +241,8 @@ const ConversationJourneyPanel = () => {
 
       await refresh();
 
-      setChatMessages((rows) => [
-        ...rows,
-        {
-          role: "assistant",
-          text: assistant.trim() || t("journey.assistantFallback"),
-          at: new Date().toISOString(),
-        },
-      ]);
+      const assistantText = assistant.trim() || t("journey.assistantFallback");
 
-      // 6 — response
       const spResp = await startTraceSpan(trace_id, {
         stage: "response",
         summary_in: t("journey.spanIn.response"),
@@ -188,9 +253,21 @@ const ConversationJourneyPanel = () => {
           chars: String(assistant.length),
         }),
       });
+
+      const contextMode =
+        doneHolder.ev?.context_mode ?? (historyMsgCount > 0 ? "chat" : "generate");
+
+      await patchTraceMetadata(trace_id, {
+        [TRACE_META_USER_TEXT]: userText,
+        [TRACE_META_ASSISTANT_TEXT]: assistantText,
+        [TRACE_META_CONTEXT_MODE]: contextMode,
+        [TRACE_META_HISTORY_MESSAGES]:
+          doneHolder.ev?.history_messages ?? historyMsgCount,
+        [TRACE_META_HISTORY_CHARS]: doneHolder.ev?.history_chars ?? historyChars,
+      });
       await refresh();
     },
-    [t],
+    [conversationId, t],
   );
 
   const handleSend = useCallback(async () => {
@@ -198,24 +275,49 @@ const ConversationJourneyPanel = () => {
     if (!text || busy) {
       return;
     }
+    const priorHistory = journeyMessagesToChatHistory(chatMessages);
+    const priorTurns = countPriorTurns(chatMessages);
     setBusy(true);
     setRunError(null);
     setDraft("");
+    const at = new Date().toISOString();
     setChatMessages((m) => [
       ...m,
-      { role: "user", text, at: new Date().toISOString() },
+      { role: "user", text, at, traceId: "pending" },
     ]);
 
     try {
-      await runPipeline(text);
+      await runPipeline(text, priorTurns, priorHistory);
+      await reloadHistory();
     } catch (e) {
       setRunError(
         e instanceof Error ? e.message : t("journey.previewFailed"),
       );
+      setChatMessages((m) => m.filter((row) => row.traceId !== "pending"));
     } finally {
       setBusy(false);
     }
-  }, [busy, draft, runPipeline, t]);
+  }, [busy, chatMessages, draft, reloadHistory, runPipeline, t]);
+
+  const handleNewConversation = useCallback(() => {
+    const id = resetJourneyConversationId();
+    setConversationId(id);
+    setChatMessages([]);
+    setTrace(null);
+    setSelectedTraceId(null);
+    setRunError(null);
+    setHistoryLoading(false);
+  }, []);
+
+  const handleSelectTurn = useCallback(
+    (traceId: string) => {
+      if (traceId === "pending" || traceId === selectedTraceId) {
+        return;
+      }
+      void loadTraceTimeline(traceId);
+    },
+    [loadTraceTimeline, selectedTraceId],
+  );
 
   return (
     <div className="ion-padding">
@@ -225,6 +327,25 @@ const ConversationJourneyPanel = () => {
       <IonNote className="conversation-journey__hint">
         {t("journey.traceUrlHint", { url: traceServiceBaseUrl })}
       </IonNote>
+      <IonNote className="conversation-journey__hint">
+        {t("journey.conversationIdHint", {
+          id: conversationId.slice(0, 8),
+        })}
+      </IonNote>
+
+      <div className="conversation-journey__toolbar">
+        <IonButton
+          fill="outline"
+          size="small"
+          disabled={busy}
+          onClick={handleNewConversation}
+        >
+          {messages.journey.newConversation}
+        </IonButton>
+        {historyLoading ? (
+          <IonNote>{messages.journey.loadingHistory}</IonNote>
+        ) : null}
+      </div>
 
       <div className="conversation-journey">
         <section
@@ -233,22 +354,42 @@ const ConversationJourneyPanel = () => {
         >
           <h3 className="conversation-journey__pane-head">{messages.journey.chatTitle}</h3>
           <div className="conversation-journey__messages">
-            {chatMessages.length === 0 ? (
+            {historyLoading && chatMessages.length === 0 ? (
+              <IonSpinner name="crescent" />
+            ) : null}
+            {!historyLoading && chatMessages.length === 0 ? (
               <IonNote>{messages.journey.emptyChat}</IonNote>
             ) : null}
-            {chatMessages.map((msg, idx) => (
-              <div
-                key={`${msg.at}-${idx}`}
-                className={
-                  msg.role === "user"
-                    ? "conversation-journey__bubble conversation-journey__bubble--user"
-                    : "conversation-journey__bubble conversation-journey__bubble--assistant"
-                }
-              >
-                {msg.text}
-                <span className="conversation-journey__meta">{msg.at}</span>
-              </div>
-            ))}
+            {chatMessages.map((msg, idx) => {
+              const selected =
+                msg.traceId !== "pending" && msg.traceId === selectedTraceId;
+              return (
+                <div
+                  key={`${msg.traceId}-${msg.role}-${idx}`}
+                  role={msg.traceId !== "pending" ? "button" : undefined}
+                  tabIndex={msg.traceId !== "pending" ? 0 : undefined}
+                  className={
+                    msg.role === "user"
+                      ? `conversation-journey__bubble conversation-journey__bubble--user${
+                          selected ? " conversation-journey__bubble--selected" : ""
+                        }${msg.traceId !== "pending" ? " conversation-journey__bubble--clickable" : ""}`
+                      : `conversation-journey__bubble conversation-journey__bubble--assistant${
+                          selected ? " conversation-journey__bubble--selected" : ""
+                        }${msg.traceId !== "pending" ? " conversation-journey__bubble--clickable" : ""}`
+                  }
+                  onClick={() => handleSelectTurn(msg.traceId)}
+                  onKeyDown={(ev) => {
+                    if (ev.key === "Enter" || ev.key === " ") {
+                      ev.preventDefault();
+                      handleSelectTurn(msg.traceId);
+                    }
+                  }}
+                >
+                  {msg.text}
+                  <span className="conversation-journey__meta">{msg.at}</span>
+                </div>
+              );
+            })}
           </div>
           <div className="conversation-journey__composer">
             {runError ? <IonNote color="danger">{runError}</IonNote> : null}
@@ -276,6 +417,9 @@ const ConversationJourneyPanel = () => {
           aria-label={messages.journey.traceTitle}
         >
           <h3 className="conversation-journey__pane-head">{messages.journey.traceTitle}</h3>
+          <IonNote className="conversation-journey__trace-select-hint">
+            {messages.journey.selectTraceHint}
+          </IonNote>
           <div className="conversation-journey__timeline">
             {!trace?.spans.length ? (
               <IonNote>{messages.journey.emptyTrace}</IonNote>

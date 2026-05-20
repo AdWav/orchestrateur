@@ -55,7 +55,9 @@ def workflow_to_team_specification(
         name=workflow.name,
         purpose=workflow.goal,
         methodology=workflow.context.get("methodology"),
-        use_case_ids=["dev-team-benchmark"] if workflow.id.startswith("team-") else [],
+        use_case_ids=["dev-team-benchmark"] if workflow.id.startswith("team-") and workflow.id != "team-code-viz" else (
+            ["code-visualization"] if workflow.id == "team-code-viz" else []
+        ),
         pipeline_step_ids=[resolve_runner_role(catalog.get_agent(s.agent_definition_id), s) for s in ordered],
         roles=roles,
         handoff_contracts=handoffs,

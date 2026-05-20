@@ -9,6 +9,7 @@ from app.views.ollama_runtime import router as ollama_runtime_router
 from app.views.runtime import router as runtime_router
 from app.views.team import router as team_router
 from app.views.workflows import router as workflows_router
+from app.views.builder import router as builder_router
 
 
 def register_routers(app: FastAPI) -> None:
@@ -19,3 +20,4 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(runtime_router)
     app.include_router(ollama_runtime_router)
     app.include_router(sampling_runtime_router)
+    app.include_router(builder_router)

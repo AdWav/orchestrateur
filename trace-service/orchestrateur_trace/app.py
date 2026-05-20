@@ -7,16 +7,23 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from orchestrateur_trace.models import (
+    ConversationTracesResponse,
     SpanPatch,
     SpanStart,
     SpanStartResponse,
     TraceCreate,
     TraceCreateResponse,
+    TraceMetadataPatch,
     TraceRecord,
 )
+from orchestrateur_trace.sqlite_store import SqliteTraceStore
 from orchestrateur_trace.store import TraceStore
 
-store = TraceStore()
+_sqlite_path = os.getenv("TRACE_SQLITE_PATH", "").strip()
+if _sqlite_path:
+    store = SqliteTraceStore(_sqlite_path)
+else:
+    store = TraceStore()
 
 app = FastAPI(
     title="Orchestrateur — service de traces conversationnelles",
@@ -54,6 +61,23 @@ def create_trace(body: TraceCreate) -> TraceCreateResponse:
 @app.get("/v1/traces/{trace_id}", response_model=TraceRecord)
 def get_trace(trace_id: UUID) -> TraceRecord:
     rec = store.get_trace(trace_id)
+    if rec is None:
+        raise HTTPException(status_code=404, detail="trace not found")
+    return rec
+
+
+@app.get("/v1/conversations/{conversation_id}/traces", response_model=ConversationTracesResponse)
+def list_conversation_traces(
+    conversation_id: str,
+    limit: int = 100,
+) -> ConversationTracesResponse:
+    traces = store.list_traces_by_conversation(conversation_id, limit=limit)
+    return ConversationTracesResponse(conversation_id=conversation_id, traces=traces)
+
+
+@app.patch("/v1/traces/{trace_id}", response_model=TraceRecord)
+def patch_trace_metadata(trace_id: UUID, body: TraceMetadataPatch) -> TraceRecord:
+    rec = store.update_trace_metadata(trace_id, dict(body.metadata))
     if rec is None:
         raise HTTPException(status_code=404, detail="trace not found")
     return rec

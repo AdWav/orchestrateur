@@ -77,6 +77,34 @@
   color: var(--ion-color-medium);
 }
 
+.conversation-journey__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 8px 0 12px;
+  max-width: 1400px;
+}
+
+.conversation-journey__bubble--clickable {
+  cursor: pointer;
+}
+
+.conversation-journey__bubble--clickable:focus-visible {
+  outline: 2px solid var(--ion-color-primary);
+  outline-offset: 2px;
+}
+
+.conversation-journey__bubble--selected {
+  box-shadow: 0 0 0 2px var(--ion-color-primary);
+}
+
+.conversation-journey__trace-select-hint {
+  display: block;
+  padding: 0 14px 8px;
+  font-size: 0.78rem;
+}
+
 .conversation-journey__composer {
   display: flex;
   flex-direction: column;

@@ -1,0 +1,26 @@
+{
+  "id": "viz_code_scan",
+  "name": "Scan code",
+  "business_role": "Code scanner",
+  "mission": "Parcourir un depot de code (tout langage supporte: Python, TS/JS, Go, Java, Rust, etc.), inventorier les fichiers sources et extraire signaux structurels: classes, fonctions, imports, points d'entree. Lecture seule. Chaque fait doit etre attache a un chemin de fichier reel.",
+  "runner_role": "diagram_code_scan",
+  "capabilities": [
+    "repo inventory",
+    "multi-language heuristics",
+    "import graph seed"
+  ],
+  "inputs": [
+    "objectif",
+    "code_visualization.repo_target.root_path",
+    "workspace_path"
+  ],
+  "outputs": [
+    "repo_inventory",
+    "structure_seed",
+    "detected_languages"
+  ],
+  "guardrails": [
+    "Ne jamais ecrire dans le depot analyse.",
+    "Respecter read_limits et exclude_paths du scope."
+  ]
+}

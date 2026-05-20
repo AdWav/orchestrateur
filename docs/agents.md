@@ -86,6 +86,44 @@ Pipeline en **trois etapes** (fichiers `catalog/workflows/documentation-steward.
 
 **Handoff** : entre etapes, les resumes des sorties precedentes sont ajoutes au prompt via les entrees memoire `catalog_step_output_<step_id>` (voir `core/catalog_runtime.py` et `CatalogGenericAgent`).
 
+## Equipe catalogue — Visualisation code (`team-code-viz`)
+
+Pipeline en **six etapes** pour lire un depot (multi-langages) et produire **UML PlantUML**, **draw.io XML** et **flux Mermaid** a partir d'un modele structurel unique.
+
+| Etape (id) | Agent catalogue | Runner | Livrable |
+|------------|-----------------|--------|----------|
+| `code_scan` | `viz_code_scan` | `diagram_code_scan` | inventaire + `structure_seed` |
+| `structure` | `viz_structure` | `diagram_structure` | `code_structure_model` |
+| `uml` | `viz_uml` | `diagram_uml` | `@startuml` … `@enduml` |
+| `drawio` | `viz_drawio` | `diagram_drawio` | `drawio_xml` (mxGraphModel) |
+| `mermaid` | `viz_mermaid` | `diagram_mermaid` | `mermaid_flow` (flowchart) |
+| `qa` | `viz_qa` | `diagram_qa` | verdict + bundle final |
+
+**Inspirations** : analyse statique + abstraction (CodeBoarding), generation Mermaid depuis repo (Swark, RepoArchitectAgent), multi-formats (diagram-architect).
+
+**API** : `POST /workflows/catalog/team-code-viz`
+
+Exemple de payload (racine du projet a analyser) :
+
+```json
+{
+  "objective": "Diagrammer l'architecture de mon application",
+  "use_case_id": "code-visualization",
+  "context": {
+    "code_visualization": {
+      "repo_target": { "root_path": "/chemin/vers/projet" },
+      "audit_scope": {
+        "analysis_axes": ["architecture"],
+        "read_limits": { "max_files": 40, "max_bytes_per_file": 12000, "max_matches": 40 }
+      }
+    }
+  },
+  "success_criteria": ["PlantUML genere", "draw.io XML genere", "Mermaid flowchart genere"]
+}
+```
+
+Modules runtime : `core/code_structure_extractor.py`, `core/diagram_emitters.py`, `core/roles_diagram.py`.
+
 ## Contrat de handoff
 
 Chaque handoff doit transporter :
@@ -114,3 +152,4 @@ Chaque handoff doit transporter :
 5. `dev-team-benchmark`
 6. `local-repo-audit`
 7. `documentation-steward` (workflow catalogue — maintenance documentaire)
+8. `code-visualization` (workflow catalogue — UML, draw.io, Mermaid)

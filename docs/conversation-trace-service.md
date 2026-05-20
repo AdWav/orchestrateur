@@ -45,6 +45,8 @@ Préfixe suggéré : `/v1/traces`.
 | `POST` | `/v1/traces/{trace_id}/spans` | Démarre un span (retourne `span_id`) |
 | `PATCH` | `/v1/traces/{trace_id}/spans/{span_id}` | Termine le span (`ended_at`, `status`, résumés) |
 | `GET` | `/v1/traces/{trace_id}` | Lit la trace complète (ordonnée) pour la timeline UI |
+| `GET` | `/v1/conversations/{conversation_id}/traces` | Liste les traces d'une conversation (sans spans ; `limit` query, défaut 100) |
+| `PATCH` | `/v1/traces/{trace_id}` | Fusionne des clés dans `metadata` (ex. `user_text`, `assistant_text` pour l'historique UI) |
 | `GET` | `/health` | Santé du service |
 
 L’**orchestrateur** (ou chaque agent HTTP) appelle ce service **au fil de l’eau** : création de trace au début de la requête utilisateur, puis un span par phase au fur et à mesure.
@@ -53,14 +55,15 @@ L’**orchestrateur** (ou chaque agent HTTP) appelle ce service **au fil de l’
 
 - **Processus unique** : le gateway / `catalog_workflow_executor` peut tenir un client HTTP vers `trace-service` (localhost ou réseau Docker).
 - **Headers** : propager `X-Trace-Id` (et optionnellement `X-Parent-Span-Id`) des requêtes entrantes pour corréler avec les logs existants.
-- **Frontend** (`frontend/` ou image Docker) : onglet **Parcours** — conversation (gauche) + timeline des spans (« potentiel d'action », droite). Appels au trace-service (`VITE_TRACE_SERVICE_URL`, defaut `http://127.0.0.1:8090`) et generation de la reponse via `POST /v1/runtime/sampling/preview/stream` sur le backend. CORS : `TRACE_CORS_ORIGINS` cote trace-service si l'origine du navigateur change. **Compose** : le service `trace-service` est inclus dans `compose.yaml` (image `trace-service/Dockerfile`, port hôte **8090**).
+- **Frontend** (`frontend/` ou image Docker) : onglet **Parcours** — conversation (gauche) + timeline des spans (« potentiel d'action », droite). `conversation_id` stable dans `localStorage` ; rechargement via `GET /v1/conversations/{id}/traces` ; textes des tours dans `metadata.user_text` / `metadata.assistant_text`. Génération : `POST /v1/runtime/sampling/preview/stream` avec champ `history` (tours précédents) → Ollama `/api/chat` ; métadonnées de trace `context_mode`, `history_messages`, `history_chars`. Appels au trace-service (`VITE_TRACE_SERVICE_URL`, defaut `http://127.0.0.1:8090`). CORS : `TRACE_CORS_ORIGINS` cote trace-service si l'origine du navigateur change. **Compose** : le service `trace-service` est inclus dans `compose.yaml` (image `trace-service/Dockerfile`, port hôte **8090**).
 
 Voir le squelette exécutable : répertoire [`trace-service/`](../trace-service/) (local `pip install -e .` ou conteneur).
 
 ## Stockage
 
-- **MVP** : mémoire (redémarrage = perte des traces), suffisant pour prototyper la timeline.
-- **Ensuite** : SQLite ou Postgres (table `traces`, `spans`), rétention TTL, index sur `conversation_id`.
+- **MVP mémoire** : sans `TRACE_SQLITE_PATH`, le processus garde les traces en RAM (redémarrage = perte), suffisant pour prototyper la timeline.
+- **SQLite + volume** : avec `TRACE_SQLITE_PATH` (fichier `.sqlite`), les traces et spans survivent aux redémarrages ; `compose.yaml` monte `trace_sqlite_data:/data` et définit `/data/traces.sqlite`.
+- **Ensuite** : Postgres, rétention TTL, index sur `conversation_id`, export OTLP (voir ci-dessous).
 
 ## Sécurité et conformité
 

@@ -1,0 +1,23 @@
+{
+  "id": "viz_uml",
+  "name": "UML PlantUML",
+  "business_role": "UML emitter",
+  "mission": "Generer un diagramme UML au format PlantUML (packages par couche, classes avec methodes detectees, relations d'import). Format standard interoperable avec PlantUML, IntelliJ, VS Code et pipelines doc.",
+  "runner_role": "diagram_uml",
+  "capabilities": [
+    "PlantUML",
+    "class diagram",
+    "component packages"
+  ],
+  "inputs": [
+    "code_structure_model"
+  ],
+  "outputs": [
+    "plantuml",
+    "uml_notes"
+  ],
+  "guardrails": [
+    "Limiter la densite (max ~20 noeuds avant decoupage).",
+    "Conserver @startuml / @enduml."
+  ]
+}
