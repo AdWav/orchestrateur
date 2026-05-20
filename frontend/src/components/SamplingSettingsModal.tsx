@@ -21,7 +21,8 @@ import { useI18n } from "../i18n/I18nProvider";
 import {
   SamplingProfile,
   fetchSamplingSettings,
-  postSamplingPreview,
+  streamSamplingPreview,
+  type SamplingPreviewStreamStats,
   putLiveSamplingSettings,
 } from "../lib/api";
 
@@ -39,6 +40,7 @@ import {
   samplingValueToDial,
   snapToSpec,
 } from "./samplingFieldSpecs";
+import PreviewTokenOutput from "./PreviewTokenOutput";
 import DialRegulator from "./DialRegulator";
 import type { DialRegulatorVariant } from "./dialRegulatorUtils";
 import MirostatRockerSwitch, { stepMirostatValue } from "./MirostatRockerSwitch";
@@ -129,6 +131,10 @@ const SamplingSettingsModal = ({
   const [orchestration, setOrchestration] = useState<SamplingProfile | null>(null);
   const [previewPrompt, setPreviewPrompt] = useState("");
   const [previewResult, setPreviewResult] = useState<string | null>(null);
+  const [previewStreamChunks, setPreviewStreamChunks] = useState<string[]>([]);
+  const [previewStats, setPreviewStats] = useState<string | null>(null);
+  const [showTokenLayer, setShowTokenLayer] = useState(false);
+  const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [meta, setMeta] = useState<{
     settings_persist_path: string | null;
     ollama_active: boolean;
@@ -213,22 +219,73 @@ const SamplingSettingsModal = ({
     }
   };
 
+  const formatPreviewStats = (stats: SamplingPreviewStreamStats): string | null => {
+    const parts: string[] = [];
+    if (typeof stats.prompt_eval_count === "number") {
+      parts.push(
+        messages.sampling.previewStatsPromptTokens.replace(
+          "{count}",
+          String(stats.prompt_eval_count),
+        ),
+      );
+    }
+    if (typeof stats.eval_count === "number") {
+      parts.push(
+        messages.sampling.previewStatsOutputTokens.replace(
+          "{count}",
+          String(stats.eval_count),
+        ),
+      );
+    }
+    if (typeof stats.eval_duration === "number" && stats.eval_duration > 0) {
+      const tokensPerSecond =
+        typeof stats.eval_count === "number"
+          ? (stats.eval_count / stats.eval_duration) * 1e9
+          : null;
+      if (tokensPerSecond !== null && Number.isFinite(tokensPerSecond)) {
+        parts.push(
+          messages.sampling.previewStatsSpeed.replace(
+            "{rate}",
+            tokensPerSecond.toFixed(1),
+          ),
+        );
+      }
+    }
+    return parts.length > 0 ? parts.join(" · ") : null;
+  };
+
   const handlePreview = async () => {
     const prompt = previewPrompt.trim();
     if (!prompt) {
       return;
     }
     setPreviewBusy(true);
-    setPreviewResult(null);
+    setPreviewResult("");
+    setPreviewStreamChunks([]);
+    setPreviewStats(null);
+    setPreviewModel(null);
     try {
-      const response = await postSamplingPreview({ prompt });
-      setPreviewResult(response.content);
+      await streamSamplingPreview(
+        { prompt },
+        {
+          onToken: (token) => {
+            setPreviewStreamChunks((chunks) => [...chunks, token]);
+            setPreviewResult((current) => `${current ?? ""}${token}`);
+          },
+          onDone: (event) => {
+            setPreviewModel(event.model);
+            setPreviewStats(formatPreviewStats(event.stats));
+          },
+        },
+      );
       void presentToast({
         message: messages.sampling.previewOk,
         duration: 2200,
         color: "success",
       });
     } catch (error: unknown) {
+      setPreviewResult(null);
+      setPreviewStreamChunks([]);
       void presentToast({
         message: error instanceof Error ? error.message : messages.sampling.previewError,
         duration: 3500,
@@ -341,8 +398,29 @@ const SamplingSettingsModal = ({
             >
               {previewBusy ? <IonSpinner name="crescent" /> : messages.sampling.preview}
             </IonButton>
-            {previewResult ? (
-              <pre className="sampling-settings-modal__preview-output">{previewResult}</pre>
+            {previewBusy || previewResult !== null ? (
+              <div className="sampling-settings-modal__preview-live">
+                {previewBusy && !previewResult ? (
+                  <IonNote className="sampling-settings-modal__preview-status">
+                    {messages.sampling.previewStreaming}
+                  </IonNote>
+                ) : null}
+                {previewResult !== null && previewResult.length > 0 ? (
+                  <PreviewTokenOutput
+                    text={previewResult}
+                    streamChunks={previewStreamChunks}
+                    streaming={previewBusy}
+                    previewModel={previewModel}
+                    showTokenLayer={showTokenLayer}
+                    onShowTokenLayerChange={setShowTokenLayer}
+                  />
+                ) : null}
+                {previewStats ? (
+                  <IonNote className="sampling-settings-modal__preview-stats">
+                    {previewStats}
+                  </IonNote>
+                ) : null}
+              </div>
             ) : null}
           </>
         ) : null}

@@ -29,11 +29,15 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 
 import AppNavBar from "../components/AppNavBar";
+import SamplingCoursePanel from "../components/SamplingCoursePanel";
 import SamplingSettingsModal from "../components/SamplingSettingsModal";
+import ConversationJourneyPanel from "../components/ConversationJourneyPanel";
 import DevTeamsSection from "../components/DevTeamsSection";
 import {
   APP_TAB_LOCAL_ORCHESTRATOR,
   APP_TAB_SAMPLING,
+  APP_TAB_SAMPLING_COURSE,
+  APP_TAB_TRACE_JOURNEY,
   type AppTabId,
 } from "../navigation/appTabs";
 import { useI18n } from "../i18n/I18nProvider";
@@ -56,6 +60,7 @@ import {
   putOllamaRuntimeSettings,
   type OllamaRuntimeSettings,
 } from "../lib/api";
+import { fetchTraceServiceHealth } from "../lib/traceApi";
 import type { ThemeMode } from "../theme/theme";
 
 import "./HomePage.css";
@@ -262,6 +267,13 @@ const HomePage = ({
     queryFn: fetchWorkflowDefinitions,
     staleTime: 10_000,
   });
+  const traceServiceHealthQuery = useQuery({
+    queryKey: ["trace-service-health"],
+    queryFn: fetchTraceServiceHealth,
+    staleTime: 15_000,
+    retry: 1,
+    refetchInterval: 20_000,
+  });
   const createAgentMutation = useMutation({
     mutationFn: createAgentDefinition,
     onSuccess: () => {
@@ -296,6 +308,12 @@ const HomePage = ({
   const hasInternalRoles = services.some(
     (service) => service.target === "in-process",
   );
+  const traceTabServiceActive =
+    traceServiceHealthQuery.isError
+      ? false
+      : traceServiceHealthQuery.isSuccess
+        ? traceServiceHealthQuery.data?.status === "ok"
+        : undefined;
 
   const handleOllamaModelsClick = async () => {
     setOllamaListBusy(true);
@@ -537,6 +555,8 @@ const HomePage = ({
             serviceActive={{
               [APP_TAB_LOCAL_ORCHESTRATOR]: backendService?.active,
               [APP_TAB_SAMPLING]: samplingService?.active,
+              [APP_TAB_SAMPLING_COURSE]: samplingService?.active,
+              [APP_TAB_TRACE_JOURNEY]: traceTabServiceActive,
             }}
           />
         </IonToolbar>
@@ -635,6 +655,14 @@ const HomePage = ({
           {activeTab === APP_TAB_SAMPLING ? (
             <SamplingSettingsModal embedded isOpen />
           ) : null}
+
+          {activeTab === APP_TAB_SAMPLING_COURSE ? (
+            <div className="sampling-course-page">
+              <SamplingCoursePanel />
+            </div>
+          ) : null}
+
+          {activeTab === APP_TAB_TRACE_JOURNEY ? <ConversationJourneyPanel /> : null}
         </div>
       </IonContent>
 

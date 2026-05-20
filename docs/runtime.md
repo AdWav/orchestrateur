@@ -151,3 +151,14 @@ L'endpoint `POST /runtime/recommendation` produit une recommandation selon:
 - niveau de concurrence attendu
 
 Les agents utilisent un client `Ollama` quand `MODEL_BACKEND=ollama`.
+
+## Echantillonnage live et tokenisation BPE
+
+En plus de l'inference des agents, le backend expose un **profil live** modifiable a la volee et un **essai streamé** (UI Echantillonnage).
+
+Pour une **tokenisation BPE alignee sur le GGUF** du modele charge (visualisation « un token, une couleur » en mode BPE) :
+
+- priorite future : `POST /api/tokenize` cote Ollama (quand disponible) ;
+- aujourd'hui : `llama-cpp-python` en `vocab_only` sur le blob GGUF, avec `OLLAMA_MODELS_DIR` pointant vers le store Ollama (monte en lecture seule sur le conteneur `backend` dans `compose.yaml`).
+
+Documentation : [`sampling-runtime.md`](sampling-runtime.md).

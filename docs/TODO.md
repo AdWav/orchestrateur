@@ -33,5 +33,8 @@
 - Min P : Seuil de probabilité minimale pour qu'un token soit considéré (par exemple, min_p=0.05 inclut uniquement les tokens avec au moins 5% de probabilité). 
 
 → je veux mettre en place un service où on peut (extemporannement) modifier les parametre de décodage d'un modèle
-→ Je veux mettre en place un service d'explication de la comptabilisation des tokens 
+→ **fait** : profil live + `PUT /v1/runtime/sampling/settings/live` + UI (voir [`sampling-runtime.md`](./sampling-runtime.md))
+→ Je veux suivre le cheminement complet d'une question utilisateur jusqu'a la reponse (trace par phases : intention, contexte, raisonnement, generation, etc.)
+→ **amorce** : service HTTP dedie + doc [`conversation-trace-service.md`](./conversation-trace-service.md) (`trace-service/`, port local 8090) ; integration backend / UI et persistance a brancher
+→ **partiel** : stats fin de stream (prompt/output, tok/s) + calque tokens Flux/BPE en UI ; doc comptabilisation détaillée : à enrichir
 → 

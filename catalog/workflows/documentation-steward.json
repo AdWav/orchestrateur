@@ -1,0 +1,54 @@
+{
+  "id": "documentation-steward",
+  "name": "Documentation steward",
+  "goal": "Tenir la documentation alignee sur le code et la pile: inventaire, proposition de mises a jour, controle qualite.",
+  "context": {
+    "methodology": "inventory-sync-qa",
+    "handoff_keys": "catalog_step_output_*"
+  },
+  "constraints": [
+    "Workflow en trois etapes sequentielles; chaque sortie sert de handoff a la suivante.",
+    "Les fichiers du depot sont la source de preuve pour l'inventaire."
+  ],
+  "success_criteria": [
+    "Inventaire structurel produit avec sources citees.",
+    "Propositions de documentation ciblees et reviewables.",
+    "Verdict QA explicite sur la coherence."
+  ],
+  "steps": [
+    {
+      "id": "doc_inventory",
+      "name": "Inventaire",
+      "agent_definition_id": "doc_inventory",
+      "objective": "Cartographier services, docs et points d'ancrage dans le depot pour preparer une mise a jour documentaire.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": []
+    },
+    {
+      "id": "doc_sync",
+      "name": "Synchronisation redactionnelle",
+      "agent_definition_id": "doc_sync",
+      "objective": "Proposer patches Markdown minimaux en s'appuyant sur l'inventaire et sur l'objectif du work item.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "doc_inventory"
+      ]
+    },
+    {
+      "id": "doc_qa",
+      "name": "Controle documentation",
+      "agent_definition_id": "doc_qa",
+      "objective": "Valider coherence et produire verdict + checklist humaine.",
+      "runner_role": null,
+      "expected_deliverables": [],
+      "success_criteria": [],
+      "depends_on": [
+        "doc_sync"
+      ]
+    }
+  ]
+}

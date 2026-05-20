@@ -105,6 +105,29 @@ class SamplingPreviewResponse(BaseModel):
     backend: str
 
 
+class ModelTokenPiece(BaseModel):
+    id: int
+    text: str
+
+
+class SamplingTokenizeRequest(BaseModel):
+    text: str = Field(min_length=1, max_length=128_000)
+    model: str | None = Field(default=None, max_length=256)
+
+
+class SamplingTokenizeResponse(BaseModel):
+    model: str
+    source: Literal["ollama", "llama_cpp"]
+    token_count: int
+    tokens: list[ModelTokenPiece]
+
+
+class SamplingTokenizeCapabilitiesResponse(BaseModel):
+    ollama_api: bool
+    llama_cpp: bool
+    source: Literal["ollama", "llama_cpp", "unavailable"]
+
+
 class RuntimeRecommendationRequest(BaseModel):
     hardware: HardwareProfile
     workload: WorkloadProfile

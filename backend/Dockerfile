@@ -8,8 +8,14 @@ WORKDIR /app
 COPY pyproject.toml README.md ./
 COPY backend ./backend
 
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -e ".[dev]"
+# llama-cpp-python : tokenisation BPE alignee sur le GGUF Ollama (vocab_only).
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential cmake libgomp1 \
+    && pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -e ".[dev]" \
+    && apt-get purge -y build-essential cmake \
+    && apt-get autoremove -y \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 8000
 

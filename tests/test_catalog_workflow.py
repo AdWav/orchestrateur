@@ -1,9 +1,15 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from core.catalog_bootstrap import ensure_dev_team_catalog
 from core.contracts import WorkItem
 from core.definition_catalog import FileDefinitionCatalog
 from core.orchestrator import MultiAgentOrchestrator
+
+
+def _repo_catalog() -> Path:
+    return Path(__file__).resolve().parents[1] / "catalog"
 
 
 def _orchestrator(tmp_path) -> MultiAgentOrchestrator:
@@ -82,3 +88,25 @@ def test_backend_and_frontend_runners_are_distinct(tmp_path) -> None:
     assert "backend" in str(backend.output.artifacts.get("source_files", [])).lower()
     assert frontend.output.role == "code_frontend"
     assert "frontend" in str(frontend.output.artifacts.get("source_files", [])).lower()
+
+
+def test_documentation_steward_workflow_loaded_from_catalog() -> None:
+    catalog = FileDefinitionCatalog(_repo_catalog())
+    wf = catalog.get_workflow("documentation-steward")
+    assert [step.id for step in wf.steps] == ["doc_inventory", "doc_sync", "doc_qa"]
+    assert catalog.get_agent("doc_inventory").id == "doc_inventory"
+
+
+def test_run_documentation_steward_catalog_workflow() -> None:
+    catalog = FileDefinitionCatalog(_repo_catalog())
+    orchestrator = MultiAgentOrchestrator(catalog=catalog)
+    item = WorkItem(
+        objective="Verifier l'alignement docs/docker-stack.md avec les services declares.",
+        use_case_id="documentation-steward",
+        success_criteria=["Inventaire cite des chemins reels", "Verdict QA explicite"],
+    )
+    result = orchestrator.run_catalog_workflow("documentation-steward", item)
+    assert result.team_id == "documentation-steward"
+    assert len(result.outputs) == 3
+    assert [out.role for out in result.outputs] == ["generic", "generic", "generic"]
+    assert all(out.approved for out in result.outputs)

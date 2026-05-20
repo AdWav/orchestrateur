@@ -6,25 +6,36 @@ Deux pipelines de **4 roles** sont disponibles pour comparer des methodologies s
 
 ### Team 1 — `team-tdd` (Test-Driven Development)
 
-| Etape | Role | Mission |
-|-------|------|---------|
-| `write_tests` | Test Author | Creer les tests avant toute implementation |
-| `code` | Developer | Coder le minimum pour faire passer les tests |
-| `run_fix` | Runner | Executer la suite et corriger si necessaire |
-| `document` | Tech Writer | Documenter le livrable et les preuves d'execution |
+Enchainement tel que `catalog/workflows/team-tdd.json` (ids d'etape du workflow) :
 
-Handoffs : tests → code → execution/correctifs → documentation.
+| Etape (id) | Agent catalogue | Mission |
+|------------|-----------------|---------|
+| `tests-first` | `write_tests` | Tests et criteres d'acceptation avant implementation |
+| `backend` | `code_backend` | API et logique serveur |
+| `frontend` | `code_frontend` | Interface et app au backend |
+| `e2e` | `integration` | Parcours complet UI + API |
+| `run-fix` | `run_fix` | Executer les suites et corriger |
+| `document` | `document` | Documentation du livrable et des preuves |
 
-### Team 2 — `team-classic` (Plan → Code → Test → Document)
+### Team 2 — `team-classic` (Plan → contrat → code → tests → livraison)
 
-| Etape | Role | Mission |
-|-------|------|---------|
-| `schematic` | Planner | Planifier et schematiser (modules, flux) |
-| `code` | Developer | Implementer selon le schema |
-| `test_and_verify` | QA | Creer les tests puis executer et valider |
-| `document` | Tech Writer | Documenter selon le verdict des tests |
+Enchainement tel que `catalog/workflows/team-classic.json` :
 
-Handoffs : schema → code → tests + execution → documentation.
+| Etape (id) | Agent catalogue | Mission |
+|------------|-----------------|---------|
+| `schematic` | `schematic` | Schema et plan d'implementation |
+| `contract` | `api_contract` | Contrat d'API (routes, schemas) |
+| `database` | `database` | Schema et migrations |
+| `backend` | `code_backend` | Serveur selon le contrat |
+| `frontend` | `code_frontend` | UI selon le contrat |
+| `test` | `test_and_verify` | Tests automatises par couche |
+| `e2e` | `integration` | E2E sur parcours reel |
+| `run-fix` | `run_fix` | Correctifs jusqu'au passage des suites |
+| `review` | `review` | Revue de code |
+| `security` | `security` | Revue risques securite |
+| `document` | `document` | Documentation du livrable final |
+
+Les dependances exactes entre etapes sont dans `depends_on` de chaque fichier `catalog/workflows/*.json`.
 
 ### Comparaison
 
@@ -61,6 +72,20 @@ L'equipe initiale reste disponible pour specification, audit repo et cas d'usage
 
 `GET /team` sans parametre renvoie cette equipe.
 
+## Workflow catalogue — Documentation steward (`documentation-steward`)
+
+Pipeline en **trois etapes** (fichiers `catalog/workflows/documentation-steward.json` et agents `doc_inventory`, `doc_sync`, `doc_qa`). Chaque agent utilise le runner catalogue generique (`CatalogGenericAgent`) : la fiche JSON pilote mission, capacites et garde-fous.
+
+| Etape (id) | Agent catalogue | Role |
+|------------|-----------------|------|
+| `doc_inventory` | `doc_inventory` | Inventaire factuel du depot (services, `docs/`, Docker, API) avec sources citees |
+| `doc_sync` | `doc_sync` | Propositions de mises a jour Markdown minimales + rappel synthetique pour la QA |
+| `doc_qa` | `doc_qa` | Verification de coherence et verdict (approbation ou revisions) |
+
+**API** : `POST /workflows/catalog/documentation-steward` avec un corps `CatalogWorkflowRunRequest` / objectif decrivant le changement a refleter (nouveau service, retrait, refonte, etc.).
+
+**Handoff** : entre etapes, les resumes des sorties precedentes sont ajoutes au prompt via les entrees memoire `catalog_step_output_<step_id>` (voir `core/catalog_runtime.py` et `CatalogGenericAgent`).
+
 ## Contrat de handoff
 
 Chaque handoff doit transporter :
@@ -88,3 +113,4 @@ Chaque handoff doit transporter :
 4. `operator-runbook`
 5. `dev-team-benchmark`
 6. `local-repo-audit`
+7. `documentation-steward` (workflow catalogue — maintenance documentaire)

@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orchestrateur-mcp-server"
+version = "0.1.0"
+description = "Serveur MCP (stdio ou Streamable HTTP Uvicorn) pour piloter l'API Orchestrateur."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "httpx>=0.28.0",
+  "mcp>=1.26.0",
+  "uvicorn[standard]>=0.30.0",
+]
+
+[project.scripts]
+orchestrateur-mcp = "orchestrateur_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["orchestrateur_mcp*"]

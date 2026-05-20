@@ -1,0 +1,21 @@
+# Development — service MCP avec rechargement du code sans rebuild Docker
+#
+# Usage (conserver l'image deja construite ou build une seule fois) :
+#   docker compose -f compose.yaml -f compose.dev-mcp.yml up mcp-server
+#
+# Modifier uniquement les fichiers sous mcp-server/orchestrateur_mcp : --reload prend en compte le volume.
+
+services:
+  mcp-server:
+    volumes:
+      - ./mcp-server/orchestrateur_mcp:/app/orchestrateur_mcp:ro
+    command:
+      - uvicorn
+      - orchestrateur_mcp.app:app
+      - --host
+      - "0.0.0.0"
+      - --port
+      - "8010"
+      - --reload
+      - --reload-dir
+      - /app/orchestrateur_mcp

@@ -50,5 +50,10 @@ class CatalogGenericAgent(SpecialistAgent):
             next_actions=["Transmettre au runner suivant du workflow."],
             approved=True,
         )
-        memory.remember(f"{self._runner_role}_output", output.model_dump(), self._runner_role)
+        dumped = output.model_dump()
+        memory.remember(f"{self._runner_role}_output", dumped, self._runner_role)
+        step_payload = memory.read("catalog_step", {})
+        step_id = step_payload.get("id") if isinstance(step_payload, dict) else None
+        if isinstance(step_id, str) and step_id.strip():
+            memory.remember(f"catalog_step_output_{step_id.strip()}", dumped, self._runner_role)
         return output

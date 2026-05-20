@@ -60,6 +60,7 @@ services:
       ORCHESTRATOR_MODE: compose
       MODEL_BACKEND: ollama
       OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODELS_DIR: /ollama-models
       OLLAMA_DEFAULT_MODEL: ${OLLAMA_DEFAULT_MODEL:-qwen2.5-coder:1.5b}
       DATABASE_URL: mysql://orchestrateur:orchestrateur@db:3306/orchestrateur
       CATALOG_BACKEND: mariadb
@@ -68,6 +69,7 @@ services:
       WORKSPACE_ROOT: /workspaces
     volumes:
       - ./workspaces:/workspaces
+      - ollama_data:/ollama-models:ro
     depends_on:
       db:
         condition: service_healthy
@@ -88,15 +90,74 @@ services:
     networks:
       - agent_mesh
 
+  trace-service:
+    build:
+      context: .
+      dockerfile: trace-service/Dockerfile
+    container_name: orchestrateur-trace
+    environment:
+      TRACE_BIND_HOST: "0.0.0.0"
+      TRACE_PORT: "8090"
+      TRACE_CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:5173,http://127.0.0.1:5173"
+    ports:
+      - "8090:8090"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - agent_mesh
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: mcp-server/Dockerfile
+    container_name: orchestrateur-mcp
+    environment:
+      ORCHESTRATOR_API_BASE: http://backend:8000
+      ORCHESTRATOR_HTTP_TIMEOUT_SECONDS: "${ORCHESTRATOR_HTTP_TIMEOUT_SECONDS:-900}"
+      MCP_RELAX_ACCEPT_HEADERS: "${MCP_RELAX_ACCEPT_HEADERS:-true}"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/healthz',timeout=3)",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    depends_on:
+      backend:
+        condition: service_started
+    ports:
+      - "${MCP_SERVER_PORT:-8010}:8010"
+    networks:
+      - agent_mesh
+
   frontend:
     build:
       context: .
       dockerfile: frontend/Dockerfile
       args:
         VITE_API_BASE_URL: http://localhost:8000
+        VITE_TRACE_SERVICE_URL: http://127.0.0.1:8090
     container_name: orchestrateur-frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_started
+      trace-service:
+        condition: service_healthy
     ports:
       - "3000:80"
     networks:

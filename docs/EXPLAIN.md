@@ -5,6 +5,8 @@ Tous agissent **à chaque token généré**, sauf **Max tokens** et **Stop**, qu
 
 Paramètres couverts : Temperature, Top-k, Top-p, Min-p, Mirostat (+ Eta, Tau), Presence penalty, Frequency penalty, Repeat penalty, Repeat last N, Logit bias, Max tokens (num_predict), Stop sequences.
 
+**Essai live et tokens** : pour observer la génération en direct et la découpe BPE du modèle, voir [`sampling-runtime.md`](./sampling-runtime.md).
+
 ---
 
 ## 1. Chaîne globale : qui influence quoi ?
@@ -239,3 +241,5 @@ flowchart LR
 ---
 
 *Document généré pour le projet orchestrateur — profil live Ollama.*
+
+**Voir aussi** : [Module Cours (théorie ↔ réglages)](./cours-echantillonnage.md) · UI : onglet Échantillonnage → **Cours**.

@@ -8,7 +8,43 @@
     "ariaLabel": "Navigation des services",
     "tabs": {
       "localOrchestrator": "Orchestrateur Local",
-      "sampling": "Echantillonnage"
+      "sampling": "Echantillonnage",
+      "samplingCourse": "Cours",
+      "traceJourney": "Parcours"
+    }
+  },
+  "journey": {
+    "panelTitle": "Parcours — conversation et potentiel d'action",
+    "chatTitle": "Conversation",
+    "traceTitle": "Etapes tracees (service dedie)",
+    "placeholder": "Ecrivez votre question...",
+    "send": "Envoyer",
+    "emptyChat": "Posez une question. La reponse utilise l'apercu echantillonnage stream du backend (profil live, comme l'onglet Echantillonnage).",
+    "emptyTrace": "Les spans apparaitront ici : entree, intention, contexte, raisonnement, generation, retour.",
+    "traceUrlHint": "API traces : {{url}}",
+    "traceUnreachable": "Service de traces injoignable ({{url}}). Depuis trace-service : pip install -e . puis orchestrateur-trace (port 8090).",
+    "previewFailed": "Erreur generation. Verifiez backend :8000 et Ollama.",
+    "assistantFallback": "(pas de texte)",
+    "stageLabels": {
+      "user_input": "Entree",
+      "intent": "Intention",
+      "context": "Contexte",
+      "reasoning": "Raisonnement / plan",
+      "generation": "Generation (modele)",
+      "response": "Retour utilisateur"
+    },
+    "spanIn": {
+      "context": "Fenetre locale : pas d'historique persistant dans cette demo.",
+      "reasoning": "Choix : reponse directe par apercu stream.",
+      "response": "Formatage bulle assistant."
+    },
+    "spanOut": {
+      "userInput": "Message enregistre.",
+      "intent": "Demande identifiee — {{snippet}}",
+      "context": "Contexte minimal (session UI seule).",
+      "reasoning": "Generation unique via POST /v1/runtime/sampling/preview/stream.",
+      "generation": "Modele {{model}} ; sortie ~{{tokens}} tokens.",
+      "response": "Reponse affichee ({{chars}} caracteres)."
     }
   },
   "header": {
@@ -228,6 +264,22 @@
     "previewPromptPlaceholder": "Ex. Résume en une phrase : qu'est-ce que le top-p ?",
     "previewOk": "Reponse generee avec le profil live.",
     "previewError": "L'essai live a echoue.",
+    "previewStreaming": "Generation en cours…",
+    "previewStatsPromptTokens": "{count} tokens prompt",
+    "previewStatsOutputTokens": "{count} tokens generes",
+    "previewStatsSpeed": "{rate} tok/s",
+    "showTokens": "Tokens",
+    "showTokensToggleAria": "Afficher le calque de tokenisation",
+    "tokenCount": "{count} fragments",
+    "tokenIndex": "Fragment {index}",
+    "tokenModeStream": "Flux",
+    "tokenModeBpe": "BPE",
+    "bpeTokenCount": "{count} tokens BPE",
+    "bpeTokenTitle": "Token {index} · id {id}",
+    "bpeTokenizing": "Tokenisation BPE du modele…",
+    "bpeTokenizeError": "Tokenisation BPE impossible.",
+    "bpeSourceOllama": "Tokenizer Ollama (/api/tokenize)",
+    "bpeSourceLlamaCpp": "Tokenizer GGUF (llama.cpp, aligne sur le modele charge)",
     "ollamaInactive": "MODEL_BACKEND=ollama requis pour un essai reel. Le profil live reste enregistre.",
     "persistPathPrefix": "Fichier de persistance (live) :",
     "groupingModeLabel": "Affichage des reglages",
@@ -314,6 +366,94 @@
     "placeholders": {
       "stop": "END\n</s>",
       "logit_bias": "50256:-1.0"
+    },
+    "openCourseForKnob": "Voir le cours"
+  },
+  "course": {
+    "title": "Module Cours — theorie et reglages",
+    "eyebrow": "Decodeur — un token a la fois",
+    "intro": "Correspondance entre les equations de decodage (un token a la fois) et les libelles de l'ecran Echantillonnage live. Cliquez un reglage pour voir symboles, formule et references.",
+    "docHint": "Version complete :",
+    "viewsLabel": "Affichage",
+    "views": {
+      "pipeline": "Chaine de calcul",
+      "knobs": "Liste des reglages"
+    },
+    "pickKnobHint": "Selectionnez un reglage dans la chaine ou la liste pour afficher le detail.",
+    "symbolsLabel": "Symboles",
+    "equationLabel": "Formule",
+    "rangeLabel": "Plage UI",
+    "integer": "entier",
+    "roleGroupLabel": "Groupe role :",
+    "impactGroupLabel": "Impact :",
+    "relatedKnobsLabel": "Reglages lies :",
+    "pipelineSteps": {
+      "logits": "Logits bruts (sortie du modele)",
+      "logit_bias": "Biais cible (logit bias)",
+      "anti_repeat": "Anti-repetition",
+      "temperature_mirostat": "Hasard / regulation (temperature ou Mirostat)",
+      "filters": "Filtres du vivier (top-k, top-p, min-p)",
+      "sample": "Echantillonnage du prochain token",
+      "constraints": "Contraintes globales (longueur, stop)"
+    },
+    "equations": {
+      "logits_raw": "z_i = logit(token_i | contexte)\nP_brute(i) propto exp(z_i)",
+      "sample": "token ~ Categorical(P')  apres normalisation sur le vivier filtre",
+      "logit_bias": "z'_i = z_i + bias_i\n(bias_i regle par logit_bias, cle token:id)",
+      "repeat_penalty": "z'_i <- f(z_i, tokens_{t-N..t-1})\n(f = repeat_penalty sur la fenetre repeat_last_n)",
+      "repeat_last_n": "N = repeat_last_n  (nombre de tokens passes consideres)",
+      "presence_penalty": "penalite si le token (ou le sujet) est deja present\n(alpha_pres = presence_penalty)",
+      "frequency_penalty": "penalite croissante avec la frequence du token\n(alpha_freq = frequency_penalty)",
+      "temperature": "P(i) propto exp(z'_i / T)\nT = temperature  (T bas -> deterministe)",
+      "mirostat": "Boucle Mirostat (si mirostat in {1,2}) :\n  k adaptatif, e = S(X) - tau,  mu <- mu - eta*e\n  (eta = mirostat_eta, tau = mirostat_tau)",
+      "mirostat_eta": "eta = mirostat_eta  (gain de la retroaction)",
+      "mirostat_tau": "tau = mirostat_tau  (surprise / perplexite cible)\nS(X) = -log P_M(X)",
+      "top_k": "V^(k) = {k tokens de plus forte P}\nne garder que i in V^(k)",
+      "top_p": "V^(p) = plus petit ensemble tel que\n  sum_{i in V^(p)} P(i) >= p\n(p = top_p, nucleus sampling)",
+      "min_p": "eligible(i) ssi P(i) >= p_min\np_min = min_p",
+      "num_predict": "arret si t >= T_max\nT_max = num_predict",
+      "stop": "arret si suffixe(contexte+gen) contient s\ns in liste stop"
+    },
+    "references": {
+      "explain": {
+        "title": "docs/EXPLAIN.md (projet)",
+        "url": ""
+      },
+      "mirostat": {
+        "title": "Basu et al., Mirostat (ICLR 2021)",
+        "url": "https://arxiv.org/abs/2007.14966"
+      },
+      "holtzman": {
+        "title": "Holtzman et al., Neural Text Degeneration (ICLR 2020)",
+        "url": "https://arxiv.org/abs/1904.09751"
+      },
+      "litterature": {
+        "title": "docs/litterature-maintien-capacite-modele/",
+        "url": ""
+      }
+    },
+    "workedExample": {
+      "title": "Exemple chiffre — vocabulaire jouet",
+      "disclaimer": "Illustration avec des nombres factices pour lier logits, softmax, tirage puis filtres.",
+      "steps": [
+        {
+          "title": "Logits jouets en sortie du LM",
+          "body": "Vocabulaire {A,B,C} ; logits bruts avant temperature :\n\nz_A = 1,5   z_B = 1,2   z_C = -0,3"
+        },
+        {
+          "title": "Temperature T = 2",
+          "body": "P(i) propto exp(z_i / T). Ici exp(z/T) :\n\nA -> exp(0,75) ~ 2,12\nB -> exp(0,60) ~ 1,82\nC -> exp(-0,15) ~ 0,86\n\nRenormaliser pour somme 1 (softmax)."
+        },
+        {
+          "title": "Tirage du prochain jeton",
+          "body": "Un tirage selon cette loi categorielle ; T bas -> distribution crete (plus deterministe), T haut -> distribution plus plate."
+        },
+        {
+          "title": "Top-k / Top-p avant renormalisation",
+          "body": "Les filtres de l UI reduisent le vivier (voir la chaine) ; apres coupe, les proba sont renormalisees sur les jetons restants, puis tirage."
+        }
+      ],
+      "closingNote": "En pratique le modele a des dizaines de milliers de jetons ; les reglages de l UI changent ces memes etapes numeriquement."
     }
   },
   "agentForm": {

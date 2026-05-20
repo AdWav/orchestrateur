@@ -170,6 +170,6 @@ Maintenir la cohérence entre **modèle génératif** et **observations**.
 ## 9. Lien projet orchestrateur
 
 - Paramètres live documentés dans [`EXPLAIN.md`](../EXPLAIN.md).
-- **Mirostat** est le seul aligné sur un papier à **boucle fermée** explicite ; les autres potards correspondent surtout aux lignes « contrainte ouverte » ou « heuristique » du tableau ci-dessus.
+- **Mirostat** est le seul aligné sur un papier à **boucle fermée** explicite ; les autres réglages correspondent surtout aux lignes « contrainte ouverte » ou « heuristique » du tableau ci-dessus.
 
 → Suite : [02-drift-temps-collapse-et-entropie.md](./02-drift-temps-collapse-et-entropie.md)

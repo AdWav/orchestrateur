@@ -53,6 +53,19 @@ def enrich_work_item_prompt(item_prompt: str, memory: SharedMemory) -> str:
         lines.append(f"Capabilities: {', '.join(str(c) for c in capabilities)}")
     if guardrails:
         lines.append(f"Guardrails: {'; '.join(str(g) for g in guardrails)}")
+
+    prev_outputs = memory.items_with_prefix("catalog_step_output_")
+    if prev_outputs:
+        lines.append("")
+        lines.append("Previous catalog step outputs (handoff):")
+        for key in sorted(prev_outputs.keys()):
+            payload = prev_outputs[key]
+            summary = ""
+            if isinstance(payload, dict):
+                summary = str(payload.get("summary", "")).strip()
+            if summary:
+                lines.append(f"- {key}: {summary[:2000]}{'…' if len(summary) > 2000 else ''}")
+
     return "\n".join(lines)
 
 

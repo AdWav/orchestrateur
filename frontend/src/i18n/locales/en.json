@@ -8,7 +8,43 @@
     "ariaLabel": "Service navigation",
     "tabs": {
       "localOrchestrator": "Local Orchestrator",
-      "sampling": "Sampling"
+      "sampling": "Sampling",
+      "samplingCourse": "Course",
+      "traceJourney": "Journey"
+    }
+  },
+  "journey": {
+    "panelTitle": "Journey — conversation and action potential",
+    "chatTitle": "Conversation",
+    "traceTitle": "Recorded steps (dedicated service)",
+    "placeholder": "Type your question...",
+    "send": "Send",
+    "emptyChat": "Ask something. The answer uses the backend streaming sampling preview (live profile, same pipeline as the Sampling tab).",
+    "emptyTrace": "Spans appear here: input, intent, context, reasoning, generation, response.",
+    "traceUrlHint": "Trace API: {{url}}",
+    "traceUnreachable": "Trace service unreachable ({{url}}). From trace-service: pip install -e . then orchestrateur-trace (port 8090).",
+    "previewFailed": "Generation failed. Check backend :8000 and Ollama.",
+    "assistantFallback": "(no text)",
+    "stageLabels": {
+      "user_input": "Input",
+      "intent": "Intent",
+      "context": "Context",
+      "reasoning": "Reasoning / plan",
+      "generation": "Generation (model)",
+      "response": "User response"
+    },
+    "spanIn": {
+      "context": "Local window: no persisted history in this demo.",
+      "reasoning": "Choice: direct answer via streaming preview.",
+      "response": "Assistant bubble formatting."
+    },
+    "spanOut": {
+      "userInput": "Message recorded.",
+      "intent": "Request identified — {{snippet}}",
+      "context": "Minimal context (UI session only).",
+      "reasoning": "Single generation via POST /v1/runtime/sampling/preview/stream.",
+      "generation": "Model {{model}}; ~{{tokens}} output tokens.",
+      "response": "Response shown ({{chars}} chars)."
     }
   },
   "header": {
@@ -228,6 +264,22 @@
     "previewPromptPlaceholder": "E.g. Summarize in one sentence: what is top-p?",
     "previewOk": "Response generated with the live profile.",
     "previewError": "Live trial failed.",
+    "previewStreaming": "Generating…",
+    "previewStatsPromptTokens": "{count} prompt tokens",
+    "previewStatsOutputTokens": "{count} output tokens",
+    "previewStatsSpeed": "{rate} tok/s",
+    "showTokens": "Tokens",
+    "showTokensToggleAria": "Show tokenization overlay",
+    "tokenCount": "{count} chunks",
+    "tokenIndex": "Chunk {index}",
+    "tokenModeStream": "Stream",
+    "tokenModeBpe": "BPE",
+    "bpeTokenCount": "{count} BPE tokens",
+    "bpeTokenTitle": "Token {index} · id {id}",
+    "bpeTokenizing": "Running model BPE tokenization…",
+    "bpeTokenizeError": "BPE tokenization failed.",
+    "bpeSourceOllama": "Ollama tokenizer (/api/tokenize)",
+    "bpeSourceLlamaCpp": "GGUF tokenizer (llama.cpp, aligned with the loaded model)",
     "ollamaInactive": "MODEL_BACKEND=ollama is required for a real trial. The live profile is still saved.",
     "persistPathPrefix": "Persistence file (live):",
     "groupingModeLabel": "Settings layout",
@@ -314,6 +366,94 @@
     "placeholders": {
       "stop": "END\n</s>",
       "logit_bias": "50256:-1.0"
+    },
+    "openCourseForKnob": "Open course"
+  },
+  "course": {
+    "title": "Course module — theory and knobs",
+    "eyebrow": "Decoder — one token at a time",
+    "intro": "Maps decoding equations (one token at a time) to Live sampling labels. Click a knob to see symbols, formula, and references.",
+    "docHint": "Full write-up:",
+    "viewsLabel": "Layout",
+    "views": {
+      "pipeline": "Computation chain",
+      "knobs": "Knob list"
+    },
+    "pickKnobHint": "Select a knob in the chain or list to show details.",
+    "symbolsLabel": "Symbols",
+    "equationLabel": "Formula",
+    "rangeLabel": "UI range",
+    "integer": "integer",
+    "roleGroupLabel": "Role group:",
+    "impactGroupLabel": "Impact:",
+    "relatedKnobsLabel": "Related knobs:",
+    "pipelineSteps": {
+      "logits": "Raw logits (model output)",
+      "logit_bias": "Targeted bias (logit bias)",
+      "anti_repeat": "Anti-repetition",
+      "temperature_mirostat": "Randomness / control (temperature or Mirostat)",
+      "filters": "Candidate pool filters (top-k, top-p, min-p)",
+      "sample": "Next-token sampling",
+      "constraints": "Global constraints (length, stop)"
+    },
+    "equations": {
+      "logits_raw": "z_i = logit(token_i | context)\nP_raw(i) propto exp(z_i)",
+      "sample": "token ~ Categorical(P')  after normalization on filtered pool",
+      "logit_bias": "z'_i = z_i + bias_i\n(bias_i set via logit_bias, token:id)",
+      "repeat_penalty": "z'_i <- f(z_i, tokens_{t-N..t-1})\n(f = repeat_penalty over window repeat_last_n)",
+      "repeat_last_n": "N = repeat_last_n  (past tokens considered)",
+      "presence_penalty": "penalty if token/topic already present\n(alpha_pres = presence_penalty)",
+      "frequency_penalty": "penalty grows with token count\n(alpha_freq = frequency_penalty)",
+      "temperature": "P(i) propto exp(z'_i / T)\nT = temperature  (low T -> deterministic)",
+      "mirostat": "Mirostat loop (if mirostat in {1,2}):\n  adaptive k, e = S(X) - tau,  mu <- mu - eta*e\n  (eta = mirostat_eta, tau = mirostat_tau)",
+      "mirostat_eta": "eta = mirostat_eta  (feedback gain)",
+      "mirostat_tau": "tau = mirostat_tau  (target surprise / perplexity)\nS(X) = -log P_M(X)",
+      "top_k": "V^(k) = {k highest-P tokens}\nkeep only i in V^(k)",
+      "top_p": "V^(p) = smallest set with\n  sum_{i in V^(p)} P(i) >= p\n(p = top_p, nucleus sampling)",
+      "min_p": "eligible(i) iff P(i) >= p_min\np_min = min_p",
+      "num_predict": "stop if t >= T_max\nT_max = num_predict",
+      "stop": "stop if suffix(context+gen) contains s\ns in stop list"
+    },
+    "references": {
+      "explain": {
+        "title": "docs/EXPLAIN.md (project)",
+        "url": ""
+      },
+      "mirostat": {
+        "title": "Basu et al., Mirostat (ICLR 2021)",
+        "url": "https://arxiv.org/abs/2007.14966"
+      },
+      "holtzman": {
+        "title": "Holtzman et al., Neural Text Degeneration (ICLR 2020)",
+        "url": "https://arxiv.org/abs/1904.09751"
+      },
+      "litterature": {
+        "title": "docs/litterature-maintien-capacite-modele/",
+        "url": ""
+      }
+    },
+    "workedExample": {
+      "title": "Worked example — toy vocabulary",
+      "disclaimer": "Illustration with made-up numbers so you can relate logits, softmax, sampling, then filters.",
+      "steps": [
+        {
+          "title": "Toy logits after the LM",
+          "body": "Vocabulary {A,B,C}; raw logits before temperature:\n\nz_A = 1.5   z_B = 1.2   z_C = -0.3"
+        },
+        {
+          "title": "Temperature T = 2",
+          "body": "P(i) ∝ exp(z_i / T). Here exp(z/T) :\n\nA → exp(0.75) ≈ 2.12\nB → exp(0.60) ≈ 1.82\nC → exp(-0.15) ≈ 0.86\n\nNormalize so they sum to 1 (softmax)."
+        },
+        {
+          "title": "Drawing the next token",
+          "body": "Draw once from this categorical distribution; low T ⇒ peaked distribution (more deterministic), high T ⇒ flatter distribution."
+        },
+        {
+          "title": "Top-k / Top-p applied before normalization",
+          "body": "UI filters trim the eligible set (see pipeline); after trimming, probs are renormalized on the remaining tokens, then sampled."
+        }
+      ],
+      "closingNote": "Real models use tens of thousands of tokens; UI knobs only change these same steps numerically."
     }
   },
   "agentForm": {

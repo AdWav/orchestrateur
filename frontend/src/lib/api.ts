@@ -72,6 +72,50 @@ export type SamplingPreviewResponse = {
   backend: string;
 };
 
+export type SamplingPreviewStreamStats = {
+  total_duration?: number;
+  load_duration?: number;
+  prompt_eval_count?: number;
+  prompt_eval_duration?: number;
+  eval_count?: number;
+  eval_duration?: number;
+};
+
+export type SamplingPreviewStreamEvent =
+  | { event: "token"; content: string }
+  | {
+      event: "done";
+      model: string;
+      profile: "live";
+      backend: string;
+      content: string;
+      stats: SamplingPreviewStreamStats;
+    }
+  | { event: "error"; detail: string };
+
+export type ModelTokenPiece = {
+  id: number;
+  text: string;
+};
+
+export type SamplingTokenizeRequest = {
+  text: string;
+  model?: string | null;
+};
+
+export type SamplingTokenizeResponse = {
+  model: string;
+  source: "ollama" | "llama_cpp";
+  token_count: number;
+  tokens: ModelTokenPiece[];
+};
+
+export type SamplingTokenizeCapabilitiesResponse = {
+  ollama_api: boolean;
+  llama_cpp: boolean;
+  source: "ollama" | "llama_cpp" | "unavailable";
+};
+
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue =
   | JsonPrimitive
@@ -405,6 +449,97 @@ export function postSamplingPreview(
     "/v1/runtime/sampling/preview",
     body,
   );
+}
+
+function parseSamplingPreviewStreamLine(line: string): SamplingPreviewStreamEvent | null {
+  const trimmed = line.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const parsed = JSON.parse(trimmed) as SamplingPreviewStreamEvent;
+  if (parsed.event === "error" && typeof parsed.detail === "string") {
+    throw new Error(parsed.detail);
+  }
+  return parsed;
+}
+
+export function fetchSamplingTokenizeCapabilities(): Promise<SamplingTokenizeCapabilitiesResponse> {
+  return fetchJson<SamplingTokenizeCapabilitiesResponse>(
+    "/v1/runtime/sampling/tokenize/capabilities",
+  );
+}
+
+export function postSamplingTokenize(
+  body: SamplingTokenizeRequest,
+): Promise<SamplingTokenizeResponse> {
+  return postJson<SamplingTokenizeRequest, SamplingTokenizeResponse>(
+    "/v1/runtime/sampling/tokenize",
+    body,
+  );
+}
+
+export async function streamSamplingPreview(
+  body: SamplingPreviewRequest,
+  handlers: {
+    onToken: (token: string) => void;
+    onDone?: (event: Extract<SamplingPreviewStreamEvent, { event: "done" }>) => void;
+    signal?: AbortSignal;
+  },
+): Promise<void> {
+  const response = await fetch(
+    new URL("/v1/runtime/sampling/preview/stream", apiBaseUrl).toString(),
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/x-ndjson",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+      signal: handlers.signal,
+    },
+  );
+
+  if (!response.ok) {
+    throw new Error(await buildErrorMessage(response, "/v1/runtime/sampling/preview/stream"));
+  }
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("Streaming preview: response body unavailable.");
+  }
+
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      const event = parseSamplingPreviewStreamLine(line);
+      if (!event) {
+        continue;
+      }
+      if (event.event === "token") {
+        handlers.onToken(event.content);
+      } else if (event.event === "done") {
+        handlers.onDone?.(event);
+      }
+    }
+  }
+
+  if (buffer.trim()) {
+    const event = parseSamplingPreviewStreamLine(buffer);
+    if (event?.event === "token") {
+      handlers.onToken(event.content);
+    } else if (event?.event === "done") {
+      handlers.onDone?.(event);
+    }
+  }
 }
 
 export function postOllamaModelWarm(modelName: string): Promise<ModelWarmUnloadAck> {

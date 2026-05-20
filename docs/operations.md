@@ -91,7 +91,7 @@ Les prochaines etapes coherentes sont:
 1. changer `OLLAMA_DEFAULT_MODEL` pour monter en qualite
 2. ajouter une trace persistante des handoffs
 3. isoler certains agents dans des images plus specialisees
-4. connecter une UI `TypeScript`
+4. enrichir l'UI operateur existante (`frontend/`)
 5. introduire un stockage memoire partage externe
 6. permettre l'audit d'un repo monte explicitement via Docker
 

@@ -4,14 +4,19 @@
 
 Cette base etablit une architecture multi-agents locale, simple a demarrer, sans partir trop tot dans une complexite distribuee excessive.
 
-La V2 ajoute un workflow `local-repo-audit` en lecture seule pour auditer un depot local avec preuves traceables.
+**Cas d'usage courants** (voir `backend/core/orchestrator.py`, routes sous `backend/app/views/`) :
+
+- **`local-repo-audit`** — audit de depot en lecture seule, `POST /workflows/repo-audit`
+- **`dev-team-benchmark`** — comparaison `team-tdd` vs `team-classic`, workspace disque
+- **Workflows catalogue** — `POST /workflows/catalog/{workflow_id}` (`catalog/workflows/*.json` synchronise en base selon config)
+- **Pipeline legacy specification** — `POST /workflows/specification` (`plan` → `research` → `execute` → `verify`)
 
 Le principe retenu est:
 
 - `Python` comme langage principal
-- `FastAPI` comme plan de controle
+- `FastAPI` comme plan de controle (`backend/app/`)
 - un orchestrateur central qui sequence les handoffs
-- une execution de roles en interne dans le processus de l'orchestrateur
+- une execution de roles en interne dans le processus du backend
 - un runtime `Ollama` partage pour la validation fonctionnelle
 - une couche de capacites repo en lecture seule pour l'audit local
 
@@ -42,51 +47,61 @@ flowchart TD
     orchestrator --> runtime[RuntimeSelection]
 ```
 
-## Workflow repo audit
+Schema simplifie : les equipes **dev** (`team-tdd`, `team-classic`) s'appuient sur d'autres *step ids* et labels moteur (`backend/core/pipeline.py`, `catalog/workflows/`), mais l'idee « orchestrateur in-process + Ollama + memoire de workflow » reste la meme.
 
-Le nouveau flux `local-repo-audit` garde les memes roles, mais specialise leurs sorties:
+## Workflow `local-repo-audit`
 
-1. `Planner` cadre le scope, les limites de lecture et le plan de recherche
-2. `Researcher` lit le depot via `RepoCapabilities` et collecte des preuves bornees
-3. `Executor` transforme ces preuves en constats structures
-4. `Verifier` controle la couverture, la presence des preuves et le respect du mode lecture seule
+Le cas d'usage **`local-repo-audit`** (identifiant `use_case_id` dans les contrats) reprend exactement l'enchainement **`plan` → `research` → `execute` → `verify`** defini par `PIPELINE_STEP_IDS` dans `backend/core/pipeline.py`. Ce n'est pas un quatrieme pipeline parallele : ce sont les memes quatre etapes que le workflow specification legacy ; le code des roles branche une logique **audit** (lecture seule, inventaire, preuves, validation) lorsque le contexte porte `repo_audit`.
+
+1. **`plan`** (Planner) — cadre le scope, les limites de lecture et le plan de recherche
+2. **`research`** (Researcher) — lit le depot via `RepoCapabilities`, produit inventaire et preuves bornees
+3. **`execute`** (Executor) — transforme les preuves en constats structures (`findings`)
+4. **`verify`** (Verifier) — couverture, presence des preuves, respect du mode lecture seule
+
+Endpoint HTTP : **`POST /workflows/repo-audit`**. Exemple de corps : [`operations.md`](./operations.md).
 
 ## Responsabilites des dossiers
 
-- `api/`: points d'entree HTTP du control plane
-- `core/`: contrats, memoire, roles, orchestration, gateway locale ou reseau
-- `serve/`: logique de recommandation de runtime local
-- `tests/`: verification du workflow et du choix de runtime
-- `docker/`: image de base Python pour l'orchestrateur et les utilitaires de stack
-- `docs/`: documentation operatoire et d'architecture
-- `ui/`: reserve a une interface TypeScript future
-- `native/`: reserve a des modules `Rust` ou `C++` futurs
+- `backend/app/` : API FastAPI MVC (router, controllers, injection)
+- `backend/core/` : contrats, memoire, roles, orchestration, gateway locale
+- `backend/serve/` : CLI client HTTP, recommandation de runtime local
+- `api/` : point d'entree historique re-exportant `app.main` (compatibilite)
+- `catalog/` : definitions JSON agents / workflows (source du catalogue fichier)
+- `frontend/` : UI operateur Ionic / React
+- `mcp-server/` : pont MCP (Streamable HTTP) vers l'API
+- `trace-service/` : prototype de traces conversationnelles (service **trace-service** dans `compose.yaml`, port **8090**)
+- `tests/` : verification des workflows et de l'API
+- `docker/` : images de base partagees (`Dockerfile.python`)
+- `docs/` : documentation operatoire et d'architecture
+- `native/` : reserve a des modules `Rust` ou `C++` futurs
 
 ## Choix de conception importants
 
 ### Orchestrateur central
 
-L'orchestrateur sequence explicitement les roles dans l'ordre:
+Pour le pipeline **legacy** (`PIPELINE_STEP_IDS`), l'orchestrateur sequence explicitement :
 
-1. `Planner`
-2. `Researcher`
-3. `Executor`
-4. `Verifier`
+1. `plan` (Planner)
+2. `research` (Researcher)
+3. `execute` (Executor)
+4. `verify` (Verifier)
 
-Ce choix simplifie:
+Les workflows **catalogue dev** (`team-tdd`, `team-classic`) enchainent d'autres etapes ; voir `catalog/workflows/*.json` et [`agents.md`](./agents.md).
 
-- la trace d'execution
+Ce decoupage simplifie :
+
+- la trace d'execution sur le pipeline lineaire
 - la debogabilite
 - la maitrise des garde-fous
 - l'introduction progressive de branches ou boucles plus tard
 
 ### Roles internes
 
-Les roles `Planner`, `Researcher`, `Executor` et `Verifier` tournent par defaut dans le meme processus que l'orchestrateur. Cela permet:
+Les roles rattaches aux etapes tournent par defaut **dans le meme processus** que le backend. Cela permet:
 
 - de reduire le nombre de conteneurs a maintenir
 - de limiter la latence et la complexite reseau
-- de garder la logique metier testable et bien separee par role
+- de garder la logique metier testable et bien separee par etape / equipe
 
 Le mode HTTP multi-services peut rester disponible comme compatibilite ou option d'evolution future.
 
@@ -100,7 +115,7 @@ Ce compromis est volontaire:
 - facile a tester
 - compatible avec un futur backend de memoire partagee
 
-Dans le workflow repo audit, cette memoire transporte aussi:
+Pour **`local-repo-audit`**, cette memoire transporte notamment :
 
 - l'inventaire du depot
 - les preuves collectees
@@ -113,7 +128,7 @@ Les evolutions naturelles de cette base sont:
 
 - conserver `Ollama` pour la validation puis changer de modele ou de runtime
 - etendre l'audit local a un repo monte explicitement en mode Docker
-- brancher un stockage de traces et d'observabilite
+- brancher un stockage de traces et d'observabilite (voir [`conversation-trace-service.md`](./conversation-trace-service.md) et le paquet `trace-service/`)
 - reintroduire des services separes si le parallelisme ou l'isolation deviennent necessaires
 - introduire une vraie memoire partagee externe
-- ajouter une interface operateur en `TypeScript`
+- enrichir l'UI operateur (`frontend/`) : parcours, observabilite, operateur terrain

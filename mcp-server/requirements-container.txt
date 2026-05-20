@@ -1,0 +1,5 @@
+# Deps MCP (couche Docker cachee avant COPY du code Python).
+# A synchroniser avec mcp-server/pyproject.toml quand vous bump les versions.
+httpx>=0.28.0,<1
+mcp>=1.26.0,<2
+uvicorn[standard]>=0.30.0,<1

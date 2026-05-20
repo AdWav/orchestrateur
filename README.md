@@ -10,6 +10,8 @@ Le catalogue (`catalog/agents/`, `catalog/workflows/`) definit des **agents reut
 |---------|---------------|------|-----------|
 | `frontend` | `frontend/Dockerfile` (Ionic/React + nginx) | UI, benchmark, trace des livrables | 3000 |
 | `backend` | `backend/Dockerfile` (FastAPI) | API, orchestration, agents in-process | 8000 |
+| `trace-service` | `trace-service/Dockerfile` (FastAPI) | Traces conversationnelles (spans par phase) — *MVP mémoire* ; aussi lançable en local (`pip install -e .`) | 8090 |
+| `mcp-server` | `mcp-server/Dockerfile` (FastMCP + Streamable HTTP) | Pont MCP vers l'API (`/mcp`) | 8010 |
 | `workspace-runner` | `workspace-runner/Dockerfile` (Python + pytest) | Rejouer tests / demos dans un environnement isole | — |
 | `db` | `mariadb:11` | Catalogue agents / workflows (JSON en base) | 3306 |
 | `ollama` | `ollama/ollama:latest` | Inference locale partagee | 11434 |
@@ -28,6 +30,7 @@ Agents fonctionnels (pas de personas) ; execution via `POST /workflows/catalog/{
 | **Legacy** `specification-team` | `plan` → `research` → `execute` → `verify` |
 | **TDD** `team-tdd` | `write_tests` → `code_backend` → `code_frontend` → `integration` → `run_fix` → `document` |
 | **Classique** `team-classic` | `schematic` → `api_contract` → `database` → `code_backend` → `code_frontend` → `test_and_verify` → `integration` → `run_fix` → `review` → `security` → `document` |
+| **Documentation steward** `documentation-steward` | `doc_inventory` → `doc_sync` → `doc_qa` (alignement docs / code) |
 
 **Benchmark** : `POST /workflows/dev-team-benchmark` execute `team-tdd` puis `team-classic` **sequentiellement** sur la meme demande (durees, succes, artefacts, workspace).
 
@@ -35,13 +38,14 @@ Runtime inference : **Ollama** (`MODEL_BACKEND=ollama`), un seul modele charge a
 
 Modele par defaut : **`qwen2.5-coder:1.5b`** (cible laptop **16 Go RAM**, workflows code / audit repo).
 
-Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md`](docs/models.md), [`docs/agents.md`](docs/agents.md).
+Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md`](docs/models.md), [`docs/agents.md`](docs/agents.md), [`docs/sampling-runtime.md`](docs/sampling-runtime.md) (echantillonnage live, streaming, tokens BPE). Pont MCP (`stdio` / Streamable HTTP) : [`docs/mcp.md`](docs/mcp.md). Service **traces parcours utilisateur** (prototype) : [`docs/conversation-trace-service.md`](docs/conversation-trace-service.md).
 
 ## Architecture
 
 ```mermaid
 flowchart LR
     browser[Navigateur] --> frontend[frontend:3000]
+    browser --> trace[trace-service:8090]
     frontend --> backend[backend:8000]
     backend --> db[(MariaDB)]
     backend --> ollama[Ollama:11434]
@@ -60,6 +64,8 @@ docker compose up --build
 
 - UI : http://localhost:3000
 - API : http://localhost:8000
+- MCP (Streamable HTTP) : http://localhost:8010/mcp
+- Traces (onglet **Parcours**) : http://localhost:8090 (via `docker compose`, voir `trace-service/`)
 - Ollama : http://localhost:11434
 
 Copier `.env.example` vers `.env` pour surcharger le modele au demarrage :
@@ -78,8 +84,14 @@ Variables utiles :
 | `CATALOG_BACKEND` | `mariadb` en compose | `file` pour dev local sans DB |
 | `ORCHESTRATOR_CATALOG_ROOT` | `./catalog` | Catalogue fichier si `CATALOG_BACKEND=file` |
 | `VITE_API_BASE_URL` | `http://localhost:8000` | URL API au build frontend |
+| `VITE_TRACE_SERVICE_URL` | `http://127.0.0.1:8090` | URL trace-service au build (onglet **Parcours** ; machine hote, pas le reseau Docker interne) |
+| `MCP_SERVER_PORT` | `8010` | Port hôte du serveur MCP (Compose) ; endpoint `http://localhost:<port>/mcp` |
+| `ORCHESTRATOR_HTTP_TIMEOUT_SECONDS` | `600` (local) / `900` (Compose MCP) | Timeout HTTP côté pont MCP vers l’API (workflows longs) |
+| `OLLAMA_MODELS_DIR` | `/ollama-models` (compose) | Acces aux blobs GGUF pour tokenisation BPE (`llama-cpp-python`) |
 
 Reglages runtime persistants : `GET` / `PUT` `/v1/runtime/ollama/settings` (ou UI).
+
+**Echantillonnage live** (UI onglet Echantillonnage) : essai streamé du profil live, calque de tokens (flux Ollama vs BPE modele). Voir [`docs/sampling-runtime.md`](docs/sampling-runtime.md).
 
 ## Workspaces executables
 
@@ -197,6 +209,12 @@ Workspaces locaux : `WORKSPACE_ROOT=./workspaces` (defaut).
 - `POST /workflows/dev-team-benchmark` — compare TDD vs classique + workspace
 - `POST /workflows/repo-audit`
 - `GET/PUT /v1/runtime/ollama/settings`
+- `GET/PUT /v1/runtime/sampling/settings` — profils orchestration + live
+- `PUT /v1/runtime/sampling/settings/live` — mise a jour du profil live
+- `POST /v1/runtime/sampling/preview` — essai bloquant
+- `POST /v1/runtime/sampling/preview/stream` — essai streamé (NDJSON)
+- `GET /v1/runtime/sampling/tokenize/capabilities` — source tokenizer BPE
+- `POST /v1/runtime/sampling/tokenize` — tokenisation BPE du texte
 
 Exemple benchmark :
 

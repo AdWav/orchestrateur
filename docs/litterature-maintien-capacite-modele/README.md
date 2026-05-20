@@ -8,6 +8,7 @@ Notes de recherche sur les cadres **formels** (équations, boucles de contrôle,
 |---------|-----------|
 | [01-decodage-et-regulation.md](./01-decodage-et-regulation.md) | **Couche 1** — À chaque token : dégénérescence, nucleus, Mirostat, contrastive search, controlled decoding, unlikelihood, inférence active |
 | [02-drift-temps-collapse-et-entropie.md](./02-drift-temps-collapse-et-entropie.md) | **Couche 2** — Dans le temps : model collapse, EWC, alignement KL, contrôle par entropie à l’inférence, liens avec l’orchestrateur |
+| [../cours-echantillonnage.md](../cours-echantillonnage.md) | **Module Cours** — Tableau réglages ↔ équations ↔ groupes UI |
 
 ## Lecture conseillée
 

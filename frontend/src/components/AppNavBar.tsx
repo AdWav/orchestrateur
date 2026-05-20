@@ -2,6 +2,8 @@ import { useI18n } from "../i18n/I18nProvider";
 import {
   APP_TAB_LOCAL_ORCHESTRATOR,
   APP_TAB_SAMPLING,
+  APP_TAB_SAMPLING_COURSE,
+  APP_TAB_TRACE_JOURNEY,
   type AppTabId,
 } from "../navigation/appTabs";
 
@@ -28,6 +30,14 @@ const AppNavBar = ({
     {
       id: APP_TAB_SAMPLING,
       label: messages.nav.tabs.sampling,
+    },
+    {
+      id: APP_TAB_SAMPLING_COURSE,
+      label: messages.nav.tabs.samplingCourse,
+    },
+    {
+      id: APP_TAB_TRACE_JOURNEY,
+      label: messages.nav.tabs.traceJourney,
     },
   ];
 

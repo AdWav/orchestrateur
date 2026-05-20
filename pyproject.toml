@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 dependencies = [
   "fastapi>=0.115.0",
   "httpx>=0.28.0",
+  "llama-cpp-python>=0.3.16",
   "pymysql>=1.1.0",
   "pydantic>=2.9.0",
   "uvicorn>=0.30.0",

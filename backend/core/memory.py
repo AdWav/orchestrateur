@@ -32,6 +32,10 @@ class SharedMemory:
         with self._lock:
             return self._state.get(key, default)
 
+    def items_with_prefix(self, prefix: str) -> dict[str, Any]:
+        with self._lock:
+            return {k: v for k, v in self._state.items() if k.startswith(prefix)}
+
     def snapshot(self) -> dict[str, Any]:
         with self._lock:
             return {
