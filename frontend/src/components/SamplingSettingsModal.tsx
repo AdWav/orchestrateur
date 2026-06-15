@@ -133,7 +133,7 @@ const SamplingSettingsModal = ({
   const [previewResult, setPreviewResult] = useState<string | null>(null);
   const [previewStreamChunks, setPreviewStreamChunks] = useState<string[]>([]);
   const [previewStats, setPreviewStats] = useState<string | null>(null);
-  const [showTokenLayer, setShowTokenLayer] = useState(false);
+  const [showTokenLayer, setShowTokenLayer] = useState(true);
   const [previewModel, setPreviewModel] = useState<string | null>(null);
   const [meta, setMeta] = useState<{
     settings_persist_path: string | null;
@@ -407,10 +407,12 @@ const SamplingSettingsModal = ({
                 ) : null}
                 {previewResult !== null && previewResult.length > 0 ? (
                   <PreviewTokenOutput
+                    promptText={previewPrompt.trim()}
                     text={previewResult}
                     streamChunks={previewStreamChunks}
                     streaming={previewBusy}
                     previewModel={previewModel}
+                    tokenGaugeMax={liveForm.num_predict}
                     showTokenLayer={showTokenLayer}
                     onShowTokenLayerChange={setShowTokenLayer}
                   />

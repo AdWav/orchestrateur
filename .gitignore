@@ -15,3 +15,5 @@ dist/
 workspaces/*
 !workspaces/.gitkeep
 db/workspaces/*
+hermes/data/*
+!hermes/data/.gitkeep

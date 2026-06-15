@@ -16,8 +16,13 @@ Le catalogue (`catalog/agents/`, `catalog/workflows/`) definit des **agents reut
 | `db` | `mariadb:11` | Catalogue agents / workflows (JSON en base) | 3306 |
 | `ollama` | `ollama/ollama:latest` | Inference locale partagee | 11434 |
 | `ollama-init` | `ollama/ollama:latest` | `ollama pull` du modele par defaut au demarrage | — |
+| `hermes-gateway` | `nousresearch/hermes-agent:latest` | Agent Hermes (overlay `compose.hermes.yml`) | — |
+| `hermes-dashboard` | `nousresearch/hermes-agent:latest` | UI web Hermes | 9119 |
+| `hermes-init` | `alpine:3.20` | Bootstrap config Hermes → `hermes/data/` | — |
 
 Reseau Docker : `orchestrateur-agent-mesh` (`agent_mesh` dans `compose.yaml`).
+
+**Hermes Agent** (optionnel, Ollama local partage) : [`docs/hermes-stack.md`](docs/hermes-stack.md) — `docker compose -f compose.yaml -f compose.hermes.yml up`.
 
 Volume partage : `./workspaces` monte sur `backend` et `workspace-runner` (`WORKSPACE_ROOT=/workspaces`).
 
@@ -39,7 +44,7 @@ Runtime inference : **Ollama** (`MODEL_BACKEND=ollama`), un seul modele charge a
 
 Modele par defaut : **`qwen2.5-coder:1.5b`** (cible laptop **16 Go RAM**, workflows code / audit repo).
 
-Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md`](docs/models.md), [`docs/agents.md`](docs/agents.md), [`docs/sampling-runtime.md`](docs/sampling-runtime.md) (echantillonnage live, streaming, tokens BPE). Pont MCP (`stdio` / Streamable HTTP) : [`docs/mcp.md`](docs/mcp.md). Service **traces parcours utilisateur** (prototype) : [`docs/conversation-trace-service.md`](docs/conversation-trace-service.md).
+Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md`](docs/models.md), [`docs/agents.md`](docs/agents.md), [`docs/sampling-runtime.md`](docs/sampling-runtime.md) (echantillonnage live, streaming, tokens BPE). **Parcours UI** (onglet Parcours vs Orchestrateur local, que se passe-t-il quand on pose une question) : [`docs/parcours-utilisateur.md`](docs/parcours-utilisateur.md). Pont MCP (`stdio` / Streamable HTTP) : [`docs/mcp.md`](docs/mcp.md). Service **traces parcours utilisateur** (prototype) : [`docs/conversation-trace-service.md`](docs/conversation-trace-service.md). **Exercice pedagogique creation d'agent** : [`IA-xercice/README.md`](IA-xercice/README.md).
 
 ## Architecture
 
@@ -47,9 +52,13 @@ Documentation detaillee : [`docs/runtime.md`](docs/runtime.md), [`docs/models.md
 flowchart LR
     browser[Navigateur] --> frontend[frontend:3000]
     browser --> trace[trace-service:8090]
+    browser --> hermesDash[hermes-dashboard:9119]
+    cursor[Cursor] --> ollama[Ollama:11434]
     frontend --> backend[backend:8000]
     backend --> db[(MariaDB)]
-    backend --> ollama[Ollama:11434]
+    backend --> ollama
+    hermesGw[hermes-gateway] --> ollama
+    hermesDash --> hermesGw
     backend --> ws[(./workspaces)]
     runner[workspace-runner] --> ws
 ```
@@ -68,6 +77,13 @@ docker compose up --build
 - MCP (Streamable HTTP) : http://localhost:8010/mcp
 - Traces (onglet **Parcours**) : http://localhost:8090 (via `docker compose`, voir `trace-service/`)
 - Ollama : http://localhost:11434
+- Hermes dashboard (overlay) : http://127.0.0.1:9119
+
+Avec Hermes :
+
+```bash
+docker compose -f compose.yaml -f compose.hermes.yml up --build
+```
 
 Copier `.env.example` vers `.env` pour surcharger le modele au demarrage :
 

@@ -2,7 +2,7 @@
 
 Guide de l’écran **Échantillonnage** (onglet réglages / modal) : essai du profil live, génération en flux, calque de tokens et tokenisation BPE alignée sur le modèle.
 
-Voir aussi : [`EXPLAIN.md`](./EXPLAIN.md) (rôle des réglages d’échantillonnage), [`cours-echantillonnage.md`](./cours-echantillonnage.md) (théorie ↔ UI).
+Voir aussi : [`parcours-utilisateur.md`](./parcours-utilisateur.md) (flux A Parcours vs flux B benchmark), [`EXPLAIN.md`](./EXPLAIN.md) (rôle des réglages d’échantillonnage), [`cours-echantillonnage.md`](./cours-echantillonnage.md) (théorie ↔ UI).
 
 ---
 

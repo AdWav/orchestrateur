@@ -218,7 +218,7 @@ def ollama_post_generate(
 
 def warm_model_loaded(model: str) -> dict[str, Any]:
     keep_alive = os.getenv("OLLAMA_KEEP_ALIVE", "5m")
-    predict = max(1, _env_int("OLLAMA_NUM_PREDICT", "96") // 4)
+    predict = max(1, _env_int("OLLAMA_NUM_PREDICT", "4096") // 4)
     payload = ollama_post_generate(
         model,
         prompt="Warmup orchestrateur.",

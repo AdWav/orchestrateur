@@ -1,0 +1,74 @@
+# Overlay Hermes Agent — Ollama local partagé (Option A)
+#
+# Démarre Hermes sur le réseau agent_mesh, branché sur le service ollama du compose principal.
+#
+# Usage :
+#   docker compose -f compose.yaml -f compose.hermes.yml up --build
+#   docker compose -f compose.yaml -f compose.hermes.yml up hermes-gateway
+#
+# Dashboard : http://127.0.0.1:9119
+# Ollama (Cursor + orchestrateur) : http://localhost:11434
+
+services:
+  hermes-init:
+    image: alpine:3.20
+    container_name: orchestrateur-hermes-init
+    volumes:
+      - ./hermes/bootstrap:/bootstrap:ro
+      - ./hermes/data:/data
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        set -e
+        if [ ! -f /data/config.yaml ]; then
+          cp /bootstrap/config.yaml /data/config.yaml
+          echo "[hermes-init] config.yaml créé depuis bootstrap"
+        fi
+        if [ ! -f /data/.env ] && [ -f /bootstrap/.env.example ]; then
+          cp /bootstrap/.env.example /data/.env
+          echo "[hermes-init] .env créé depuis bootstrap/.env.example"
+        fi
+        mkdir -p /data/sessions /data/memories /data/skills /data/logs /data/cron
+    restart: "no"
+    networks:
+      - agent_mesh
+
+  hermes-gateway:
+    image: nousresearch/hermes-agent:latest
+    container_name: orchestrateur-hermes-gateway
+    restart: unless-stopped
+    shm_size: 1g
+    environment:
+      HERMES_UID: "10000"
+      HERMES_GID: "10000"
+      # Dashboard intégré au gateway (un seul conteneur → un seul s6-log lock).
+      # Évite « unable to lock .../gateways/default/lock: Resource busy » quand
+      # gateway + dashboard partagent hermes/data sur un volume Windows.
+      HERMES_DASHBOARD: "1"
+      HERMES_DASHBOARD_HOST: "0.0.0.0"
+      HERMES_DASHBOARD_PORT: "9119"
+      HERMES_DASHBOARD_INSECURE: "1"
+    volumes:
+      - ./hermes/data:/opt/data
+    ports:
+      - "127.0.0.1:9119:9119"
+    command: ["gateway", "run"]
+    depends_on:
+      hermes-init:
+        condition: service_completed_successfully
+      ollama-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import pathlib; raise SystemExit(0 if pathlib.Path('/opt/data/config.yaml').is_file() else 1)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - agent_mesh

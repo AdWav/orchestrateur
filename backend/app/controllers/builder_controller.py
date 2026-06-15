@@ -1183,7 +1183,7 @@ class BuilderController:
             actor_id=requester_id,
             after_payload={"source_kind": source_kind, "source_id": source_id},
         )
-        return {"id": request_id, "status": "submitted"}
+        return self._get_promotion(request_id)
 
     def list_promotions(
         self,
@@ -1288,12 +1288,10 @@ class BuilderController:
                 "catalog_version_id": result_catalog_version_id,
             },
         )
-        return {
-            "id": request_id,
-            "status": "approved",
-            "catalog_agent_id": catalog_agent_id,
-            "catalog_version_id": result_catalog_version_id,
-        }
+        row = self._get_promotion(request_id)
+        row["catalog_agent_id"] = catalog_agent_id
+        row["catalog_version_id"] = result_catalog_version_id
+        return row
 
     def reject_promotion(
         self,
@@ -1332,7 +1330,7 @@ class BuilderController:
             actor_id=reviewer_id,
             after_payload={"status": "rejected"},
         )
-        return {"id": request_id, "status": "rejected"}
+        return self._get_promotion(request_id)
 
     def create_session(
         self,
@@ -1416,6 +1414,31 @@ class BuilderController:
             "audit_events": audit,
         }
 
+    def _get_promotion(self, request_id: int) -> dict[str, Any]:
+        with connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT id, requester_id, source_kind, source_id, target_kind, target_id,
+                           proposed_payload, status, reviewer_id, created_at, resolved_at,
+                           result_catalog_version_id AS catalog_version_id
+                    FROM builder_promotion_requests
+                    WHERE id = %s
+                    """,
+                    (request_id,),
+                )
+                row = cursor.fetchone()
+        if row is None:
+            raise KeyError(f"Unknown promotion request '{request_id}'.")
+        if isinstance(row.get("proposed_payload"), (str, bytes)):
+            row["proposed_payload"] = json.loads(row["proposed_payload"])
+        catalog_version_id = row.pop("catalog_version_id", None)
+        if catalog_version_id is not None:
+            row["catalog_version_id"] = int(catalog_version_id)
+        if row["status"] == "approved" and row.get("target_id"):
+            row["catalog_agent_id"] = row["target_id"]
+        return row
+
     def list_custom_agents(
         self,
         *,
@@ -1424,7 +1447,7 @@ class BuilderController:
         clauses: list[str] = []
         params: list[Any] = []
         if owner_user_id:
-            clauses.append("owner_user_id = %s")
+            clauses.append("a.owner_user_id = %s")
             params.append(owner_user_id)
         where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
         with connect() as conn:
@@ -1434,8 +1457,15 @@ class BuilderController:
                     SELECT a.id, a.slug, a.workspace_id, a.owner_user_id, a.created_at,
                            v.id AS version_id, v.version, v.status
                     FROM builder_custom_agents a
-                    LEFT JOIN builder_custom_agent_versions v
-                        ON v.custom_agent_id = a.id AND v.status = 'draft'
+                    LEFT JOIN (
+                        SELECT v1.custom_agent_id, v1.id, v1.version, v1.status
+                        FROM builder_custom_agent_versions v1
+                        INNER JOIN (
+                            SELECT custom_agent_id, MAX(id) AS max_version_id
+                            FROM builder_custom_agent_versions
+                            GROUP BY custom_agent_id
+                        ) latest ON latest.max_version_id = v1.id
+                    ) v ON v.custom_agent_id = a.id
                     {where}
                     ORDER BY a.created_at DESC
                     """,

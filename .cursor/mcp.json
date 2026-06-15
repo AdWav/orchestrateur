@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "hermes": {
+      "command": "C:\\Users\\WaAd\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts\\hermes.exe",
+      "args": ["mcp", "serve"],
+      "env": {
+        "HERMES_HOME": "C:\\Users\\WaAd\\Documents\\Projets\\orchestrateur\\hermes\\data"
+      }
+    }
+  }
+}

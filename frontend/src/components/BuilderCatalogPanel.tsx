@@ -10,7 +10,7 @@ import {
   IonTextarea,
 } from "@ionic/react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { useI18n } from "../i18n/I18nProvider";
 import {
@@ -128,6 +128,7 @@ const BuilderCatalogPanel = () => {
     mutationFn: submitBuilderPromotion,
     onSuccess: () => {
       setActionError(null);
+      setActiveStep(5);
       void queryClient.invalidateQueries({ queryKey: ["builder-promotions"] });
     },
     onError: (error: Error) => setActionError(error.message),
@@ -166,6 +167,24 @@ const BuilderCatalogPanel = () => {
   const catalogCount = catalogAgentsQuery.data?.length ?? 0;
   const customAgents = customAgentsQuery.data ?? [];
   const draftAgents = customAgents.filter((row) => row.status === "draft" && row.version_id);
+  const publishedAgents = customAgents.filter(
+    (row) => row.status === "published" && row.version_id,
+  );
+
+  useEffect(() => {
+    if (lastPublish || !slug.trim()) {
+      return;
+    }
+    const published = publishedAgents.find((row) => row.slug === slug.trim());
+    if (!published?.version_id) {
+      return;
+    }
+    setLastPublish({
+      runtimeAgentId: `custom-${published.slug}`,
+      customAgentId: published.id,
+      versionId: published.version_id,
+    });
+  }, [lastPublish, publishedAgents, slug]);
 
   const selectedLabels = useMemo(() => {
     const all = bricksQuery.data ?? [];

@@ -67,7 +67,8 @@ Endpoint HTTP : **`POST /workflows/repo-audit`**. Exemple de corps : [`operation
 - `backend/serve/` : CLI client HTTP, recommandation de runtime local
 - `api/` : point d'entree historique re-exportant `app.main` (compatibilite)
 - `catalog/` : definitions JSON agents / workflows (source du catalogue fichier)
-- [`docs/guide-builder-utilisation.md`](guide-builder-utilisation.md) : **guide utilisateur** (parcours UI, API curl, dépannage)
+- [`docs/parcours-utilisateur.md`](parcours-utilisateur.md) : **flux UI** (onglet Parcours vs Orchestrateur local, question → réponse)
+- [`docs/guide-builder-utilisation.md`](guide-builder-utilisation.md) : **guide utilisateur** (catalogue builder, API curl, dépannage)
 - [`docs/builder-catalog.md`](builder-catalog.md) : module builder (schéma SQL, SemVer, référence API `/builder`)
 - `frontend/` : UI operateur Ionic / React
 - `mcp-server/` : pont MCP (Streamable HTTP) vers l'API

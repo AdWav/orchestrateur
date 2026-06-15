@@ -47,7 +47,7 @@ curl http://localhost:8000/builder/catalog/agents
 ### Interface web
 
 - URL : en général `http://localhost` (nginx frontend) ou le port Vite en dev (`npm run dev` dans `frontend/`).
-- Onglet à choisir : **« Catalogue builder »** (pas **« Parcours »**, qui sert aux traces de conversation).
+- Onglet à choisir : **« Catalogue builder »** (pas **« Parcours »**, qui sert aux traces de conversation — voir [`parcours-utilisateur.md`](./parcours-utilisateur.md)).
 
 ---
 

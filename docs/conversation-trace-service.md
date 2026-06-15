@@ -1,5 +1,7 @@
 # Service de traçage « potentiel d’action » (conversation → réponse)
 
+> **Vue d’ensemble** (flux A Parcours vs flux B benchmark, tous les onglets) : [`parcours-utilisateur.md`](./parcours-utilisateur.md).
+
 Document de cadrage pour un **nouveau service** qui enregistre et expose le cheminement d’une interaction utilisateur, **du message entrant jusqu’à la réponse affichée**, sur le modèle des traces distribuées (proche d’OpenTelemetry : `trace` + `spans`).
 
 ## Objectif produit

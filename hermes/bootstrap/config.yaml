@@ -1,0 +1,29 @@
+# Hermes Agent — profil Compose (Option A : Ollama local partagé)
+# Copié vers hermes/data/ au premier démarrage (service hermes-init).
+# Modèle aligné sur OLLAMA_DEFAULT_MODEL du projet (compose.yaml).
+
+model:
+  default: qwen2.5-coder:7b
+  provider: custom
+  base_url: http://ollama:11434/v1
+  api_key: ollama
+  context_length: 65536
+  ollama_num_ctx: 65536
+
+providers: {}
+fallback_providers: []
+
+toolsets:
+  - hermes-cli
+
+agent:
+  max_turns: 60
+  verbose: false
+  tool_use_enforcement: auto
+
+terminal:
+  backend: docker
+  docker_image: nikolaik/python-nodejs:python3.11-nodejs20
+  timeout: 180
+  container_cpu: 1
+  container_memory: 5120

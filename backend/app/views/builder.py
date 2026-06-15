@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query, status
 
 from app.dependencies import get_container
+from core.builder.serialize import coerce_builder_row
 from app.models.api_schemas import (
     BuilderAgentDraftRequest,
     BuilderAuditEventResponse,
@@ -189,7 +190,10 @@ def list_custom_agents(
     owner_user_id: str | None = Query(default=None),
 ) -> list[BuilderCustomAgentSummaryResponse]:
     rows = get_container().builder_controller.list_custom_agents(owner_user_id=owner_user_id)
-    return [BuilderCustomAgentSummaryResponse.model_validate(row) for row in rows]
+    return [
+        BuilderCustomAgentSummaryResponse.model_validate(coerce_builder_row(row))
+        for row in rows
+    ]
 
 
 @router.get("/pending/bricks", response_model=list[BuilderPendingBrickResponse])
@@ -367,7 +371,10 @@ def list_promotions(
     status: str | None = Query(default=None),
 ) -> list[BuilderPromotionResponse]:
     rows = get_container().builder_controller.list_promotions(status=status)
-    return [BuilderPromotionResponse.model_validate(row) for row in rows]
+    return [
+        BuilderPromotionResponse.model_validate(coerce_builder_row(row))
+        for row in rows
+    ]
 
 
 @router.post(
@@ -387,7 +394,7 @@ def submit_promotion(body: BuilderPromotionSubmitRequest) -> BuilderPromotionRes
         )
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc)) from exc
-    return BuilderPromotionResponse.model_validate(result)
+    return BuilderPromotionResponse.model_validate(coerce_builder_row(result))
 
 
 @router.post(
@@ -408,7 +415,7 @@ def approve_promotion(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc)) from exc
-    return BuilderPromotionResponse.model_validate(result)
+    return BuilderPromotionResponse.model_validate(coerce_builder_row(result))
 
 
 @router.post(
@@ -427,7 +434,7 @@ def reject_promotion(
         )
     except KeyError as exc:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)) from exc
-    return BuilderPromotionResponse.model_validate(result)
+    return BuilderPromotionResponse.model_validate(coerce_builder_row(result))
 
 
 @router.post(

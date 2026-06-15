@@ -1,0 +1,12 @@
+{
+  "id": "remplacer-par-slug-unique",
+  "name": "Nom affiché de l'agent",
+  "business_role": "Rôle métier en une phrase",
+  "mission": "Objectif mesurable et borné. Préciser ce qui est hors scope.",
+  "runner_role": "",
+  "capabilities": [],
+  "inputs": [],
+  "outputs": [],
+  "guardrails": [],
+  "tools": []
+}

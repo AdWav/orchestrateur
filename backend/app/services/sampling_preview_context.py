@@ -59,7 +59,7 @@ def resolve_preview_live_context(payload: SamplingPreviewRequest) -> PreviewLive
         raise ValueError("Le prompt ne peut pas etre vide.")
 
     live_options = get_runtime_sampling().live_snapshot().to_ollama_options()
-    num_predict = int(live_options.pop("num_predict", None) or 96)
+    num_predict = int(live_options.pop("num_predict", None) or 4096)
 
     clipped = clip_chat_history(list(payload.history))
     if clipped:
