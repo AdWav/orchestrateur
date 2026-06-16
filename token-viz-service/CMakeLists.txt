@@ -27,6 +27,7 @@ add_executable(token-viz-service
   src/ollama_decode.cpp
   src/model_inspect.cpp
   src/embeddings.cpp
+  src/attention.cpp
   src/config.cpp
 )
 

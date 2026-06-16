@@ -1,4 +1,5 @@
 #include "config.hpp"
+#include "attention.hpp"
 #include "embeddings.hpp"
 #include "model_inspect.hpp"
 #include "ollama_decode.hpp"
@@ -152,6 +153,27 @@ int main() {
         emb_request.text = body.value("text", body.value("prompt", body.value("input", "")));
         emb_request.token_index = body.value("token_index", -1);
         const auto payload = token_viz::extract_embeddings(config, tokenizer, emb_request);
+        res.set_content(payload.dump(), "application/json");
+      } catch (const std::invalid_argument& exc) {
+        res.status = 400;
+        res.set_content(error_json(exc.what()).dump(), "application/json");
+      } catch (const std::exception& exc) {
+        res.status = 500;
+        res.set_content(error_json(exc.what()).dump(), "application/json");
+      }
+    });
+
+    server.Post("/v1/attention", [&](const httplib::Request& req, httplib::Response& res) {
+      apply_cors(res, config.cors_origins);
+      try {
+        const auto body = json::parse(req.body);
+        token_viz::AttentionRequest attn_request;
+        attn_request.model = body.value("model", "");
+        attn_request.text = body.value("text", body.value("prompt", body.value("input", "")));
+        attn_request.layer = body.value("layer", 0);
+        attn_request.head = body.value("head", 0);
+        attn_request.max_tokens = body.value("max_tokens", 64);
+        const auto payload = token_viz::extract_attention_map(config, attn_request);
         res.set_content(payload.dump(), "application/json");
       } catch (const std::invalid_argument& exc) {
         res.status = 400;

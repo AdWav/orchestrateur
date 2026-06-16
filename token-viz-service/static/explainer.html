@@ -635,7 +635,7 @@
       <!-- Étape 3 -->
       <section class="step-panel" data-panel="2">
         <div class="explain">
-          <h2>Blocs Transformer <span class="badge schema">schéma animé</span></h2>
+          <h2>Blocs Transformer <span class="badge real">attention réelle</span></h2>
           <p>
             Le cœur du modèle : <strong id="layerCountLabel">—</strong> blocs empilés. Chaque bloc
             contient une couche d'<strong>attention</strong> (les tokens « se parlent ») et un
@@ -643,8 +643,9 @@
             et la normalisation stabilisent l'apprentissage.
           </p>
           <p>
-            La matrice d'attention ci-dessous est un <em>schéma pédagogique</em> (masque causal +
-            proximité) — les vraies cartes d'attention arrivent en Phase 3.
+            La matrice d'attention est extraite depuis llama.cpp via <code>cb_eval</code> sur le
+            softmax d'attention. Si l'extraction échoue (modèle/build), on affiche un fallback
+            pédagogique.
           </p>
         </div>
         <div class="card">
@@ -652,7 +653,7 @@
           <div id="layerStack" class="layer-stack"></div>
         </div>
         <div class="card">
-          <h3>Attention masquée (aperçu)</h3>
+          <h3>Attention (layer 0, head 0)</h3>
           <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 10px">
             Chaque cellule = « combien le token en ligne regarde le token en colonne ». Le triangle
             supérieur est masqué (pas de regard vers le futur).
@@ -713,6 +714,8 @@
         modelInfo: null,
         embeddingByIndex: {},
         embNote: "",
+        attentionMatrix: null,
+        attentionMeta: "",
         candidates: [],
         chosenRaw: "",
         layerAnimTimer: null,
@@ -957,15 +960,15 @@
         return matrix;
       }
 
-      function renderAttentionMatrix(tokens) {
-        if (tokens.length > 12) {
+      function renderAttentionMatrix(tokens, realMatrix = null) {
+        if (!realMatrix && tokens.length > 12) {
           $("attnMatrix").innerHTML =
             '<p style="color:var(--muted)">Prompt trop long pour la matrice (' +
             tokens.length +
             " tokens). Réduisez le prompt pour voir l'aperçu.</p>";
           return;
         }
-        const matrix = pedagogicalAttention(tokens);
+        const matrix = realMatrix || pedagogicalAttention(tokens);
         const labels = tokens.map((t) => t.text.replace(/\n/g, "↵").slice(0, 8));
         let html = "<table class='attn-matrix'><thead><tr><th></th>";
         labels.forEach((l) => {
@@ -975,16 +978,21 @@
         matrix.forEach((row, i) => {
           html += `<tr><th title="${escapeHtml(labels[i])}">${escapeHtml(labels[i])}</th>`;
           row.forEach((v) => {
-            if (v < 0) {
+            if (!realMatrix && v < 0) {
               html += '<td class="attn-cell masked">—</td>';
             } else {
               const intensity = Math.round(v * 255);
-              html += `<td class="attn-cell" style="background:rgba(79,140,255,${v.toFixed(2)})" title="${(v * 100).toFixed(1)}%">${(v * 100).toFixed(0)}%</td>`;
+              const val = Number(v) || 0;
+              const alpha = Math.max(0.02, Math.min(1, val));
+              html += `<td class="attn-cell" style="background:rgba(79,140,255,${alpha.toFixed(2)})" title="${(val * 100).toFixed(1)}%">${(val * 100).toFixed(0)}%</td>`;
             }
           });
           html += "</tr>";
         });
         html += "</tbody></table>";
+        if (realMatrix && state.attentionMeta) {
+          html += `<p style="font-size:0.75rem;color:var(--muted);margin-top:8px">${escapeHtml(state.attentionMeta)}</p>`;
+        }
         $("attnMatrix").innerHTML = html;
       }
 
@@ -1079,9 +1087,9 @@
           return;
         }
 
-        $("status").textContent = "Chargement tokenisation, architecture, embeddings, logprobs…";
+        $("status").textContent = "Chargement tokenisation, architecture, embeddings, attention, logprobs…";
         try {
-          const [tokRes, inspectRes, embRes, decodeRes] = await Promise.all([
+          const [tokRes, inspectRes, embRes, attnRes, decodeRes] = await Promise.all([
             fetch("/v1/tokenize", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -1092,6 +1100,11 @@
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ model, text: prompt }),
+            }),
+            fetch("/v1/attention", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model, text: prompt, layer: 0, head: 0, max_tokens: 32 }),
             }),
             fetch("/v1/decode/tree", {
               method: "POST",
@@ -1109,11 +1122,19 @@
           const tokData = await tokRes.json();
           const inspectData = await inspectRes.json();
           const embData = await embRes.json();
+          const attnData = await attnRes.json();
           const decodeData = await decodeRes.json();
 
           if (!tokRes.ok) throw new Error(tokData.detail || "Tokenisation échouée");
           if (!inspectRes.ok) throw new Error(inspectData.detail || "Inspection modèle échouée");
           if (!embRes.ok) throw new Error(embData.detail || "Extraction embeddings échouée");
+          state.attentionMatrix = null;
+          state.attentionMeta = "";
+          if (attnRes.ok && Array.isArray(attnData.matrix)) {
+            state.attentionMatrix = attnData.matrix;
+            const shape = Array.isArray(attnData.tensor_shape) ? attnData.tensor_shape.join("×") : "—";
+            state.attentionMeta = `source ${attnData.source || "llama"} · tenseur ${attnData.tensor_name || "—"} · shape ${shape}`;
+          }
           if (!decodeRes.ok) throw new Error(decodeData.detail || "Décodage échoué");
 
           state.tokens = tokData.tokens || [];
@@ -1130,14 +1151,15 @@
           renderTokenChips(state.tokens);
           renderModelMeta(inspectData);
           renderLayerStack(dims.nLayer);
-          renderAttentionMatrix(state.tokens);
+          renderAttentionMatrix(state.tokens, state.attentionMatrix);
 
           const { candidates, chosen } = extractFirstStepCandidates(decodeData.tree);
           state.candidates = candidates;
           state.chosenRaw = chosen;
           renderProbBars();
 
-          $("status").textContent = `${state.tokens.length} tokens · ${dims.nLayer} couches · prochain token analysé`;
+          const attnMode = state.attentionMatrix ? "attention réelle" : "attention fallback";
+          $("status").textContent = `${state.tokens.length} tokens · ${dims.nLayer} couches · ${attnMode} · prochain token analysé`;
           $("nextStep").disabled = false;
           $("nextStepBottom").disabled = false;
         } catch (err) {

@@ -12,6 +12,7 @@ Service HTTP C++ qui tokenise du texte avec le **vocabulaire GGUF** du modèle O
 | `POST` | `/v1/tokenize/split` | Corps `{ "model", "input", "output" }` |
 | `POST` | `/v1/decode/tree` | Génération Ollama + arbre top-K logprobs (`prompt`, `top_logprobs`, `num_predict`) |
 | `POST` | `/v1/embeddings` | Vecteurs `token_embd` réels depuis le GGUF (`text` ou `token_index`) |
+| `POST` | `/v1/attention` | Carte d’attention réelle via callback llama.cpp (`text`, `layer`, `head`) |
 | `GET` | `/` | UI tokenisation BPE (static) |
 | `GET` | `/explainer.html` | **Transformer Explainer** — parcours pédagogique 4 étapes |
 | `GET` | `/tree.html` | UI arbre de décodage (2D) |
@@ -74,4 +75,8 @@ curl -s -X POST http://localhost:8091/v1/tokenize/split \
 curl -s -X POST http://localhost:8091/v1/embeddings \
   -H "Content-Type: application/json" \
   -d '{"model":"qwen2.5-coder:1.5b","text":"Bonjour"}'
+
+curl -s -X POST http://localhost:8091/v1/attention \
+  -H "Content-Type: application/json" \
+  -d '{"model":"qwen2.5-coder:1.5b","text":"Bonjour tout le monde","layer":0,"head":0,"max_tokens":32}'
 ```
