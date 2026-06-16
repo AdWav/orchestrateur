@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Token Viz — C++ / llama.cpp</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0f141d;
+        --panel: #171f2b;
+        --text: #e8edf5;
+        --muted: #8b97a8;
+        --accent: #4f8cff;
+        --border: #2a3547;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(circle at top, #1a2433, var(--bg));
+        color: var(--text);
+        min-height: 100vh;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 1.6rem;
+      }
+      p.lead {
+        margin: 0 0 20px;
+        color: var(--muted);
+      }
+      .toolbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+      input,
+      textarea,
+      button {
+        font: inherit;
+      }
+      input,
+      textarea {
+        width: 100%;
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+      }
+      textarea {
+        min-height: 120px;
+        resize: vertical;
+        line-height: 1.45;
+      }
+      button {
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 18px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+      .grid {
+        display: grid;
+        gap: 16px;
+      }
+      @media (min-width: 900px) {
+        .grid {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      section {
+        background: rgba(23, 31, 43, 0.9);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+      }
+      section h2 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--accent);
+      }
+      .meta {
+        font-size: 0.82rem;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .tokens {
+        font-family: "Cascadia Code", "Fira Code", monospace;
+        font-size: 0.92rem;
+        line-height: 1.7;
+        white-space: pre-wrap;
+        word-break: break-word;
+        min-height: 80px;
+      }
+      .token {
+        display: inline;
+        padding: 1px 2px;
+        margin: 0 1px;
+        border-radius: 4px;
+        cursor: default;
+      }
+      .error {
+        color: #ff7b7b;
+        margin-top: 12px;
+      }
+      .tones {
+        --tone-0: #355c7d;
+        --tone-1: #4e8098;
+        --tone-2: #6a5acd;
+        --tone-3: #2a9d8f;
+        --tone-4: #e9c46a;
+        --tone-5: #f4a261;
+        --tone-6: #e76f51;
+        --tone-7: #8d6a9f;
+        --tone-8: #3d6b59;
+        --tone-9: #7c6a4f;
+        --tone-10: #5c7cfa;
+        --tone-11: #9b5de5;
+      }
+      .token[data-tone="0"] {
+        background: var(--tone-0);
+      }
+      .token[data-tone="1"] {
+        background: var(--tone-1);
+      }
+      .token[data-tone="2"] {
+        background: var(--tone-2);
+      }
+      .token[data-tone="3"] {
+        background: var(--tone-3);
+      }
+      .token[data-tone="4"] {
+        background: var(--tone-4);
+      }
+      .token[data-tone="5"] {
+        background: var(--tone-5);
+      }
+      .token[data-tone="6"] {
+        background: var(--tone-6);
+      }
+      .token[data-tone="7"] {
+        background: var(--tone-7);
+      }
+      .token[data-tone="8"] {
+        background: var(--tone-8);
+      }
+      .token[data-tone="9"] {
+        background: var(--tone-9);
+      }
+      .token[data-tone="10"] {
+        background: var(--tone-10);
+      }
+      .token[data-tone="11"] {
+        background: var(--tone-11);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Visualisation des tokens (C++)</h1>
+      <p class="lead">
+        Service <code>token-viz-service</code> — tokenisation BPE via llama.cpp sur le GGUF Ollama.
+        <a href="/explainer.html"><strong>Transformer Explainer →</strong></a>
+        <a href="/tree.html">Arbre de décodage →</a>
+        <a href="/cloud3d.html">Nuage 3D →</a>
+        <a href="/model3d.html">Nuage volumique →</a>
+      </p>
+
+      <div class="toolbar">
+        <label>
+          Modèle Ollama
+          <input id="model" value="qwen2.5-coder:1.5b" />
+        </label>
+        <button id="run">Tokeniser</button>
+      </div>
+
+      <div class="grid">
+        <label>
+          Input (prompt)
+          <textarea id="input">Explique en une phrase ce qu'est le top-p.</textarea>
+        </label>
+        <label>
+          Output (réponse)
+          <textarea id="output">Le top-p limite la sélection aux tokens dont la probabilité cumulée atteint p.</textarea>
+        </label>
+      </div>
+
+      <p id="error" class="error" hidden></p>
+
+      <div class="grid" style="margin-top: 16px">
+        <section>
+          <h2>Input</h2>
+          <div id="inputMeta" class="meta">—</div>
+          <div id="inputTokens" class="tokens tones"></div>
+        </section>
+        <section>
+          <h2>Output</h2>
+          <div id="outputMeta" class="meta">—</div>
+          <div id="outputTokens" class="tokens tones"></div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+
+      function renderTokens(container, tokens, toneOffset = 0) {
+        container.textContent = "";
+        for (const [index, token] of tokens.entries()) {
+          const span = document.createElement("span");
+          span.className = "token";
+          span.dataset.tone = String((toneOffset + index) % 12);
+          span.title = `Token ${index + 1} · id ${token.id}`;
+          span.textContent = token.text;
+          container.appendChild(span);
+        }
+      }
+
+      async function tokenize() {
+        $("error").hidden = true;
+        $("run").disabled = true;
+        try {
+          const response = await fetch("/v1/tokenize/split", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: $("model").value.trim(),
+              input: $("input").value,
+              output: $("output").value,
+            }),
+          });
+          const payload = await response.json();
+          if (!response.ok) {
+            throw new Error(payload.detail || "Tokenisation impossible");
+          }
+
+          const inputCount = payload.input?.token_count ?? 0;
+          const outputCount = payload.output?.token_count ?? 0;
+          $("inputMeta").textContent = `${inputCount} tokens BPE`;
+          $("outputMeta").textContent = `${outputCount} tokens BPE`;
+
+          renderTokens($("inputTokens"), payload.input?.tokens ?? [], 0);
+          renderTokens($("outputTokens"), payload.output?.tokens ?? [], inputCount);
+        } catch (error) {
+          $("error").textContent = error.message;
+          $("error").hidden = false;
+        } finally {
+          $("run").disabled = false;
+        }
+      }
+
+      $("run").addEventListener("click", tokenize);
+      tokenize();
+    </script>
+  </body>
+</html>

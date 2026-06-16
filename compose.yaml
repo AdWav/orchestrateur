@@ -122,6 +122,34 @@ services:
     networks:
       - agent_mesh
 
+  token-viz-service:
+    build:
+      context: .
+      dockerfile: token-viz-service/Dockerfile
+    container_name: orchestrateur-token-viz
+    environment:
+      TOKEN_VIZ_BIND_HOST: "0.0.0.0"
+      TOKEN_VIZ_PORT: "8091"
+      TOKEN_VIZ_STATIC_DIR: /app/static
+      OLLAMA_BASE_URL: http://ollama:11434
+      OLLAMA_MODELS_DIR: /ollama-models
+      TOKEN_VIZ_CORS_ORIGINS: "http://localhost:3000,http://127.0.0.1:3000,http://localhost:8091,http://127.0.0.1:8091"
+    volumes:
+      - ollama_data:/ollama-models:ro
+    depends_on:
+      ollama-init:
+        condition: service_completed_successfully
+    ports:
+      - "8091:8091"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8091/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - agent_mesh
+
   mcp-server:
     build:
       context: .

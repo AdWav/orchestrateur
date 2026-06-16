@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Transformer Explainer — Token Viz</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0a0e14;
+        --panel: #121a26;
+        --panel2: #1a2433;
+        --text: #e8edf5;
+        --muted: #8b97a8;
+        --accent: #4f8cff;
+        --accent2: #3ddc97;
+        --warn: #e9c46a;
+        --border: #2a3547;
+        --step-active: #4f8cff;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background: radial-gradient(ellipse at 20% 0%, #152033, var(--bg));
+        color: var(--text);
+        min-height: 100vh;
+      }
+      a {
+        color: var(--accent);
+      }
+      header {
+        padding: 18px 24px;
+        border-bottom: 1px solid var(--border);
+        background: rgba(10, 14, 20, 0.92);
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        backdrop-filter: blur(8px);
+      }
+      header h1 {
+        margin: 0 0 6px;
+        font-size: 1.35rem;
+        font-weight: 700;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.88rem;
+        max-width: 900px;
+        line-height: 1.5;
+      }
+      .prompt-bar {
+        display: grid;
+        grid-template-columns: 1fr 1.4fr auto auto;
+        gap: 10px;
+        padding: 14px 24px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        align-items: end;
+      }
+      @media (max-width: 900px) {
+        .prompt-bar {
+          grid-template-columns: 1fr;
+        }
+      }
+      label {
+        display: grid;
+        gap: 4px;
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      input,
+      textarea,
+      button,
+      select {
+        font: inherit;
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        background: #0d131c;
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 9px 11px;
+      }
+      textarea {
+        min-height: 52px;
+        resize: vertical;
+        line-height: 1.4;
+      }
+      button {
+        background: var(--accent);
+        color: #fff;
+        border: 0;
+        border-radius: 8px;
+        padding: 10px 20px;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: not-allowed;
+      }
+      .steps-nav {
+        display: flex;
+        gap: 0;
+        padding: 0 24px;
+        background: var(--panel2);
+        border-bottom: 1px solid var(--border);
+        overflow-x: auto;
+      }
+      .step-tab {
+        flex: 1;
+        min-width: 140px;
+        padding: 14px 16px;
+        background: none;
+        border: 0;
+        border-bottom: 3px solid transparent;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: 0.85rem;
+        cursor: pointer;
+        text-align: left;
+        border-radius: 0;
+      }
+      .step-tab:hover {
+        color: var(--text);
+        background: rgba(79, 140, 255, 0.06);
+      }
+      .step-tab.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        background: rgba(79, 140, 255, 0.1);
+      }
+      .step-tab .num {
+        display: block;
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-bottom: 2px;
+      }
+      main {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .step-panel {
+        display: none;
+        animation: fadeIn 0.35s ease;
+      }
+      .step-panel.active {
+        display: block;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: none;
+        }
+      }
+      .explain {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+        font-size: 0.92rem;
+      }
+      .explain h2 {
+        margin: 0 0 8px;
+        font-size: 1.05rem;
+        color: var(--accent);
+      }
+      .explain p {
+        margin: 0 0 10px;
+        color: var(--muted);
+      }
+      .explain p:last-child {
+        margin-bottom: 0;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.72rem;
+        padding: 2px 8px;
+        border-radius: 99px;
+        font-weight: 600;
+        vertical-align: middle;
+      }
+      .badge.real {
+        background: rgba(61, 220, 151, 0.15);
+        color: var(--accent2);
+        border: 1px solid rgba(61, 220, 151, 0.35);
+      }
+      .badge.schema {
+        background: rgba(233, 196, 106, 0.12);
+        color: var(--warn);
+        border: 1px solid rgba(233, 196, 106, 0.35);
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .card h3 {
+        margin: 0 0 12px;
+        font-size: 0.88rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--muted);
+      }
+      .card-section + .card-section {
+        margin-top: 18px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+      .tokens-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .token-chip {
+        display: inline-flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #1e2a3d;
+        border: 1px solid var(--border);
+        min-width: 48px;
+        cursor: pointer;
+        transition: border-color 0.15s, transform 0.15s;
+      }
+      .token-chip:hover,
+      .token-chip.selected {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+      }
+      .token-chip .text {
+        font-family: "Cascadia Code", "Fira Code", monospace;
+        font-size: 0.95rem;
+      }
+      .token-chip .id {
+        font-size: 0.68rem;
+        color: var(--muted);
+        margin-top: 4px;
+      }
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 10px;
+      }
+      .meta-item {
+        background: #0d131c;
+        border-radius: 8px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+      }
+      .meta-item .val {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: var(--accent);
+      }
+      .meta-item .lbl {
+        font-size: 0.72rem;
+        color: var(--muted);
+        margin-top: 2px;
+      }
+      .emb-heatmap-wrap {
+        margin-top: 10px;
+        overflow-x: auto;
+      }
+      .emb-heatmap {
+        display: grid;
+        gap: 1px;
+        width: fit-content;
+        max-width: 100%;
+        background: #0a0e14;
+        padding: 2px;
+        border-radius: 6px;
+        border: 1px solid var(--border);
+      }
+      .emb-cell {
+        width: 10px;
+        height: 10px;
+        border-radius: 1px;
+        transition: transform 0.1s, outline 0.1s;
+        cursor: crosshair;
+      }
+      .emb-cell:hover {
+        transform: scale(1.35);
+        outline: 1px solid #fff;
+        z-index: 1;
+        position: relative;
+      }
+      .emb-heatmap-legend {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 10px;
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+      .emb-heatmap-legend .gradient {
+        width: 120px;
+        height: 10px;
+        border-radius: 3px;
+        background: linear-gradient(90deg, #2a5090, #1a2433, #e76f51);
+        border: 1px solid var(--border);
+      }
+      .layer-stack {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 4px;
+        max-height: 320px;
+        overflow-y: auto;
+        padding: 4px 0;
+      }
+      .layer-block {
+        display: grid;
+        grid-template-columns: 80px 1fr;
+        gap: 10px;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #0d131c;
+        border: 1px solid var(--border);
+        opacity: 0.45;
+        transition: opacity 0.3s, border-color 0.3s;
+      }
+      .layer-block.lit {
+        opacity: 1;
+        border-color: var(--accent);
+        box-shadow: 0 0 12px rgba(79, 140, 255, 0.15);
+      }
+      .layer-block .idx {
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-weight: 600;
+      }
+      .layer-parts {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .layer-part {
+        font-size: 0.7rem;
+        padding: 3px 8px;
+        border-radius: 4px;
+        background: #1a2433;
+        color: var(--muted);
+      }
+      .layer-part.attn {
+        color: var(--accent);
+        background: rgba(79, 140, 255, 0.12);
+      }
+      .layer-part.mlp {
+        color: var(--accent2);
+        background: rgba(61, 220, 151, 0.1);
+      }
+      .attn-matrix-wrap {
+        overflow-x: auto;
+      }
+      .attn-matrix {
+        border-collapse: collapse;
+        font-size: 0.7rem;
+      }
+      .attn-matrix th,
+      .attn-matrix td {
+        padding: 4px 6px;
+        text-align: center;
+        border: 1px solid var(--border);
+        min-width: 36px;
+      }
+      .attn-matrix th {
+        color: var(--muted);
+        font-weight: 500;
+        max-width: 60px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .attn-cell {
+        border-radius: 2px;
+        transition: background 0.2s;
+      }
+      .attn-cell.masked {
+        background: #0a0e14 !important;
+        opacity: 0.3;
+      }
+      .prob-bars {
+        display: grid;
+        gap: 6px;
+      }
+      .prob-row {
+        display: grid;
+        grid-template-columns: 120px 1fr 56px;
+        gap: 10px;
+        align-items: center;
+        font-size: 0.82rem;
+      }
+      .prob-row .bar-track {
+        height: 22px;
+        background: #0d131c;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+      }
+      .prob-row .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #2a5090, var(--accent));
+        border-radius: 3px;
+        transition: width 0.25s;
+      }
+      .prob-row.chosen .bar-fill {
+        background: linear-gradient(90deg, #1a5c40, var(--accent2));
+      }
+      .prob-row .token-label {
+        font-family: monospace;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .prob-row .pct {
+        text-align: right;
+        color: var(--muted);
+        font-variant-numeric: tabular-nums;
+      }
+      .sliders {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 16px;
+      }
+      @media (max-width: 700px) {
+        .sliders {
+          grid-template-columns: 1fr;
+        }
+      }
+      .slider-group input[type="range"] {
+        width: 100%;
+        accent-color: var(--accent);
+      }
+      .slider-group .val-display {
+        font-weight: 700;
+        color: var(--accent);
+        font-size: 0.9rem;
+      }
+      .flow-diagram {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 16px;
+        font-size: 0.82rem;
+      }
+      .flow-box {
+        padding: 10px 14px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        background: #0d131c;
+        text-align: center;
+      }
+      .flow-arrow {
+        color: var(--muted);
+        font-size: 1.2rem;
+      }
+      .error {
+        color: #ff7b7b;
+        padding: 0 24px 12px;
+        font-size: 0.9rem;
+      }
+      .status {
+        padding: 0 24px 8px;
+        font-size: 0.82rem;
+        color: var(--muted);
+      }
+      .nav-footer {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 24px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+      }
+      .nav-footer button.secondary {
+        background: var(--panel2);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .chosen-token {
+        font-size: 1.1rem;
+        padding: 12px 16px;
+        background: rgba(61, 220, 151, 0.1);
+        border: 1px solid rgba(61, 220, 151, 0.35);
+        border-radius: 8px;
+        margin-top: 12px;
+      }
+      .chosen-token strong {
+        color: var(--accent2);
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Transformer Explainer</h1>
+      <p>
+        Parcours pas à pas : du texte aux probabilités du prochain token.
+        Données réelles via Ollama (tokenisation, architecture, logprobs).
+        <a href="/">Autres vues →</a>
+      </p>
+    </header>
+
+    <div class="prompt-bar">
+      <label>
+        Modèle Ollama
+        <input id="model" value="qwen2.5-coder:1.5b" />
+      </label>
+      <label>
+        Votre prompt
+        <textarea id="prompt">La visualisation de données permet aux utilisateurs de</textarea>
+      </label>
+      <label>
+        &nbsp;
+        <button id="analyze">Analyser</button>
+      </label>
+      <label>
+        &nbsp;
+        <button id="nextStep" class="secondary" disabled>Étape suivante →</button>
+      </label>
+    </div>
+
+    <div id="status" class="status"></div>
+    <div id="error" class="error" hidden></div>
+
+    <nav class="steps-nav" id="stepsNav">
+      <button class="step-tab active" data-step="0">
+        <span class="num">Étape 1</span>
+        Tokenisation
+      </button>
+      <button class="step-tab" data-step="1">
+        <span class="num">Étape 2</span>
+        Embeddings
+      </button>
+      <button class="step-tab" data-step="2">
+        <span class="num">Étape 3</span>
+        Blocs Transformer
+      </button>
+      <button class="step-tab" data-step="3">
+        <span class="num">Étape 4</span>
+        Prochain token
+      </button>
+    </nav>
+
+    <main>
+      <!-- Étape 1 -->
+      <section class="step-panel active" data-panel="0">
+        <div class="explain">
+          <h2>Tokenisation <span class="badge real">données réelles</span></h2>
+          <p>
+            Le modèle ne lit pas des mots entiers : il découpe le texte en
+            <strong>tokens</strong> (mots ou sous-mots). Chaque token reçoit un identifiant
+            numérique unique dans le vocabulaire du modèle (souvent 30 000 à 150 000 entrées).
+          </p>
+          <p>
+            Ci-dessous : le découpage BPE exact du GGUF Ollama, calculé par llama.cpp.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Tokens du prompt</h3>
+          <div id="tokenChips" class="tokens-row">
+            <span style="color: var(--muted)">Cliquez sur « Analyser » pour commencer.</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Flux</h3>
+          <div class="flow-diagram">
+            <div class="flow-box">Texte brut</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Tokenizer BPE</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Liste d'IDs</div>
+            <span class="flow-arrow">→</span>
+            <div class="flow-box">Embeddings</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Étape 2 -->
+      <section class="step-panel" data-panel="1">
+        <div class="explain">
+          <h2>Embeddings <span class="badge real">données réelles</span></h2>
+          <p>
+            Chaque ID est converti en un vecteur de dimension
+            <strong id="embDimLabel">—</strong>, lu directement depuis la matrice
+            <code>token_embd.weight</code> du GGUF (déquantifiée via ggml).
+          </p>
+          <p>
+            Heatmap matricielle <span id="embGridLabel">—</span> =
+            <span id="embDimTotal2">—</span> dimensions réelles — cliquez sur un token pour
+            explorer son vecteur. <span id="embPosNote" style="color:var(--muted)"></span>
+          </p>
+        </div>
+        <div class="card">
+          <h3>Architecture du modèle</h3>
+          <div id="modelMeta" class="meta-grid"></div>
+        </div>
+        <div class="card">
+          <div class="card-section">
+            <h3>Tokens du prompt</h3>
+            <div id="tokenChipsEmb" class="tokens-row">
+              <span style="color: var(--muted)">Analysez un prompt pour afficher les tokens.</span>
+            </div>
+          </div>
+          <div class="card-section">
+            <h3>Vecteur du token sélectionné</h3>
+            <div id="embPreview">
+              <span style="color: var(--muted)">Sélectionnez un token ci-dessus.</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Étape 3 -->
+      <section class="step-panel" data-panel="2">
+        <div class="explain">
+          <h2>Blocs Transformer <span class="badge schema">schéma animé</span></h2>
+          <p>
+            Le cœur du modèle : <strong id="layerCountLabel">—</strong> blocs empilés. Chaque bloc
+            contient une couche d'<strong>attention</strong> (les tokens « se parlent ») et un
+            <strong>MLP</strong> (transformation locale de chaque token). Les connexions résiduelles
+            et la normalisation stabilisent l'apprentissage.
+          </p>
+          <p>
+            La matrice d'attention ci-dessous est un <em>schéma pédagogique</em> (masque causal +
+            proximité) — les vraies cartes d'attention arrivent en Phase 3.
+          </p>
+        </div>
+        <div class="card">
+          <h3>Empilement des couches</h3>
+          <div id="layerStack" class="layer-stack"></div>
+        </div>
+        <div class="card">
+          <h3>Attention masquée (aperçu)</h3>
+          <p style="font-size: 0.82rem; color: var(--muted); margin: 0 0 10px">
+            Chaque cellule = « combien le token en ligne regarde le token en colonne ». Le triangle
+            supérieur est masqué (pas de regard vers le futur).
+          </p>
+          <div id="attnMatrix" class="attn-matrix-wrap"></div>
+        </div>
+      </section>
+
+      <!-- Étape 4 -->
+      <section class="step-panel" data-panel="3">
+        <div class="explain">
+          <h2>Probabilités du prochain token <span class="badge real">logprobs Ollama</span></h2>
+          <p>
+            Après tous les blocs, une couche linéaire produit un score (<em>logit</em>) pour chaque
+            token du vocabulaire. Le <strong>softmax</strong> les transforme en probabilités. Le
+            modèle en choisit un — c'est la <strong>prédiction du prochain token</strong>.
+          </p>
+          <p>
+            Ajustez la température, le top-k et le top-p pour voir comment le tirage change
+            (recalcul côté navigateur sur les logprobs retournés).
+          </p>
+        </div>
+        <div class="sliders">
+          <div class="slider-group">
+            <label>Température <span class="val-display" id="tempVal">1.0</span></label>
+            <input type="range" id="temperature" min="0.1" max="2" step="0.05" value="1" />
+          </div>
+          <div class="slider-group">
+            <label>Top-k <span class="val-display" id="topKVal">5</span></label>
+            <input type="range" id="topK" min="1" max="20" step="1" value="5" />
+          </div>
+          <div class="slider-group">
+            <label>Top-p <span class="val-display" id="topPVal">1.0</span></label>
+            <input type="range" id="topP" min="0.05" max="1" step="0.05" value="1" />
+          </div>
+        </div>
+        <div class="card">
+          <h3>Distribution (top candidats)</h3>
+          <div id="probBars" class="prob-bars">
+            <span style="color: var(--muted)">—</span>
+          </div>
+          <div id="chosenToken" class="chosen-token" hidden></div>
+        </div>
+      </section>
+
+      <div class="nav-footer">
+        <button id="prevStep" class="secondary" disabled>← Étape précédente</button>
+        <button id="nextStepBottom" class="secondary" disabled>Étape suivante →</button>
+      </div>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      const state = {
+        step: 0,
+        tokens: [],
+        selectedIdx: 0,
+        modelInfo: null,
+        embeddingByIndex: {},
+        embNote: "",
+        candidates: [],
+        chosenRaw: "",
+        layerAnimTimer: null,
+      };
+
+      function setStep(n) {
+        state.step = Math.max(0, Math.min(3, n));
+        document.querySelectorAll(".step-tab").forEach((tab) => {
+          tab.classList.toggle("active", Number(tab.dataset.step) === state.step);
+        });
+        document.querySelectorAll(".step-panel").forEach((panel) => {
+          panel.classList.toggle("active", Number(panel.dataset.panel) === state.step);
+        });
+        $("prevStep").disabled = state.step === 0;
+        $("nextStep").disabled = state.step === 3;
+        $("nextStepBottom").disabled = state.step === 3;
+        if (state.step === 2) startLayerAnimation();
+        else stopLayerAnimation();
+      }
+
+      document.querySelectorAll(".step-tab").forEach((tab) => {
+        tab.addEventListener("click", () => setStep(Number(tab.dataset.step)));
+      });
+      $("prevStep").addEventListener("click", () => setStep(state.step - 1));
+      $("nextStep").addEventListener("click", () => setStep(state.step + 1));
+      $("nextStepBottom").addEventListener("click", () => setStep(state.step + 1));
+
+      function metaVal(meta, ...keys) {
+        for (const k of keys) {
+          if (meta && meta[k] != null) return meta[k];
+        }
+        return null;
+      }
+
+      function parseModelDims(inspect) {
+        const meta = inspect.metadata || {};
+        return {
+          nEmbd: metaVal(meta, "llama.embedding_length", "qwen2.embedding_length", "gemma.embedding_length") || 2048,
+          nLayer: metaVal(meta, "llama.block_count", "qwen2.block_count", "gemma.block_count") || inspect.layers?.length - 2 || 28,
+          nHead: metaVal(meta, "llama.attention.head_count", "qwen2.attention.head_count") || 16,
+          nVocab: metaVal(meta, "tokenizer.ggml.tokens", "llama.vocab_size") || "—",
+          totalParams: inspect.total_params_llama || inspect.total_params_gguf,
+          desc: inspect.model_desc || inspect.model,
+        };
+      }
+
+      function selectToken(idx) {
+        state.selectedIdx = idx;
+        document.querySelectorAll(".token-chip").forEach((chip) => {
+          chip.classList.toggle("selected", Number(chip.dataset.idx) === idx);
+        });
+        if (state.tokens[idx]) renderEmbPreview(state.tokens[idx], state.modelInfo);
+      }
+
+      function renderTokenChips(tokens, selectedIdx = 0) {
+        state.selectedIdx = selectedIdx;
+        const containers = [$("tokenChips"), $("tokenChipsEmb")].filter(Boolean);
+        containers.forEach((container) => {
+          container.textContent = "";
+          tokens.forEach((tok, i) => {
+            const chip = document.createElement("button");
+            chip.type = "button";
+            chip.dataset.idx = i;
+            chip.className = "token-chip" + (i === selectedIdx ? " selected" : "");
+            chip.innerHTML = `<span class="text">${escapeHtml(tok.text)}</span><span class="id">id ${tok.id}</span>`;
+            chip.addEventListener("click", () => selectToken(i));
+            container.appendChild(chip);
+          });
+        });
+        if (tokens.length) renderEmbPreview(tokens[selectedIdx], state.modelInfo);
+      }
+
+      function escapeHtml(s) {
+        return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      }
+
+      function renderEmbPreview(tok, modelInfo, index = state.selectedIdx) {
+        const emb = state.embeddingByIndex[index];
+        const values = emb?.vector;
+        if (!values?.length) {
+          $("embPreview").innerHTML =
+            '<span style="color: var(--muted)">Vecteur indisponible — relancez l\'analyse.</span>';
+          return;
+        }
+        const nEmbd = values.length;
+        const { rows, cols } = heatmapGridShape(nEmbd);
+        const stats = emb.stats || {};
+        $("embPreview").innerHTML = `
+          <div style="margin-bottom:8px;font-family:monospace">${escapeHtml(tok.text)} <span style="color:var(--muted)">(id ${tok.id})</span></div>
+          <div class="emb-heatmap-wrap">${renderEmbHeatmap(values, rows, cols)}</div>
+          <div class="emb-heatmap-legend">
+            <span>−</span>
+            <div class="gradient"></div>
+            <span>+</span>
+            <span style="margin-left:8px">${rows} × ${cols} = ${nEmbd} dims · GGUF token_embd</span>
+          </div>
+          <p style="font-size:0.78rem;color:var(--muted);margin:8px 0 0">
+            min ${Number(stats.min).toFixed(4)} · max ${Number(stats.max).toFixed(4)} ·
+            μ ${Number(stats.mean).toFixed(4)} · σ ${Number(stats.std).toFixed(4)}
+          </p>
+        `;
+        const gridLabel = $("embGridLabel");
+        if (gridLabel) gridLabel.textContent = `${rows}×${cols}`;
+        const dimTotal2 = $("embDimTotal2");
+        if (dimTotal2) dimTotal2.textContent = String(nEmbd);
+      }
+
+      function heatmapGridShape(n) {
+        const targetCols = Math.ceil(Math.sqrt(n * 1.6));
+        let cols = targetCols;
+        while (cols > 1 && n % cols !== 0) cols--;
+        if (cols === 1) cols = Math.min(n, 32);
+        const rows = Math.ceil(n / cols);
+        return { rows, cols };
+      }
+
+      function heatmapColor(value, min, max) {
+        const mid = (min + max) / 2;
+        const range = Math.max(max - min, 0.001);
+        const t = Math.max(0, Math.min(1, (value - min) / range));
+        if (value < mid) {
+          const u = (value - min) / (mid - min || 1);
+          const r = Math.round(20 + u * 30);
+          const g = Math.round(50 + u * 90);
+          const b = Math.round(160 + u * 60);
+          return `rgb(${r},${g},${b})`;
+        }
+        const u = (value - mid) / (max - mid || 1);
+        const r = Math.round(60 + u * 195);
+        const g = Math.round(140 - u * 100);
+        const b = Math.round(120 - u * 90);
+        return `rgb(${r},${g},${b})`;
+      }
+
+      function renderEmbHeatmap(values, rows, cols) {
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const cells = [];
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            const idx = r * cols + c;
+            if (idx >= values.length) {
+              cells.push(`<div class="emb-cell" style="background:#0a0e14"></div>`);
+              continue;
+            }
+            const v = values[idx];
+            const color = heatmapColor(v, min, max);
+            cells.push(
+              `<div class="emb-cell" style="background:${color}" title="dim ${idx} = ${v.toFixed(3)}"></div>`,
+            );
+          }
+        }
+        return `<div class="emb-heatmap" style="grid-template-columns:repeat(${cols},10px)">${cells.join("")}</div>`;
+      }
+
+      function renderModelMeta(inspect) {
+        const d = parseModelDims(inspect);
+        $("embDimLabel").textContent = d.nEmbd;
+        $("layerCountLabel").textContent = d.nLayer;
+        const items = [
+          { val: formatNum(d.totalParams), lbl: "Paramètres" },
+          { val: d.nLayer, lbl: "Couches" },
+          { val: d.nHead, lbl: "Têtes d'attention" },
+          { val: d.nEmbd, lbl: "Dim. embedding" },
+          { val: inspect.tensor_count ?? "—", lbl: "Tenseurs GGUF" },
+          { val: d.desc?.slice(0, 24) || "—", lbl: "Modèle" },
+        ];
+        $("modelMeta").innerHTML = items
+          .map((it) => `<div class="meta-item"><div class="val">${it.val}</div><div class="lbl">${it.lbl}</div></div>`)
+          .join("");
+      }
+
+      function formatNum(n) {
+        if (typeof n !== "number") return n;
+        if (n >= 1e9) return (n / 1e9).toFixed(1) + "B";
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + "M";
+        if (n >= 1e3) return (n / 1e3).toFixed(1) + "K";
+        return String(n);
+      }
+
+      function renderLayerStack(nLayer) {
+        const stack = $("layerStack");
+        stack.textContent = "";
+        for (let i = 0; i < nLayer; i++) {
+          const div = document.createElement("div");
+          div.className = "layer-block";
+          div.dataset.layer = i;
+          div.innerHTML = `
+            <div class="idx">Bloc ${i}</div>
+            <div class="layer-parts">
+              <span class="layer-part">LayerNorm</span>
+              <span class="layer-part attn">Attention × ${state.modelInfo ? parseModelDims(state.modelInfo).nHead : 16} têtes</span>
+              <span class="layer-part">+ résiduel</span>
+              <span class="layer-part">LayerNorm</span>
+              <span class="layer-part mlp">MLP (×4)</span>
+              <span class="layer-part">+ résiduel</span>
+            </div>
+          `;
+          stack.appendChild(div);
+        }
+      }
+
+      let layerAnimIdx = 0;
+      function startLayerAnimation() {
+        stopLayerAnimation();
+        const blocks = document.querySelectorAll(".layer-block");
+        if (!blocks.length) return;
+        layerAnimIdx = 0;
+        state.layerAnimTimer = setInterval(() => {
+          blocks.forEach((b) => b.classList.remove("lit"));
+          if (blocks[layerAnimIdx]) blocks[layerAnimIdx].classList.add("lit");
+          layerAnimIdx = (layerAnimIdx + 1) % blocks.length;
+        }, 600);
+      }
+
+      function stopLayerAnimation() {
+        if (state.layerAnimTimer) {
+          clearInterval(state.layerAnimTimer);
+          state.layerAnimTimer = null;
+        }
+      }
+
+      function pedagogicalAttention(tokens) {
+        const n = tokens.length;
+        const matrix = [];
+        for (let i = 0; i < n; i++) {
+          const row = [];
+          for (let j = 0; j < n; j++) {
+            if (j > i) {
+              row.push(-1);
+            } else {
+              const dist = i - j;
+              let w = 1 / (1 + dist * 0.6);
+              if (tokens[i].text === tokens[j].text) w += 0.25;
+              if (tokens[i].text.trim() === tokens[j].text.trim() && tokens[i].text.includes(" ")) w += 0.15;
+              row.push(w);
+            }
+          }
+          const sum = row.reduce((a, v) => a + Math.max(v, 0), 0);
+          matrix.push(row.map((v) => (v < 0 ? -1 : v / sum)));
+        }
+        return matrix;
+      }
+
+      function renderAttentionMatrix(tokens) {
+        if (tokens.length > 12) {
+          $("attnMatrix").innerHTML =
+            '<p style="color:var(--muted)">Prompt trop long pour la matrice (' +
+            tokens.length +
+            " tokens). Réduisez le prompt pour voir l'aperçu.</p>";
+          return;
+        }
+        const matrix = pedagogicalAttention(tokens);
+        const labels = tokens.map((t) => t.text.replace(/\n/g, "↵").slice(0, 8));
+        let html = "<table class='attn-matrix'><thead><tr><th></th>";
+        labels.forEach((l) => {
+          html += `<th title="${escapeHtml(l)}">${escapeHtml(l)}</th>`;
+        });
+        html += "</tr></thead><tbody>";
+        matrix.forEach((row, i) => {
+          html += `<tr><th title="${escapeHtml(labels[i])}">${escapeHtml(labels[i])}</th>`;
+          row.forEach((v) => {
+            if (v < 0) {
+              html += '<td class="attn-cell masked">—</td>';
+            } else {
+              const intensity = Math.round(v * 255);
+              html += `<td class="attn-cell" style="background:rgba(79,140,255,${v.toFixed(2)})" title="${(v * 100).toFixed(1)}%">${(v * 100).toFixed(0)}%</td>`;
+            }
+          });
+          html += "</tr>";
+        });
+        html += "</tbody></table>";
+        $("attnMatrix").innerHTML = html;
+      }
+
+      function softmax(logprobs) {
+        const max = Math.max(...logprobs);
+        const exps = logprobs.map((l) => Math.exp(l - max));
+        const sum = exps.reduce((a, b) => a + b, 0);
+        return exps.map((e) => e / sum);
+      }
+
+      function applySampling(candidates, temperature, topK, topP) {
+        const scaled = candidates.map((c) => ({
+          ...c,
+          logprob: c.logprob / temperature,
+        }));
+        scaled.sort((a, b) => b.logprob - a.logprob);
+
+        let filtered = scaled.slice(0, topK);
+        const probs = softmax(filtered.map((c) => c.logprob));
+
+        let cum = 0;
+        const nucleus = [];
+        for (let i = 0; i < filtered.length; i++) {
+          cum += probs[i];
+          nucleus.push({ ...filtered[i], probability: probs[i] });
+          if (cum >= topP) break;
+        }
+
+        const total = nucleus.reduce((s, c) => s + c.probability, 0);
+        return nucleus.map((c) => ({
+          ...c,
+          probability: c.probability / total,
+        }));
+      }
+
+      function renderProbBars() {
+        if (!state.candidates.length) return;
+        const temp = Number($("temperature").value);
+        const topK = Number($("topK").value);
+        const topP = Number($("topP").value);
+        $("tempVal").textContent = temp.toFixed(2);
+        $("topKVal").textContent = String(topK);
+        $("topPVal").textContent = topP.toFixed(2);
+
+        const results = applySampling(state.candidates, temp, topK, topP);
+        const maxP = Math.max(...results.map((r) => r.probability), 0.001);
+
+        $("probBars").innerHTML = results
+          .map((r) => {
+            const isChosen = r.raw === state.chosenRaw;
+            const label = r.raw.replace(/\n/g, "↵") || "␠";
+            return `<div class="prob-row${isChosen ? " chosen" : ""}">
+              <span class="token-label" title="${escapeHtml(r.raw)}">${escapeHtml(label)}</span>
+              <div class="bar-track"><div class="bar-fill" style="width:${(r.probability / maxP) * 100}%"></div></div>
+              <span class="pct">${(r.probability * 100).toFixed(1)}%</span>
+            </div>`;
+          })
+          .join("");
+
+        const top = results[0];
+        $("chosenToken").hidden = false;
+        $("chosenToken").innerHTML = `Token le plus probable après rééchantillonnage : <strong>${escapeHtml(top?.raw?.replace(/\n/g, "↵") || "—")}</strong> (${((top?.probability || 0) * 100).toFixed(1)} %)`;
+      }
+
+      ["temperature", "topK", "topP"].forEach((id) => {
+        $(id).addEventListener("input", renderProbBars);
+      });
+
+      function extractFirstStepCandidates(tree) {
+        const children = tree?.children;
+        if (!Array.isArray(children) || !children.length) return { candidates: [], chosen: "" };
+        const candidates = children.map((n) => ({
+          raw: n.raw || n.name,
+          logprob: n.logprob ?? -Infinity,
+          selected: n.selected || n.kind === "chosen",
+        }));
+        const chosen = candidates.find((c) => c.selected)?.raw || candidates[0]?.raw || "";
+        return { candidates, chosen };
+      }
+
+      async function analyze() {
+        $("error").hidden = true;
+        $("analyze").disabled = true;
+        $("nextStep").disabled = true;
+        $("nextStepBottom").disabled = true;
+        const model = $("model").value.trim();
+        const prompt = $("prompt").value;
+        if (!model || !prompt) {
+          $("error").textContent = "Modèle et prompt requis.";
+          $("error").hidden = false;
+          $("analyze").disabled = false;
+          return;
+        }
+
+        $("status").textContent = "Chargement tokenisation, architecture, embeddings, logprobs…";
+        try {
+          const [tokRes, inspectRes, embRes, decodeRes] = await Promise.all([
+            fetch("/v1/tokenize", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model, text: prompt }),
+            }),
+            fetch(`/v1/model/inspect?model=${encodeURIComponent(model)}`),
+            fetch("/v1/embeddings", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ model, text: prompt }),
+            }),
+            fetch("/v1/decode/tree", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                model,
+                prompt,
+                top_logprobs: 20,
+                num_predict: 1,
+                temperature: 1,
+              }),
+            }),
+          ]);
+
+          const tokData = await tokRes.json();
+          const inspectData = await inspectRes.json();
+          const embData = await embRes.json();
+          const decodeData = await decodeRes.json();
+
+          if (!tokRes.ok) throw new Error(tokData.detail || "Tokenisation échouée");
+          if (!inspectRes.ok) throw new Error(inspectData.detail || "Inspection modèle échouée");
+          if (!embRes.ok) throw new Error(embData.detail || "Extraction embeddings échouée");
+          if (!decodeRes.ok) throw new Error(decodeData.detail || "Décodage échoué");
+
+          state.tokens = tokData.tokens || [];
+          state.modelInfo = inspectData;
+          state.embeddingByIndex = {};
+          for (const item of embData.tokens || []) {
+            state.embeddingByIndex[item.index] = item;
+          }
+          state.embNote = embData.positional_note || "";
+          const posNote = $("embPosNote");
+          if (posNote) posNote.textContent = state.embNote;
+
+          const dims = parseModelDims(inspectData);
+          renderTokenChips(state.tokens);
+          renderModelMeta(inspectData);
+          renderLayerStack(dims.nLayer);
+          renderAttentionMatrix(state.tokens);
+
+          const { candidates, chosen } = extractFirstStepCandidates(decodeData.tree);
+          state.candidates = candidates;
+          state.chosenRaw = chosen;
+          renderProbBars();
+
+          $("status").textContent = `${state.tokens.length} tokens · ${dims.nLayer} couches · prochain token analysé`;
+          $("nextStep").disabled = false;
+          $("nextStepBottom").disabled = false;
+        } catch (err) {
+          $("error").textContent = err.message;
+          $("error").hidden = false;
+          $("status").textContent = "";
+        } finally {
+          $("analyze").disabled = false;
+        }
+      }
+
+      $("analyze").addEventListener("click", analyze);
+      setStep(0);
+    </script>
+  </body>
+</html>
